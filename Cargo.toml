@@ -1,0 +1,11 @@
+[package]
+name = "redstone-simulator"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+hematite-nbt = "0.5.2"
+serde = {version = "1.0.160", features = ["derive"]}
+heapless = "0.7.16"
