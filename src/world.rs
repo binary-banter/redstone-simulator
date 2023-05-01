@@ -37,7 +37,7 @@ impl World {
         let mut palette = vec![(Block::Air, false, false); format.palette_max as usize];
 
         for (id, i) in &format.palette {
-            palette[*i as usize] = Block::from_id(&id);
+            palette[*i as usize] = Block::from_id(id);
         }
 
         let mut world = World::new_empty(
@@ -65,6 +65,17 @@ impl World {
         }
 
         world
+    }
+
+    pub fn get_probes(&self) -> Vec<bool> {
+        self.probes
+            .iter()
+            .map(|&(x, y, z)| match self.data[x][y][z] {
+                Block::Solid(0) => false,
+                Block::Solid(_) => true,
+                _ => unreachable!(),
+            })
+            .collect()
     }
 
     pub fn display_probes(&self) {

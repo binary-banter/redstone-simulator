@@ -4,7 +4,7 @@ use std::mem;
 
 impl World {
     pub fn step(&mut self) {
-        let mut tick_updatable = mem::replace(&mut self.updatable, Vec::new());
+        let mut tick_updatable = mem::take(&mut self.updatable);
 
         while let Some((x, y, z)) = tick_updatable.pop() {
             let block = self.data[x][y][z];
@@ -18,7 +18,9 @@ impl World {
                             let n_block = self.data[nx][ny][nz];
                             match n_block {
                                 Block::Redstone(ns) => ns.saturating_sub(1),
+                                Block::Repeater(true, nf) if nf.back(nx, ny, nz) == (x, y, z) => 15,
                                 Block::Trigger(true) => 15,
+                                Block::Solid(16) => 15,
                                 _ => 0,
                             }
                         })
@@ -41,6 +43,7 @@ impl World {
                             let n_block = self.data[nx][ny][nz];
                             match n_block {
                                 Block::Redstone(1..) => 1,
+                                Block::Repeater(true, nf) if nf.back(nx, ny, nz) == (x, y, z) => 16,
                                 _ => 0,
                             }
                         })
@@ -55,11 +58,27 @@ impl World {
                         self.data[x][y][z] = Block::Solid(s_new);
                     }
                 }
-                _ => {}
+                Block::Repeater(s, f) => {
+                    // find signal strength of input
+                    let s_new = match self[f.front(x, y, z)] {
+                        Block::Solid(1..) | Block::Redstone(1..) | Block::Trigger(true) => true,
+                        Block::Repeater(true, f2) if f == f2 => true,
+                        Block::Solid(_)
+                        | Block::Redstone(_)
+                        | Block::Trigger(_)
+                        | Block::Repeater(_, _)
+                        | Block::Air => false,
+                    };
+
+                    // if signal strength has changed, update neighbours
+                    if s != s_new {
+                        tick_updatable.push(f.back(x, y, z));
+                        self.data[x][y][z] = Block::Repeater(s_new, f);
+                    }
+                }
+                Block::Air | Block::Trigger(_) => {}
             }
         }
-
-        print!("");
     }
 
     pub fn step_with_trigger(&mut self) {
