@@ -3,6 +3,7 @@ use crate::blocks::solid::Solid;
 use crate::blocks::Block;
 use crate::schematic::SchemFormat;
 use crate::world_data::WorldData;
+use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
@@ -14,7 +15,7 @@ pub struct World {
     pub size_z: usize,
     pub data: WorldData,
     pub triggers: Vec<(usize, usize, usize)>,
-    pub probes: HashMap<(usize, usize, usize), String>,
+    pub probes: BiMap<(usize, usize, usize), String>,
     pub updatable: Vec<(usize, usize, usize)>,
 }
 
@@ -26,7 +27,7 @@ impl World {
             size_z,
             data: WorldData(vec![vec![vec![Block::Air(Air {}); size_x]; size_y]; size_z]),
             triggers: vec![],
-            probes: HashMap::new(),
+            probes: BiMap::new(),
             updatable: vec![],
         }
     }
@@ -86,7 +87,8 @@ impl World {
                     }
                     if *is_probe {
                         let name: String = world
-                            .data.neighbours((x, y, z))
+                            .data
+                            .neighbours((x, y, z))
                             .find_map(|(nb, _)| signs.get(&nb).cloned())
                             .unwrap_or(format!("{x},{y},{z}"));
                         world.probes.insert((x, y, z), name);
@@ -100,8 +102,12 @@ impl World {
         world
     }
 
-    pub fn get_probe(&self, p: &str) -> bool {
-        match self.data[*self.probes.iter().find(|&(_, name)| name == p).unwrap().0] {
+    pub fn get_probe(&self, name: &str) -> bool {
+        match self.data[*self
+            .probes
+            .get_by_right(name)
+            .expect("Probe does not exist.")]
+        {
             Block::Solid(Solid { signal: 0 }) => false,
             Block::Solid(_) => true,
             _ => unreachable!(),

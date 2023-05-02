@@ -1,4 +1,4 @@
-use crate::blocks::{BlockTrait};
+use crate::blocks::BlockTrait;
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
