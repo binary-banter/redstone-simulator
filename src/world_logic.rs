@@ -10,17 +10,19 @@ impl World {
             let block = self.data[x][y][z];
 
             match block {
-                Block::Redstone(s) => {
+                Block::Redstone { signal: s } => {
                     // find biggest signal strength around this block
                     let s_new = self
                         .neighbours(x, y, z)
                         .map(|(nx, ny, nz)| {
                             let n_block = self.data[nx][ny][nz];
                             match n_block {
-                                Block::Redstone(ns) => ns.saturating_sub(1),
-                                Block::Repeater(true, nf) if nf.back(nx, ny, nz) == (x, y, z) => 15,
-                                Block::Trigger(true) => 15,
-                                Block::Solid(16) => 15,
+                                Block::Redstone { signal: ns } => ns.saturating_sub(1),
+                                Block::Repeater {
+                                    signal: 16,
+                                    facing: nf,
+                                } if nf.back(nx, ny, nz) == (x, y, z) => 15,
+                                Block::Trigger { signal: 16 } | Block::Solid { signal: 16 } => 15,
                                 _ => 0,
                             }
                         })
@@ -32,18 +34,21 @@ impl World {
                         for (nx, ny, nz) in self.neighbours(x, y, z) {
                             tick_updatable.push((nx, ny, nz));
                         }
-                        self.data[x][y][z] = Block::Redstone(s_new);
+                        self.data[x][y][z] = Block::Redstone { signal: s_new };
                     }
                 }
-                Block::Solid(s) => {
+                Block::Solid { signal: s } => {
                     // find biggest signal strength around this block
                     let s_new = self
                         .neighbours(x, y, z)
                         .map(|(nx, ny, nz)| {
                             let n_block = self.data[nx][ny][nz];
                             match n_block {
-                                Block::Redstone(1..) => 1,
-                                Block::Repeater(true, nf) if nf.back(nx, ny, nz) == (x, y, z) => 16,
+                                Block::Redstone { signal: 1.. } => 1,
+                                Block::Repeater {
+                                    signal: 16,
+                                    facing: nf,
+                                } if nf.back(nx, ny, nz) == (x, y, z) => 16,
                                 _ => 0,
                             }
                         })
@@ -55,28 +60,39 @@ impl World {
                         for (nx, ny, nz) in self.neighbours(x, y, z) {
                             tick_updatable.push((nx, ny, nz));
                         }
-                        self.data[x][y][z] = Block::Solid(s_new);
+                        self.data[x][y][z] = Block::Solid { signal: s_new };
                     }
                 }
-                Block::Repeater(s, f) => {
+                Block::Repeater {
+                    signal: s,
+                    facing: f,
+                } => {
                     // find signal strength of input
                     let s_new = match self[f.front(x, y, z)] {
-                        Block::Solid(1..) | Block::Redstone(1..) | Block::Trigger(true) => true,
-                        Block::Repeater(true, f2) if f == f2 => true,
-                        Block::Solid(_)
-                        | Block::Redstone(_)
-                        | Block::Trigger(_)
-                        | Block::Repeater(_, _)
-                        | Block::Air => false,
+                        Block::Solid { signal: 1.. }
+                        | Block::Redstone { signal: 1.. }
+                        | Block::Trigger { signal: 16 } => 16,
+                        Block::Repeater {
+                            signal: 16,
+                            facing: nf,
+                        } if f == nf => 16,
+                        Block::Solid { .. }
+                        | Block::Redstone { .. }
+                        | Block::Trigger { .. }
+                        | Block::Repeater { .. }
+                        | Block::Air => 0,
                     };
 
                     // if signal strength has changed, update neighbours
                     if s != s_new {
                         tick_updatable.push(f.back(x, y, z));
-                        self.data[x][y][z] = Block::Repeater(s_new, f);
+                        self.data[x][y][z] = Block::Repeater {
+                            signal: s_new,
+                            facing: f,
+                        };
                     }
                 }
-                Block::Air | Block::Trigger(_) => {}
+                Block::Air | Block::Trigger { .. } => {}
             }
         }
     }
@@ -84,7 +100,7 @@ impl World {
     pub fn step_with_trigger(&mut self) {
         // put redstone power on triggers
         for &(tx, ty, tz) in &self.triggers {
-            self.data[tx][ty][tz] = Block::Trigger(true);
+            self.data[tx][ty][tz] = Block::Trigger { signal: 16 };
             for (nx, ny, nz) in self.neighbours(tx, ty, tz) {
                 self.updatable.push((nx, ny, nz));
             }
@@ -94,7 +110,7 @@ impl World {
 
         // take redstone power off triggers
         for &(tx, ty, tz) in &self.triggers {
-            self.data[tx][ty][tz] = Block::Trigger(false);
+            self.data[tx][ty][tz] = Block::Trigger { signal: 0 };
             for (nx, ny, nz) in self.neighbours(tx, ty, tz) {
                 self.updatable.push((nx, ny, nz));
             }

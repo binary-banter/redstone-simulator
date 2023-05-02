@@ -35,30 +35,38 @@ impl Facing {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Block {
-    /// Solid block can be 0 (off), 1 (powered) or 16 (repeater powered)
-    Solid(u8),
+    Solid {
+        /// Can be 0 (off), 1 (powered) or 16 (repeater powered)
+        signal: u8,
+    },
 
-    /// Redstone ranges from 0 to 15 inclusive
-    Redstone(u8),
+    Redstone {
+        /// Ranges from 0 to 15 inclusive.
+        signal: u8,
+    },
+
+    Trigger {
+        /// Can be 0 (off) or 16 (triggered).
+        signal: u8,
+    },
+
+    Repeater {
+        /// Can be 0 (off) or 16 (powered).
+        signal: u8,
+
+        /// This is the direction of the input side.
+        facing: Facing,
+    },
 
     Air,
-
-    /// Trigger
-    Trigger(bool),
-
-    /// Facing = Direction of INPUT of repeater
-    Repeater(bool, Facing), // delay: 4, count: 1
-
-                            // minecraft:repeater, with meta: "delay=1,facing=north,locked=false,powered=false"
 }
 
 impl Block {
-    /// Returns (Block, is_trigger, is_probe)
+    /// Returns (`Block`, `is_trigger`, `is_probe`)
     pub fn from_id(id: &str) -> (Self, bool, bool) {
         let (id, meta) = id
             .split_once('[')
-            .map(|(x, y)| (x, y.trim_end_matches(']')))
-            .unwrap_or((id, ""));
+            .map_or((id, ""), |(x, y)| (x, y.trim_end_matches(']')));
 
         let meta = meta
             .split(',')
@@ -67,16 +75,44 @@ impl Block {
             .collect::<HashMap<&str, &str>>();
 
         match id {
-            "minecraft:redstone_wire" => (Block::Redstone(0), false, false),
+            "minecraft:redstone_wire" => (Block::Redstone { signal: 0 }, false, false),
             "minecraft:air" => (Block::Air, false, false),
-            "minecraft:stone" => (Block::Solid(0), false, false),
-            "minecraft:gold_block" => (Block::Trigger(false), true, false),
-            "minecraft:diamond_block" => (Block::Solid(0), false, true),
+            "minecraft:stone" => (Block::Solid { signal: 0 }, false, false),
+            "minecraft:gold_block" => (Block::Trigger { signal: 0 }, true, false),
+            "minecraft:diamond_block" => (Block::Solid { signal: 0 }, false, true),
             "minecraft:repeater" => match *meta.get("facing").unwrap() {
-                "north" => (Block::Repeater(false, Facing::North), false, false),
-                "east" => (Block::Repeater(false, Facing::East), false, false),
-                "south" => (Block::Repeater(false, Facing::South), false, false),
-                "west" => (Block::Repeater(false, Facing::West), false, false),
+                "north" => (
+                    Block::Repeater {
+                        signal: 0,
+                        facing: Facing::North,
+                    },
+                    false,
+                    false,
+                ),
+                "east" => (
+                    Block::Repeater {
+                        signal: 0,
+                        facing: Facing::East,
+                    },
+                    false,
+                    false,
+                ),
+                "south" => (
+                    Block::Repeater {
+                        signal: 0,
+                        facing: Facing::South,
+                    },
+                    false,
+                    false,
+                ),
+                "west" => (
+                    Block::Repeater {
+                        signal: 0,
+                        facing: Facing::West,
+                    },
+                    false,
+                    false,
+                ),
                 _ => unreachable!(),
             },
             "minecraft:oak_wall_sign" => (Block::Air, false, false),
@@ -89,23 +125,33 @@ impl Block {
 impl Display for Block {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Block::Solid(i) => match *i {
+            Block::Solid { signal: s } => match s {
                 0 => write!(f, "□"),
                 1 => write!(f, "■"),
                 16 => write!(f, "▣"),
                 _ => unreachable!(),
             },
-            Block::Redstone(i) => write!(
-                f,
-                "{}",
-                "0123456789ABCDEF".chars().nth(*i as usize).unwrap()
-            ),
+            &Block::Redstone { signal: s } => {
+                write!(f, "{}", "0123456789ABCDEF".chars().nth(s as usize).unwrap())
+            }
             Block::Air => write!(f, " "),
-            Block::Trigger(_) => write!(f, "T"),
-            Block::Repeater(_, Facing::North) => write!(f, "v"),
-            Block::Repeater(_, Facing::East) => write!(f, "<"),
-            Block::Repeater(_, Facing::South) => write!(f, "^"),
-            Block::Repeater(_, Facing::West) => write!(f, ">"),
+            Block::Trigger { .. } => write!(f, "T"),
+            Block::Repeater {
+                facing: Facing::North,
+                ..
+            } => write!(f, "v"),
+            Block::Repeater {
+                facing: Facing::East,
+                ..
+            } => write!(f, "<"),
+            Block::Repeater {
+                facing: Facing::South,
+                ..
+            } => write!(f, "^"),
+            Block::Repeater {
+                facing: Facing::West,
+                ..
+            } => write!(f, ">"),
         }
     }
 }

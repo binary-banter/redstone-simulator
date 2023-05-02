@@ -13,5 +13,5 @@ fn main() {
     world.step_with_trigger();
     world.step();
     world.display_probes();
-    println!("{}", world);
+    println!("{world}");
 }

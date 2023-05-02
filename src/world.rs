@@ -85,8 +85,7 @@ impl World {
                     if is_probe {
                         let name: String = world
                             .neighbours(x, y, z)
-                            .filter_map(|nb| signs.get(&nb).cloned())
-                            .next()
+                            .find_map(|nb| signs.get(&nb).cloned())
                             .unwrap_or(format!("{x},{y},{z}"));
                         world.probes.insert((x, y, z), name);
                     }
@@ -101,8 +100,8 @@ impl World {
 
     pub fn get_probe(&self, p: &str) -> bool {
         match self[*self.probes.iter().find(|&(_, name)| name == p).unwrap().0] {
-            Block::Solid(0) => false,
-            Block::Solid(_) => true,
+            Block::Solid { signal: 0 } => false,
+            Block::Solid { .. } => true,
             _ => unreachable!(),
         }
     }
@@ -114,8 +113,8 @@ impl World {
                 (
                     &s[..],
                     match self.data[x][y][z] {
-                        Block::Solid(0) => false,
-                        Block::Solid(_) => true,
+                        Block::Solid { signal: 0 } => false,
+                        Block::Solid { .. } => true,
                         _ => unreachable!(),
                     },
                 )
@@ -124,9 +123,9 @@ impl World {
     }
 
     pub fn display_probes(&self) {
-        for (&(x, y, z), s) in &self.probes {
+        for (&(x, y, z), name) in &self.probes {
             match self.data[x][y][z] {
-                Block::Solid(i) => println!("Probe '{s}': {i}"),
+                Block::Solid { signal: s } => println!("Probe '{name}': {s}"),
                 _ => unreachable!(),
             }
         }
