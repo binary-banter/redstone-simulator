@@ -7,7 +7,7 @@ use crate::world::World;
 use std::fs::File;
 
 fn main() {
-    let file = File::open("./schematics/repeater_1t.schem").unwrap();
+    let file = File::open("./schematics/steady_state.schem").unwrap();
     let mut world = World::from_file(&file);
 
     world.step_with_trigger();

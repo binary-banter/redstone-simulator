@@ -6,9 +6,9 @@ fn test_repeater() {
     let file = File::open("./schematics/repeater_1t.schem").unwrap();
     let mut world = World::from_file(&file);
 
-    assert_eq!(world.get_probes(), vec![false]);
+    assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
-    assert_eq!(world.get_probes(), vec![true]);
+    assert!(world.get_probe("probe_1"));
     world.step();
-    assert_eq!(world.get_probes(), vec![false]);
+    assert!(!world.get_probe("probe_1"));
 }

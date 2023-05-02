@@ -79,6 +79,8 @@ impl Block {
                 "west" => (Block::Repeater(false, Facing::West), false, false),
                 _ => unreachable!(),
             },
+            "minecraft:oak_wall_sign" => (Block::Air, false, false),
+            "minecraft:oak_sign" => (Block::Air, false, false),
             _ => todo!("Unimplemented identifier: {id}, with meta: {meta:?}."),
         }
     }

@@ -1,6 +1,7 @@
 use crate::block::Block;
 use crate::schematic::SchemFormat;
-use nbt::from_gzip_reader;
+use nbt::{from_gzip_reader, Value};
+use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::ops::{Index, IndexMut};
@@ -11,7 +12,7 @@ pub struct World {
     pub(crate) size_z: usize,
     pub(crate) data: Vec<Vec<Vec<Block>>>,
     pub(crate) triggers: Vec<(usize, usize, usize)>,
-    pub(crate) probes: Vec<(usize, usize, usize)>,
+    pub(crate) probes: HashMap<(usize, usize, usize), String>,
     pub(crate) updatable: Vec<(usize, usize, usize)>,
 }
 
@@ -23,7 +24,7 @@ impl World {
             size_z,
             data: vec![vec![vec![Block::Air; size_x]; size_y]; size_z],
             triggers: vec![],
-            probes: vec![],
+            probes: HashMap::new(),
             updatable: vec![],
         }
     }
@@ -46,6 +47,32 @@ impl World {
             format.length as usize,
         );
 
+        let signs: HashMap<_, _> = format
+            .block_entities
+            .iter()
+            .filter_map(|b| {
+                if b.id == "minecraft:sign" {
+                    if let Some(Value::String(s)) = b.props.get("Text1") {
+                        let j: serde_json::Value = serde_json::from_str(s).unwrap();
+                        let t = j
+                            .as_object()
+                            .unwrap()
+                            .get("text")
+                            .unwrap()
+                            .as_str()
+                            .unwrap()
+                            .to_string();
+
+                        return Some((
+                            (b.pos[0] as usize, b.pos[1] as usize, b.pos[2] as usize),
+                            t,
+                        ));
+                    }
+                }
+                None
+            })
+            .collect();
+
         let mut i = 0;
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
@@ -56,7 +83,12 @@ impl World {
                         world.triggers.push((x, y, z));
                     }
                     if is_probe {
-                        world.probes.push((x, y, z));
+                        let name: String = world
+                            .neighbours(x, y, z)
+                            .filter_map(|nb| signs.get(&nb).cloned())
+                            .next()
+                            .unwrap_or(format!("{x},{y},{z}"));
+                        world.probes.insert((x, y, z), name);
                     }
 
                     i += 1;
@@ -67,21 +99,34 @@ impl World {
         world
     }
 
-    pub fn get_probes(&self) -> Vec<bool> {
+    pub fn get_probe(&self, p: &str) -> bool {
+        match self[*self.probes.iter().find(|&(_, name)| name == p).unwrap().0] {
+            Block::Solid(0) => false,
+            Block::Solid(_) => true,
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn get_probes(&self) -> HashMap<&str, bool> {
         self.probes
             .iter()
-            .map(|&(x, y, z)| match self.data[x][y][z] {
-                Block::Solid(0) => false,
-                Block::Solid(_) => true,
-                _ => unreachable!(),
+            .map(|(&(x, y, z), s)| {
+                (
+                    &s[..],
+                    match self.data[x][y][z] {
+                        Block::Solid(0) => false,
+                        Block::Solid(_) => true,
+                        _ => unreachable!(),
+                    },
+                )
             })
             .collect()
     }
 
     pub fn display_probes(&self) {
-        for &(x, y, z) in &self.probes {
+        for (&(x, y, z), s) in &self.probes {
             match self.data[x][y][z] {
-                Block::Solid(i) => println!("Probe at ({x}, {y}, {z}): {i}"),
+                Block::Solid(i) => println!("Probe '{s}': {i}"),
                 _ => unreachable!(),
             }
         }

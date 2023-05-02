@@ -101,7 +101,7 @@ impl World {
         }
     }
 
-    fn neighbours(
+    pub fn neighbours(
         &self,
         x: usize,
         y: usize,
