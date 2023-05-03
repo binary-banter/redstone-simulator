@@ -75,13 +75,15 @@ impl Block {
                     .map(|&x| if x == "true" { 16 } else { 0 })
                     .unwrap();
 
+                let f = meta
+                    .get("facing")
+                    .map(|&f| Facing::from(f))
+                    .unwrap_or(Facing::Up);
+
                 (
                     Block::Torch(Torch {
                         signal: s,
-                        facing: meta
-                            .get("facing")
-                            .map(|&f| Facing::from(f))
-                            .unwrap_or(Facing::Up),
+                        facing: f,
                         count: 0,
                         next_signal: s,
                     }),

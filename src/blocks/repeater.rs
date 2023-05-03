@@ -13,7 +13,7 @@ pub struct Repeater {
     /// This is the direction of the input side.
     pub facing: Facing,
 
-    /// This represents the number of ticks passed since a new signal was deteceted.
+    /// This represents the number of ticks passed since a new signal was detected.
     pub count: u8,
 
     /// The repeater delay in ticks, can range from 1 to 4 inclusive.
