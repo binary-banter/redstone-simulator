@@ -80,3 +80,17 @@ fn test_repeater_4t() {
     world.step();
     assert!(!world.get_probe("probe_1")); // tick 8
 }
+
+#[test]
+fn test_extender() {
+    let file = File::open("./schematics/repeater_extender.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    assert!(!world.get_probe("probe_1"));
+    world.step_with_trigger();
+    assert!(!world.get_probe("probe_1")); // tick 0
+    world.step();
+    assert!(world.get_probe("probe_1")); // tick 1
+    world.step();
+    assert!(!world.get_probe("probe_1")); // tick 2
+}
