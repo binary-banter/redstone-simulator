@@ -5,7 +5,7 @@ use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Solid {
-    /// Can be 0 (off), 1 (powered) or 16 (repeater powered)
+    /// Can be 0 (off), 1 (powered) or 16 (repeater powered).
     pub signal: u8,
 }
 

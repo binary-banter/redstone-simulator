@@ -7,10 +7,10 @@ pub struct Torch {
     /// Can be 0 (off) or 16 (powered).
     pub signal: u8,
 
-    /// This is the torch faces.
+    /// Direction the torch faces.
     pub facing: Facing,
 
-    /// This represents the number of ticks passed since a new signal was detected.
+    /// Number of ticks passed since a new input signal was detected.
     pub count: u8,
 
     /// Next signal to be set when count reaches the torch delay (2).
