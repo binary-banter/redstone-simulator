@@ -29,7 +29,12 @@ impl BlockTrait for Solid {
                         facing: nf,
                         ..
                     }) if nf.back(n) == p => 16,
-                    _ => 0,
+                    Block::Solid(_)
+                    | Block::Redstone(_)
+                    | Block::Trigger(_)
+                    | Block::Repeater(_)
+                    | Block::Air(_) => 0,
+                    Block::Torch(_) => todo!(),
                 }
             })
             .max()

@@ -3,6 +3,7 @@ use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
 use crate::blocks::repeater::Repeater;
 use crate::blocks::solid::Solid;
+use crate::blocks::torch::Torch;
 use crate::blocks::trigger::Trigger;
 use crate::world_data::WorldData;
 use std::collections::HashMap;
@@ -13,6 +14,7 @@ pub mod facing;
 pub mod redstone;
 pub mod repeater;
 pub mod solid;
+pub mod torch;
 pub mod trigger;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -21,6 +23,7 @@ pub enum Block {
     Redstone(Redstone),
     Trigger(Trigger),
     Repeater(Repeater),
+    Torch(Torch),
     Air(Air),
 }
 
@@ -66,6 +69,26 @@ impl Block {
             ),
             "minecraft:oak_wall_sign" => (Block::Air(Air {}), false, false),
             "minecraft:oak_sign" => (Block::Air(Air {}), false, false),
+            "minecraft:redstone_wall_torch" | "minecraft:redstone_torch" => {
+                let s = meta
+                    .get("lit")
+                    .map(|&x| if x == "true" { 16 } else { 0 })
+                    .unwrap();
+
+                (
+                    Block::Torch(Torch {
+                        signal: s,
+                        facing: meta
+                            .get("facing")
+                            .map(|&f| Facing::from(f))
+                            .unwrap_or(Facing::Up),
+                        count: 0,
+                        next_signal: s,
+                    }),
+                    false,
+                    false,
+                )
+            }
             _ => todo!("Unimplemented identifier: {id}, with meta: {meta:?}."),
         }
     }
@@ -106,6 +129,7 @@ impl Display for Block {
                 ..
             }) => write!(f, ">"),
             Block::Repeater(Repeater { .. }) => unreachable!(),
+            Block::Torch(_) => write!(f, "*"),
         }
     }
 }

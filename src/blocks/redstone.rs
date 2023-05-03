@@ -34,7 +34,8 @@ impl BlockTrait for Redstone {
                     Block::Trigger(Trigger { signal: 16 }) | Block::Solid(Solid { signal: 16 }) => {
                         15
                     }
-                    _ => 0,
+                    Block::Air(_) | Block::Repeater(_) | Block::Solid(_) | Block::Trigger(_) => 0,
+                    Block::Torch(_) => todo!(),
                 }
             })
             .max()

@@ -16,6 +16,7 @@ impl World {
                 Block::Trigger(ref mut v) => v.update(p, &self.data),
                 Block::Repeater(ref mut v) => v.update(p, &self.data),
                 Block::Air(ref mut v) => v.update(p, &self.data),
+                Block::Torch(ref mut v) => v.update(p, &self.data),
             };
             self.data[p] = block;
 

@@ -43,11 +43,12 @@ impl BlockTrait for Repeater {
                     facing: nf,
                     ..
                 }) if self.facing == nf => 16,
-                Block::Solid { .. }
-                | Block::Redstone { .. }
-                | Block::Trigger { .. }
-                | Block::Repeater { .. }
+                Block::Solid(_)
+                | Block::Redstone(_)
+                | Block::Trigger(_)
+                | Block::Repeater(_)
                 | Block::Air(_) => 0,
+                Block::Torch(_) => todo!(),
             },
         };
 
