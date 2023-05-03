@@ -68,10 +68,6 @@ impl BlockTrait for Repeater {
             (_, _, _) => {}
         };
 
-        if self.signal != self.next_signal {
-            (vec![], true)
-        } else {
-            (vec![], false)
-        }
+        (vec![], self.signal != self.next_signal)
     }
 }
