@@ -8,11 +8,17 @@ use crate::world::World;
 use std::fs::File;
 
 fn main() {
-    let file = File::open("./schematics/steady_state.schem").unwrap();
+    let file = File::open("./schematics/repeater_2t.schem").unwrap();
     let mut world = World::from_file(&file);
 
     world.step_with_trigger();
+    println!("{world}");
     world.step();
-    world.display_probes();
+    println!("{world}");
+    world.step();
+    println!("{world}");
+    world.step();
+    println!("{world}");
+    world.step();
     println!("{world}");
 }

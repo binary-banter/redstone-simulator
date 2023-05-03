@@ -52,27 +52,26 @@ impl BlockTrait for Repeater {
         };
 
         // if signal strength has changed, update neighbours
-        let update_next_tick = match (s_new, self.next_signal == s_new, self.count == 0) {
-            // Next signal has not changed.
-            (_, true, _) => true,
-
+        match (s_new, self.next_signal == s_new, self.count == 0) {
             // Signal changed upwards: update next signal and reset count.
             (16, false, _) => {
                 self.next_signal = s_new;
                 self.count = 0;
-                true
             }
 
             // Signal changed downward, and is not propagating already: update next signal.
             (0, false, true) => {
                 self.next_signal = s_new;
-                true
             }
 
-            // Signal has changed downward, and is propagating (and other unreachable cases).
-            (_, _, _) => false,
+            // Other cases.
+            (_, _, _) => {}
         };
 
-        (vec![], update_next_tick)
+        if self.signal != self.next_signal {
+            (vec![], true)
+        } else {
+            (vec![], false)
+        }
     }
 }
