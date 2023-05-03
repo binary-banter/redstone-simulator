@@ -8,6 +8,18 @@ pub enum Facing {
     Down,
 }
 
+impl From<&str> for Facing {
+    fn from(value: &str) -> Self {
+        match value {
+            "north" => Facing::North,
+            "east" => Facing::East,
+            "south" => Facing::South,
+            "west" => Facing::West,
+            _ => panic!("Not a facing: {value}."),
+        }
+    }
+}
+
 impl Facing {
     pub fn reverse(self) -> Self {
         match self {
