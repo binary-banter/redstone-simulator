@@ -1,6 +1,7 @@
 use crate::blocks::trigger::Trigger;
 use crate::blocks::{Block, BlockTrait};
 use crate::world::World;
+use itertools::Itertools;
 use std::mem;
 
 impl World {
@@ -22,6 +23,33 @@ impl World {
             if self_update {
                 self.updatable.push(p);
             }
+        }
+
+        // perform end-of-tick updates.
+        for &p in self.updatable.clone().iter().unique() {
+            let mut block = self.data[p].clone();
+
+            #[allow(clippy::single_match)]
+            match block {
+                Block::Repeater(ref mut v) => {
+                    v.count += 1;
+                    if v.count == v.delay {
+                        v.signal = v.next_signal;
+                        v.count = 0;
+
+                        if let Some((p, _)) = self
+                            .data
+                            .neighbours(p)
+                            .find(|(_, f)| *f == v.facing.reverse())
+                        {
+                            self.updatable.push(p);
+                        }
+                    }
+                }
+                _ => {}
+            }
+
+            self.data[p] = block;
         }
     }
 

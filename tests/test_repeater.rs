@@ -8,6 +8,8 @@ fn test_repeater() {
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
+    assert!(!world.get_probe("probe_1"));
+    world.step();
     assert!(world.get_probe("probe_1"));
     world.step();
     assert!(!world.get_probe("probe_1"));

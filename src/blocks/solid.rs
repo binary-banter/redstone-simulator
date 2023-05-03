@@ -27,6 +27,7 @@ impl BlockTrait for Solid {
                     Block::Repeater(Repeater {
                         signal: 16,
                         facing: nf,
+                        ..
                     }) if nf.back(n) == p => 16,
                     _ => 0,
                 }

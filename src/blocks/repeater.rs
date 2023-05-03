@@ -12,6 +12,15 @@ pub struct Repeater {
 
     /// This is the direction of the input side.
     pub facing: Facing,
+
+    /// This represents the number of ticks passed since a new signal was deteceted.
+    pub count: u8,
+
+    /// The repeater delay in ticks, can range from 1 to 4 inclusive.
+    pub delay: u8,
+
+    /// Next signal to be set when count reaches the repeater delay.
+    pub next_signal: u8,
 }
 
 impl BlockTrait for Repeater {
@@ -21,9 +30,6 @@ impl BlockTrait for Repeater {
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
         let in_nbs = world.neighbours(p).find(|(_, f)| *f == self.facing);
-        let out_nbs = world
-            .neighbours(p)
-            .filter(|(_, f)| *f == self.facing.reverse());
 
         // find signal strength of input
         let s_new = match in_nbs {
@@ -35,6 +41,7 @@ impl BlockTrait for Repeater {
                 Block::Repeater(Repeater {
                     signal: 16,
                     facing: nf,
+                    ..
                 }) if self.facing == nf => 16,
                 Block::Solid { .. }
                 | Block::Redstone { .. }
@@ -45,13 +52,27 @@ impl BlockTrait for Repeater {
         };
 
         // if signal strength has changed, update neighbours
-        let marked_neighbours = if self.signal != s_new {
-            self.signal = s_new;
-            out_nbs.map(|(n, _)| n).collect()
-        } else {
-            vec![]
+        let update_next_tick = match (s_new, self.next_signal == s_new, self.count == 0) {
+            // Next signal has not changed.
+            (_, true, _) => true,
+
+            // Signal changed upwards: update next signal and reset count.
+            (16, false, _) => {
+                self.next_signal = s_new;
+                self.count = 0;
+                true
+            }
+
+            // Signal changed downward, and is not propagating already: update next signal.
+            (0, false, true) => {
+                self.next_signal = s_new;
+                true
+            }
+
+            // Signal has changed downward, and is propagating (and other unreachable cases).
+            (_, _, _) => false,
         };
 
-        (marked_neighbours, false)
+        (vec![], update_next_tick)
     }
 }

@@ -29,6 +29,7 @@ impl BlockTrait for Redstone {
                     Block::Repeater(Repeater {
                         signal: 16,
                         facing: nf,
+                        ..
                     }) if nf.back(n) == p => 15,
                     Block::Trigger(Trigger { signal: 16 }) | Block::Solid(Solid { signal: 16 }) => {
                         15

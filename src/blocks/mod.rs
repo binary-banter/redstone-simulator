@@ -58,6 +58,9 @@ impl Block {
                     Block::Repeater(Repeater {
                         signal: 0,
                         facing: Facing::North,
+                        count: 0,
+                        delay: 1,
+                        next_signal: 0,
                     }),
                     false,
                     false,
@@ -66,6 +69,9 @@ impl Block {
                     Block::Repeater(Repeater {
                         signal: 0,
                         facing: Facing::East,
+                        count: 0,
+                        delay: 1,
+                        next_signal: 0,
                     }),
                     false,
                     false,
@@ -74,6 +80,9 @@ impl Block {
                     Block::Repeater(Repeater {
                         signal: 0,
                         facing: Facing::South,
+                        count: 0,
+                        delay: 1,
+                        next_signal: 0,
                     }),
                     false,
                     false,
@@ -82,6 +91,9 @@ impl Block {
                     Block::Repeater(Repeater {
                         signal: 0,
                         facing: Facing::West,
+                        count: 0,
+                        delay: 1,
+                        next_signal: 0,
                     }),
                     false,
                     false,
