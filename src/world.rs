@@ -25,7 +25,7 @@ impl World {
             size_x,
             size_y,
             size_z,
-            data: WorldData(vec![vec![vec![Block::Air(Air {}); size_x]; size_y]; size_z]),
+            data: WorldData(vec![vec![vec![Block::Air(Air {}); size_z]; size_y]; size_x]),
             triggers: vec![],
             probes: BiMap::new(),
             updatable: vec![],
