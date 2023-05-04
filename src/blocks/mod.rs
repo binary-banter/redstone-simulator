@@ -1,4 +1,3 @@
-use crate::blocks::air::Air;
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::{ConnectionDirection, ConnectionDirections, Redstone};
 use crate::blocks::repeater::Repeater;
@@ -9,7 +8,6 @@ use crate::world_data::WorldData;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 
-pub mod air;
 pub mod facing;
 pub mod redstone;
 pub mod repeater;
@@ -24,7 +22,7 @@ pub enum Block {
     Trigger(Trigger),
     Repeater(Repeater),
     Torch(Torch),
-    Air(Air),
+    Air,
 }
 
 pub trait BlockTrait {
@@ -64,7 +62,7 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:air" => (Block::Air(Air {}), false, false),
+            "minecraft:air" => (Block::Air, false, false),
             "minecraft:stone" => (Block::Solid(Solid { signal: 0 }), false, false),
             "minecraft:gold_block" => (Block::Trigger(Trigger { signal: 0 }), true, false),
             "minecraft:diamond_block" => (Block::Solid(Solid { signal: 0 }), false, true),
@@ -79,8 +77,8 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:oak_wall_sign" => (Block::Air(Air {}), false, false),
-            "minecraft:oak_sign" => (Block::Air(Air {}), false, false),
+            "minecraft:oak_wall_sign" => (Block::Air, false, false),
+            "minecraft:oak_sign" => (Block::Air, false, false),
             "minecraft:redstone_wall_torch" | "minecraft:redstone_torch" => {
                 let s = meta
                     .get("lit")
@@ -124,7 +122,7 @@ impl Display for Block {
                     "0123456789ABCDEF".chars().nth(*s as usize).unwrap()
                 )
             }
-            Block::Air(Air {}) => write!(f, " "),
+            Block::Air => write!(f, " "),
             Block::Trigger(Trigger { .. }) => write!(f, "T"),
             Block::Repeater(Repeater {
                 facing: Facing::North,

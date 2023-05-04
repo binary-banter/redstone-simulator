@@ -13,67 +13,12 @@ impl WorldData {
     ) -> impl Iterator<Item = ((usize, usize, usize), Facing)> {
         let mut vec: heapless::Vec<_, 6> = heapless::Vec::new();
 
-        if x != 0 {
-            vec.push(((x - 1, y, z), Facing::West)).unwrap();
-        }
-        if x != self.0.len() - 1 {
-            vec.push(((x + 1, y, z), Facing::East)).unwrap();
-        }
-        if y != 0 {
-            vec.push(((x, y - 1, z), Facing::Up)).unwrap();
-        }
-        if y != self.0[0].len() - 1 {
-            vec.push(((x, y + 1, z), Facing::Down)).unwrap();
-        }
-        if z != 0 {
-            vec.push(((x, y, z - 1), Facing::North)).unwrap();
-        }
-        if z != self.0[0][0].len() - 1 {
-            vec.push(((x, y, z + 1), Facing::South)).unwrap();
-        }
-
-        vec.into_iter()
-    }
-
-    /// Returns the coordinates and facing of extra neighbouring blocks relative to the given position.
-    pub fn extra_neighbours(
-        &self,
-        (x, y, z): (usize, usize, usize),
-    ) -> impl Iterator<Item = ((usize, usize, usize), Facing, Facing)> {
-        let mut vec: heapless::Vec<_, 8> = heapless::Vec::new();
-
-        if x != 0 && y != 0 {
-            vec.push(((x - 1, y - 1, z), Facing::West, Facing::Down))
-                .unwrap();
-        }
-        if x != 0 && y != self.0[0].len() - 1 {
-            vec.push(((x - 1, y + 1, z), Facing::West, Facing::Up))
-                .unwrap();
-        }
-        if x != self.0.len() - 1 && y != 0 {
-            vec.push(((x + 1, y - 1, z), Facing::East, Facing::Down))
-                .unwrap();
-        }
-        if x != self.0.len() - 1 && y != self.0[0].len() - 1 {
-            vec.push(((x + 1, y + 1, z), Facing::East, Facing::Up))
-                .unwrap();
-        }
-        if z != 0 && y != 0 {
-            vec.push(((x, y - 1, z - 1), Facing::North, Facing::Down))
-                .unwrap();
-        }
-        if z != 0 && y != self.0[0].len() - 1 {
-            vec.push(((x, y + 1, z - 1), Facing::North, Facing::Up))
-                .unwrap();
-        }
-        if z != self.0[0][0].len() - 1 && y != 0 {
-            vec.push(((x, y - 1, z + 1), Facing::South, Facing::Down))
-                .unwrap();
-        }
-        if z != self.0[0][0].len() - 1 && y != self.0[0].len() - 1 {
-            vec.push(((x, y + 1, z + 1), Facing::South, Facing::Up))
-                .unwrap();
-        }
+        vec.push(((x.wrapping_sub(1), y, z), Facing::West)).unwrap();
+        vec.push(((x.wrapping_add(1), y, z), Facing::East)).unwrap();
+        vec.push(((x, y.wrapping_sub(1), z), Facing::Up)).unwrap();
+        vec.push(((x, y.wrapping_add(1), z), Facing::Down)).unwrap();
+        vec.push(((x, y, z.wrapping_sub(1)), Facing::North)).unwrap();
+        vec.push(((x, y, z.wrapping_add(1)), Facing::South)).unwrap();
 
         vec.into_iter()
     }
@@ -83,7 +28,7 @@ impl Index<(usize, usize, usize)> for WorldData {
     type Output = Block;
 
     fn index(&self, (x, y, z): (usize, usize, usize)) -> &Self::Output {
-        &self.0[x][y][z]
+        self.0.get(x).map(|l| l.get(y).map(|l| l.get(z))).flatten().flatten().unwrap_or(&Block::Air)
     }
 }
 

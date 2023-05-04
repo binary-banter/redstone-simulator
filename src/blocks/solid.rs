@@ -33,7 +33,7 @@ impl BlockTrait for Solid {
                     | Block::Redstone(_)
                     | Block::Trigger(_)
                     | Block::Repeater(_)
-                    | Block::Air(_) => 0,
+                    | Block::Air => 0,
                     Block::Torch(_) => todo!(),
                 }
             })

@@ -1,4 +1,3 @@
-use crate::blocks::air::Air;
 use crate::blocks::redstone::ConnectionDirection;
 use crate::blocks::solid::Solid;
 use crate::blocks::Block;
@@ -26,7 +25,7 @@ impl World {
             size_x,
             size_y,
             size_z,
-            data: WorldData(vec![vec![vec![Block::Air(Air {}); size_z]; size_y]; size_x]),
+            data: WorldData(vec![vec![vec![Block::Air; size_z]; size_y]; size_x]),
             triggers: vec![],
             probes: BiMap::new(),
             updatable: vec![],
@@ -39,7 +38,7 @@ impl World {
     }
 
     fn from_format(format: &SchemFormat) -> Self {
-        let mut palette = vec![(Block::Air(Air {}), false, false); format.palette_max as usize];
+        let mut palette = vec![(Block::Air, false, false); format.palette_max as usize];
 
         for (id, i) in &format.palette {
             palette[*i as usize] = Block::from_id(id);
@@ -104,12 +103,12 @@ impl World {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
                     if let Block::Redstone(v) = &world.data[(x, y, z)] {
-                        world.data.extra_neighbours((x,y,z));
-                        for (dir, con) in v.in_dirs {
-                            if con == ConnectionDirection::Up {
-                                // world.data[dir.front((x,y+1,z))] =
-                            }
-                        }
+                        // world.data.extra_neighbours((x,y,z));
+                        // for (dir, con) in v.in_dirs {
+                        //     if con == ConnectionDirection::Up {
+                        //         world.data[dir.front((x,y+1,z))] =
+                            // }
+                        // }
                     }
                 }
             }
