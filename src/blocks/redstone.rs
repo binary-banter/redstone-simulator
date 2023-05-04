@@ -47,7 +47,10 @@ impl BlockTrait for Redstone {
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        let in_nbs = world.neighbours(p);
+        let in_nbs = world
+            .neighbours(p)
+            .map(|(n, _)| n)
+            .chain(self.in_dirs.iter().cloned());
         let out_nbs = world.neighbours(p).filter(|(_, f)| *f != Facing::Up);
 
         // find biggest signal strength around this block
