@@ -31,6 +31,7 @@ impl BlockTrait for Solid {
                 let n_block = &world[n];
                 n_block
                     .weak_power_dir(f)
+                    .saturating_sub(1)
                     .min(1)
                     .max(n_block.strong_power_dir(f))
             })

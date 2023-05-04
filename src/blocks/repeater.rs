@@ -29,30 +29,11 @@ impl BlockTrait for Repeater {
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        let in_nbs = world
-            .neighbours_and_facings(p)
-            .into_iter()
-            .find(|(_, f)| *f == self.facing);
-
         // find signal strength of input
-        let s_new = match in_nbs {
-            None => 0,
-            Some((n, _)) => match world[n] {
-                Block::Solid(Solid { signal: 1.. })
-                | Block::Redstone(Redstone { signal: 1.., .. })
-                | Block::Trigger(Trigger { signal: 16 }) => 16,
-                Block::Repeater(Repeater {
-                    signal: 16,
-                    facing: nf,
-                    ..
-                }) if self.facing == nf => 16,
-                Block::Solid(_)
-                | Block::Redstone(_)
-                | Block::Trigger(_)
-                | Block::Repeater(_)
-                | Block::Air => 0,
-                Block::Torch(_) => todo!(),
-            },
+        let s_new = if world[self.facing.front(p)].weak_power_dir(self.facing) > 0 {
+            16
+        } else{
+            0
         };
 
         // if signal strength has changed, update neighbours

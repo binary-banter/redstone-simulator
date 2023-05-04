@@ -56,7 +56,6 @@ impl Block {
             Block::Torch(v) => v.signal,
             Block::Air => 0,
         }
-        .saturating_sub(1)
     }
 
     fn strong_power_dir(&self, f: Facing) -> u8 {
