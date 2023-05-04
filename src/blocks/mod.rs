@@ -109,7 +109,7 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:gold_block" => (Block::Trigger(Trigger { signal: 0 }), true, false),
+            "minecraft:gold_block" | "minecraft:lightning_rod" => (Block::Trigger(Trigger { signal: 0 }), true, false),
             "minecraft:diamond_block" => (Block::Solid(Solid { signal: 0 }), false, true),
             "minecraft:repeater" => (
                 Block::Repeater(Repeater {
@@ -146,9 +146,6 @@ impl Block {
             "minecraft:redstone_block" => (Block::RedstoneBlock, false, false),
 
             "minecraft:comparator" => (Block::Air, false, false), //TODO
-            "minecraft:stone_button" => (Block::Air, false, false), //TODO
-            "minecraft:lever" => (Block::Air, false, false), //TODO
-            "minecraft:lightning_rod" => (Block::Air, false, false), //TODO
 
             id if SOLID_BLOCKS.contains(id) => (Block::Solid(Solid { signal: 0 }), false, false),
             id if TRANSPARENT_BLOCKS.contains(id) => (Block::Air, false, false),

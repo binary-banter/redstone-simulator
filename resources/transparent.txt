@@ -60,3 +60,5 @@ minecraft:crimson_wall_sign
 minecraft:warped_wall_sign
 minecraft:quartz_slab
 minecraft:smooth_stone_slab
+minecraft:stone_button
+minecraft:lever
