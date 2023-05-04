@@ -6,7 +6,9 @@ fn torch() {
     let file = File::open("./schematics/torch.schem").unwrap();
     let mut world = World::from_file(&file);
 
+    assert!(world.get_probe("probe_1"));
     world.step_with_trigger();
+    assert!(world.get_probe("probe_1"));
     world.step();
     assert!(!world.get_probe("probe_1")); // tick 1
     world.step();
@@ -18,7 +20,9 @@ fn wall_torch() {
     let file = File::open("./schematics/wall_torch.schem").unwrap();
     let mut world = World::from_file(&file);
 
+    assert!(world.get_probe("probe_1"));
     world.step_with_trigger();
+    assert!(world.get_probe("probe_1"));
     world.step();
     assert!(!world.get_probe("probe_1")); // tick 1
     world.step();
@@ -30,7 +34,9 @@ fn torch_strong() {
     let file = File::open("./schematics/torch_strong.schem").unwrap();
     let mut world = World::from_file(&file);
 
+    assert!(world.get_probe("probe_1"));
     world.step_with_trigger();
+    assert!(world.get_probe("probe_1"));
     world.step();
     assert!(!world.get_probe("probe_1")); // tick 1
     world.step();
