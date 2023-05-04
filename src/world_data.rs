@@ -32,9 +32,7 @@ impl Index<(usize, usize, usize)> for WorldData {
     fn index(&self, (x, y, z): (usize, usize, usize)) -> &Self::Output {
         self.0
             .get(x)
-            .map(|l| l.get(y).map(|l| l.get(z)))
-            .flatten()
-            .flatten()
+            .and_then(|l| l.get(y).and_then(|l| l.get(z)))
             .unwrap_or(&Block::Air)
     }
 }
