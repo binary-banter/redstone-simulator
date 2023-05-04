@@ -14,16 +14,24 @@ impl BlockTrait for Solid {
         world.neighbours(p)
     }
 
+    fn in_nbs(&self, (x,y,z): (usize, usize, usize), _world: &WorldData) -> Vec<(usize, usize, usize)> {
+        vec![
+            (x.wrapping_sub(1), y, z),
+            (x.wrapping_add(1), y, z),
+            (x, y.wrapping_sub(1), z),
+            (x, y.wrapping_add(1), z),
+            (x, y, z.wrapping_sub(1)),
+            (x, y, z.wrapping_add(1)),
+        ]
+    }
+
     fn update(
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        let in_nbs = world.neighbours(p);
-        let out_nbs = world.neighbours(p);
-
         // find biggest signal strength around this block
-        let s_new = in_nbs
+        let s_new = self.in_nbs(p, world)
             .into_iter()
             .map(|n| {
                 let n_block = &world[n];
@@ -46,12 +54,11 @@ impl BlockTrait for Solid {
             .unwrap_or(0);
 
         // if signal strength has changed, update neighbours
-        let marked_neighbours = if self.signal != s_new {
+        if self.signal != s_new {
             self.signal = s_new;
-            out_nbs
+            (self.out_nbs(p, world), false)
         } else {
-            vec![]
-        };
-        (marked_neighbours, false)
+            (vec![], false)
+        }
     }
 }

@@ -1,4 +1,3 @@
-use crate::blocks::facing::Facing;
 use crate::blocks::solid::Solid;
 use crate::blocks::Block;
 use crate::schematic::SchemFormat;
@@ -96,40 +95,6 @@ impl World {
                     }
 
                     i += 1;
-                }
-            }
-        }
-
-        for y in 0..format.height as usize {
-            for z in 0..format.length as usize {
-                for x in 0..format.width as usize {
-                    let mut block = world.data[(x, y, z)].clone();
-
-                    if let Block::Redstone(ref mut v) = block {
-                        let top = (x, y.wrapping_add(1), z);
-                        v.in_dirs = [Facing::North, Facing::East, Facing::South, Facing::West]
-                            .into_iter()
-                            .filter_map(|dir| {
-                                let side = dir.front((x, y, z));
-                                let side_down = (side.0, side.1.wrapping_sub(1), side.2);
-                                let side_up = (side.0, side.1.wrapping_add(1), side.2);
-                                match [side_down, side, side_up, top].map(|n| &world.data[n]) {
-                                    [Block::Redstone(_), b, _, _] if b.is_transparent() => {
-                                        Some(side_down)
-                                    }
-                                    [_, Block::Redstone(_), _, _] => Some(side),
-                                    [_, Block::Solid(_), Block::Redstone(_), b]
-                                        if b.is_transparent() =>
-                                    {
-                                        Some(side_up)
-                                    }
-                                    _ => None,
-                                }
-                            })
-                            .collect();
-                    }
-
-                    world.data[(x, y, z)] = block;
                 }
             }
         }

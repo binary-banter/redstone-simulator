@@ -28,6 +28,8 @@ pub enum Block {
 pub trait BlockTrait {
     fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)>;
 
+    fn in_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)>;
+
     /// Updates the block using its neighbours.
     /// Returns the neighbours that need to be updated and whether the block needs to be updated next tick.
     fn update(
@@ -37,7 +39,40 @@ pub trait BlockTrait {
     ) -> (Vec<(usize, usize, usize)>, bool);
 }
 
+pub trait BlockTraitLate {
+    /// Updates after the game tick
+    fn update_late(&mut self,
+                   pos: (usize, usize, usize),
+                   world: &WorldData,) -> Vec<(usize, usize, usize)>;
+}
+
 impl Block {
+    pub fn weak_power_dir(&self, f: Facing) -> u8 {
+        match self {
+            Block::Solid(v) => v.signal,
+            Block::Redstone(v) => v.signal, //TODO output dirs
+            Block::Trigger(v) => v.signal,
+            Block::Repeater(v) if v.facing == f => v.signal,
+            Block::Repeater(_) => 0,
+            Block::Torch(v) if v.facing.reverse() == f => 0, // Torch does not output where it's hanging
+            Block::Torch(v) => v.signal,
+            Block::Air => 0,
+        }
+    }
+
+    pub fn strong_power_dir(&self, f: Facing) -> u8 {
+        match self {
+            Block::Solid(_) => 0,
+            Block::Redstone(_) => 0,
+            Block::Trigger(_) => 0,
+            Block::Repeater(v) if v.facing == f => v.signal,
+            Block::Repeater(_) => 0,
+            Block::Torch(_) if f == Facing::Up => 16,
+            Block::Torch(_) => 0,
+            Block::Air => 0,
+        }
+    }
+
     pub fn is_transparent(&self) -> bool {
         match self {
             Block::Solid(_) => false,
@@ -65,8 +100,6 @@ impl Block {
             "minecraft:redstone_wire" => (
                 Block::Redstone(Redstone {
                     signal: 0,
-                    // Temporary values: Will be set during a later update
-                    in_dirs: Vec::new(),
                     out_dirs: ConnectionDirections {
                         north: ConnectionDirection::from_str(meta["north"]),
                         east: ConnectionDirection::from_str(meta["east"]),
@@ -109,7 +142,6 @@ impl Block {
                     Block::Torch(Torch {
                         signal: s,
                         facing: f,
-                        count: 0,
                         next_signal: s,
                     }),
                     false,

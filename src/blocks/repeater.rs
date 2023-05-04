@@ -2,7 +2,7 @@ use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
 use crate::blocks::solid::Solid;
 use crate::blocks::trigger::Trigger;
-use crate::blocks::{Block, BlockTrait};
+use crate::blocks::{Block, BlockTrait, BlockTraitLate};
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -26,6 +26,10 @@ pub struct Repeater {
 impl BlockTrait for Repeater {
     fn out_nbs(&self, p: (usize, usize, usize), _world: &WorldData) -> Vec<(usize, usize, usize)> {
         vec![self.facing.back(p)]
+    }
+
+    fn in_nbs(&self, p: (usize, usize, usize), _world: &WorldData) -> Vec<(usize, usize, usize)> {
+        vec![self.facing.front(p)]
     }
 
     fn update(
@@ -77,5 +81,20 @@ impl BlockTrait for Repeater {
         };
 
         (vec![], self.signal != self.next_signal)
+    }
+}
+
+impl BlockTraitLate for Repeater {
+    fn update_late(&mut self, p: (usize, usize, usize),
+                   world: &WorldData) -> Vec<(usize, usize, usize)> {
+        self.count += 1;
+        if self.count == self.delay {
+            self.signal = self.next_signal;
+            self.count = 0;
+
+            self.out_nbs(p, world)
+        } else {
+            vec![]
+        }
     }
 }

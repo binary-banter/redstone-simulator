@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::BlockTrait;
+use crate::blocks::{BlockTrait, BlockTraitLate};
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -10,23 +10,49 @@ pub struct Torch {
     /// Direction the torch faces.
     pub facing: Facing,
 
-    /// Number of ticks passed since a new input signal was detected.
-    pub count: u8,
-
     /// Next signal to be set when count reaches the torch delay (2).
     pub next_signal: u8,
 }
 
 impl BlockTrait for Torch {
-    fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)> {
+    fn out_nbs(
+        &self,
+        (x, y, z): (usize, usize, usize),
+        _world: &WorldData,
+    ) -> Vec<(usize, usize, usize)> {
+        vec![
+            (x.wrapping_sub(1), y, z),
+            (x.wrapping_add(1), y, z),
+            (x, y.wrapping_sub(1), z),
+            (x, y.wrapping_add(1), z),
+            (x, y, z.wrapping_sub(1)),
+            (x, y, z.wrapping_add(1)),
+        ]
+    }
+
+    fn in_nbs(&self, _p: (usize, usize, usize), _world: &WorldData) -> Vec<(usize, usize, usize)> {
         todo!()
     }
 
     fn update(
         &mut self,
-        _p: (usize, usize, usize),
-        _world: &WorldData,
+        p: (usize, usize, usize),
+        world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        todo!()
+        let input = self.facing.back(p);
+        self.next_signal = world[input].weak_power_dir(self.facing);
+        (self.out_nbs(p, world), true)
+    }
+}
+
+impl BlockTraitLate for Torch {
+    fn update_late(&mut self, p: (usize, usize, usize),
+                   world: &WorldData) -> Vec<(usize, usize, usize)> {
+        if self.signal != self.next_signal {
+            self.signal = self.next_signal;
+            self.out_nbs(p, world)
+        } else {
+            vec![]
+        }
     }
 }
