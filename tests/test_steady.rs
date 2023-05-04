@@ -41,3 +41,14 @@ fn indirect() {
     assert!(world.get_probe("indirect_down"));
     assert!(world.get_probe("indirect_up"));
 }
+
+#[test]
+fn power_block_with_1_strength() {
+    let file = File::open("./schematics/power_block_with_1_strength.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    world.step_with_trigger();
+
+    assert!(world.get_probe("probe_1"));
+    assert!(world.get_probe("probe_2"));
+}

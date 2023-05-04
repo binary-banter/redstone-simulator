@@ -11,6 +11,7 @@ fn main() {
     let file = File::open("./schematics/repeater_2t.schem").unwrap();
     let mut world = World::from_file(&file);
 
+    // println!("{}", world);
     world.step_with_trigger();
     println!("{world}");
     world.step();

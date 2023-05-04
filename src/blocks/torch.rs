@@ -38,8 +38,14 @@ impl BlockTrait for Torch {
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
         let input = self.facing.back(p);
-        self.next_signal = world[input].weak_power_dir(self.facing);
-        (self.out_nbs(p, world), true)
+
+        self.next_signal = if world[input].weak_power_dir(self.facing.reverse()) > 0 {
+            0
+        } else {
+            16
+        };
+
+        (vec![], true)
     }
 }
 

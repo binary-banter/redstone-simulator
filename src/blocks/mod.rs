@@ -45,6 +45,8 @@ pub trait BlockTraitLate {
 }
 
 impl Block {
+    /// Facing is from the perspective of the updated block, not the powering block
+    /// So this is the weak power delivered TO the reverse of f.
     fn weak_power_dir(&self, f: Facing) -> u8 {
         match self {
             Block::Solid(v) => v.signal,
@@ -52,7 +54,7 @@ impl Block {
             Block::Trigger(v) => v.signal,
             Block::Repeater(v) if v.facing == f => v.signal,
             Block::Repeater(_) => 0,
-            Block::Torch(v) if v.facing.reverse() == f => 0, // Torch does not output where it's hanging
+            Block::Torch(v) if v.facing == f => 0, // Torch does not output where it's hanging
             Block::Torch(v) => v.signal,
             Block::Air => 0,
         }
@@ -65,7 +67,7 @@ impl Block {
             Block::Trigger(_) => 0,
             Block::Repeater(v) if v.facing == f => v.signal,
             Block::Repeater(_) => 0,
-            Block::Torch(_) if f == Facing::Up => 16,
+            Block::Torch(_) if f == Facing::Down => 16,
             Block::Torch(_) => 0,
             Block::Air => 0,
         }
@@ -97,7 +99,7 @@ impl Block {
         match id {
             "minecraft:redstone_wire" => (
                 Block::Redstone(Redstone {
-                    signal: 0,
+                    signal: meta["power"].parse().unwrap(),
                     out_dirs: ConnectionDirections {
                         north: ConnectionDirection::from_str(meta["north"]),
                         east: ConnectionDirection::from_str(meta["east"]),
@@ -115,9 +117,9 @@ impl Block {
             "minecraft:repeater" => (
                 Block::Repeater(Repeater {
                     signal: 0,
-                    facing: Facing::from(*meta.get("facing").unwrap()),
+                    facing: Facing::from(meta["facing"]),
                     count: 0,
-                    delay: meta.get("delay").unwrap().parse().unwrap(),
+                    delay: meta["delay"].parse().unwrap(),
                     next_signal: 0,
                 }),
                 false,
@@ -186,7 +188,8 @@ impl Display for Block {
                 ..
             }) => write!(f, ">"),
             Block::Repeater(Repeater { .. }) => unreachable!(),
-            Block::Torch(_) => write!(f, "*"),
+            Block::Torch(v) if v.signal == 0 => write!(f, "*"),
+            Block::Torch(_) => write!(f, "+"),
         }
     }
 }

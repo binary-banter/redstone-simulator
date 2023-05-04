@@ -1,7 +1,11 @@
 
 
 
-use crate::blocks::{BlockTrait};
+use crate::blocks::{Block, BlockTrait};
+use crate::blocks::facing::Facing;
+use crate::blocks::redstone::Redstone;
+use crate::blocks::repeater::Repeater;
+use crate::blocks::torch::Torch;
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -24,19 +28,27 @@ impl BlockTrait for Solid {
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        let s_new = world
-            .neighbours_and_facings(p)
+        let s_new = world.neighbours_and_facings(p)
             .into_iter()
-            .map(|(n, f)| {
+            .map(|(n,f)| {
                 let n_block = &world[n];
-                n_block
-                    .weak_power_dir(f)
-                    .saturating_sub(1)
-                    .min(1)
-                    .max(n_block.strong_power_dir(f))
+                match n_block {
+                    Block::Redstone(Redstone { signal: 1.., .. }) => 1,
+                    Block::Repeater(Repeater {
+                                        signal: 16,
+                                        facing: nf,
+                                        ..
+                                    }) if f == *nf => 16,
+                    Block::Solid(_)
+                    | Block::Redstone(_)
+                    | Block::Trigger(_)
+                    | Block::Repeater(_)
+                    | Block::Air => 0,
+                    Block::Torch(Torch { signal: s, .. }) => if *s > 0 && f == Facing::Down { 16 } else { 0 },
+                }
             })
             .max()
-            .unwrap();
+            .unwrap_or(0);
 
         // if signal strength has changed, update neighbours
         if self.signal != s_new {

@@ -1,7 +1,4 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::repeater::Repeater;
-use crate::blocks::solid::Solid;
-use crate::blocks::trigger::Trigger;
 use crate::blocks::{Block, BlockTrait};
 use crate::world_data::WorldData;
 
@@ -68,15 +65,8 @@ impl Redstone {
         &self,
         (x, y, z): (usize, usize, usize),
         world: &WorldData,
-    ) -> Vec<(usize, usize, usize)> {
-        let mut in_nbs = vec![
-            (x.wrapping_sub(1), y, z),
-            (x.wrapping_add(1), y, z),
-            (x, y.wrapping_sub(1), z),
-            (x, y.wrapping_add(1), z),
-            (x, y, z.wrapping_sub(1)),
-            (x, y, z.wrapping_add(1)),
-        ];
+    ) -> Vec<((usize, usize, usize), Facing)> {
+        let mut in_nbs = world.neighbours_and_facings((x,y,z));
 
         let top = (x, y.wrapping_add(1), z);
         for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
@@ -86,10 +76,10 @@ impl Redstone {
 
             match [side_down, side, side_up, top].map(|n| &world[n]) {
                 [Block::Redstone(_), b, _, _] if b.is_transparent() => {
-                    in_nbs.push(side_down);
+                    in_nbs.push((side_down, f));
                 }
                 [_, Block::Solid(_), Block::Redstone(_), b] if b.is_transparent() => {
-                    in_nbs.push(side_up)
+                    in_nbs.push((side_up, f))
                 }
                 _ => {}
             }
@@ -109,20 +99,10 @@ impl BlockTrait for Redstone {
         let s_new =
             self.in_nbs(p, world)
                 .into_iter()
-                .map(|n| {
+                .map(|(n,f)| {
                     let n_block = &world[n];
-                    match n_block {
-                        Block::Redstone(Redstone { signal: ns, .. }) => ns.saturating_sub(1),
-                        Block::Repeater(Repeater {
-                            signal: 16,
-                            facing: nf,
-                            ..
-                        }) if nf.back(n) == p => 15,
-                        Block::Trigger(Trigger { signal: 16 })
-                        | Block::Solid(Solid { signal: 16 }) => 15,
-                        Block::Air | Block::Repeater(_) | Block::Solid(_) | Block::Trigger(_) => 0,
-                        Block::Torch(_) => todo!(),
-                    }
+
+                    n_block.weak_power_dir(f).saturating_sub(1)
                 })
                 .max()
                 .unwrap_or(0);

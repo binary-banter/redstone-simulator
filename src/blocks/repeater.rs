@@ -1,8 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::redstone::Redstone;
-use crate::blocks::solid::Solid;
-use crate::blocks::trigger::Trigger;
-use crate::blocks::{Block, BlockTrait, BlockTraitLate};
+use crate::blocks::{BlockTrait, BlockTraitLate};
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
