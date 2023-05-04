@@ -33,6 +33,7 @@ impl World {
 
     pub fn from_file(file: &File) -> Self {
         let format: SchemFormat = from_gzip_reader(file).unwrap();
+        println!("{:?}", format.block_data);
         World::from_format(&format)
     }
 
@@ -79,7 +80,18 @@ impl World {
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    let (block, is_trigger, is_probe) = &palette[format.block_data[i] as usize];
+                    let mut ix: usize = 0;
+                    for j in 0.. {
+                        let next = format.block_data[i];
+                        ix |= (next as usize & 0b0111_1111) << (j*7);
+                        i += 1;
+
+                        if next >= 0 {
+                            break;
+                        }
+                    }
+
+                    let (block, is_trigger, is_probe) = &palette[ix];
                     world.data[(x, y, z)] = block.clone();
                     if *is_trigger {
                         world.triggers.push((x, y, z));
@@ -96,7 +108,7 @@ impl World {
 
                     world.updatable.push((x, y, z));
 
-                    i += 1;
+
                 }
             }
         }

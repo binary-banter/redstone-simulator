@@ -19,6 +19,9 @@ pub mod trigger;
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
     include_str!("../../resources/solid.txt").lines().collect()
 });
+static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+    include_str!("../../resources/transparent.txt").lines().collect()
+});
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Block {
@@ -106,7 +109,6 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:air" | "minecraft:glass" => (Block::Air, false, false),
             "minecraft:gold_block" => (Block::Trigger(Trigger { signal: 0 }), true, false),
             "minecraft:diamond_block" => (Block::Solid(Solid { signal: 0 }), false, true),
             "minecraft:repeater" => (
@@ -120,7 +122,6 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:oak_sign" | "minecraft:oak_wall_sign" => (Block::Air, false, false),
             "minecraft:redstone_torch" | "minecraft:redstone_wall_torch"  => {
                 let s = meta
                     .get("lit")
@@ -143,7 +144,14 @@ impl Block {
                 )
             }
             "minecraft:redstone_block" => (Block::RedstoneBlock, false, false),
+
+            "minecraft:comparator" => (Block::Air, false, false), //TODO
+            "minecraft:stone_button" => (Block::Air, false, false), //TODO
+            "minecraft:lever" => (Block::Air, false, false), //TODO
+            "minecraft:lightning_rod" => (Block::Air, false, false), //TODO
+
             id if SOLID_BLOCKS.contains(id) => (Block::Solid(Solid { signal: 0 }), false, false),
+            id if TRANSPARENT_BLOCKS.contains(id) => (Block::Air, false, false),
             _ => todo!("Unimplemented identifier: {id}, with meta: {meta:?}."),
         }
     }
