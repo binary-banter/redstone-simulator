@@ -1,4 +1,4 @@
-use crate::blocks::redstone::ConnectionDirection;
+use crate::blocks::facing::Facing;
 use crate::blocks::solid::Solid;
 use crate::blocks::Block;
 use crate::schematic::SchemFormat;
@@ -102,14 +102,33 @@ impl World {
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    if let Block::Redstone(v) = &world.data[(x, y, z)] {
-                        // world.data.extra_neighbours((x,y,z));
-                        // for (dir, con) in v.in_dirs {
-                        //     if con == ConnectionDirection::Up {
-                        //         world.data[dir.front((x,y+1,z))] =
-                            // }
-                        // }
+                    let mut block = world.data[(x, y, z)].clone();
+
+                    if let Block::Redstone(ref mut v) = block {
+                        let top = (x, y.wrapping_add(1), z);
+                        v.in_dirs = [Facing::North, Facing::East, Facing::South, Facing::West]
+                            .into_iter()
+                            .filter_map(|dir| {
+                                let side = dir.front((x, y, z));
+                                let side_down = (side.0, side.1.wrapping_sub(1), side.2);
+                                let side_up = (side.0, side.1.wrapping_add(1), side.2);
+                                match [side_down, side, side_up, top].map(|n| &world.data[n]) {
+                                    [Block::Redstone(_), b, _, _] if b.is_transparent() => {
+                                        Some(side_down)
+                                    }
+                                    [_, Block::Redstone(_), _, _] => Some(side),
+                                    [_, Block::Solid(_), Block::Redstone(_), b]
+                                        if b.is_transparent() =>
+                                    {
+                                        Some(side_up)
+                                    }
+                                    _ => None,
+                                }
+                            })
+                            .collect();
                     }
+
+                    world.data[(x, y, z)] = block;
                 }
             }
         }
@@ -123,8 +142,7 @@ impl World {
             .get_by_right(name)
             .expect("Probe does not exist.")]
         {
-            Block::Solid(Solid { signal: 0 }) => false,
-            Block::Solid(_) => true,
+            Block::Solid(Solid { signal: s }) => s > 0,
             _ => unreachable!(),
         }
     }

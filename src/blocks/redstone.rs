@@ -4,15 +4,12 @@ use crate::blocks::solid::Solid;
 use crate::blocks::trigger::Trigger;
 use crate::blocks::{Block, BlockTrait};
 use crate::world_data::WorldData;
-use std::array::IntoIter;
-use std::ops::Index;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum ConnectionDirection {
     None,
     Up,
     Side,
-    Down,
 }
 
 impl ConnectionDirection {
@@ -35,27 +32,13 @@ pub struct ConnectionDirections {
     pub west: ConnectionDirection,
 }
 
-impl IntoIterator for ConnectionDirections {
-    type Item = (Facing, ConnectionDirection);
-    type IntoIter = IntoIter<(Facing, ConnectionDirection), 4>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        [
-            (Facing::North, self.north),
-            (Facing::East, self.east),
-            (Facing::South, self.south),
-            (Facing::West, self.west),
-        ]
-        .into_iter()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Redstone {
     /// Ranges from 0 to 15 inclusive.
     pub signal: u8,
     /// North East South West
-    pub in_dirs: ConnectionDirections,
+    pub in_dirs: heapless::Vec<(usize, usize, usize), 4>,
+    pub out_dirs: ConnectionDirections,
 }
 
 impl BlockTrait for Redstone {
@@ -69,7 +52,7 @@ impl BlockTrait for Redstone {
 
         // find biggest signal strength around this block
         let s_new = in_nbs
-            .map(|(n, _)| {
+            .map(|n| {
                 let n_block = &world[n];
                 match n_block {
                     Block::Redstone(Redstone { signal: ns, .. }) => ns.saturating_sub(1),

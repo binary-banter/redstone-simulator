@@ -36,6 +36,17 @@ pub trait BlockTrait {
 }
 
 impl Block {
+    pub fn is_transparent(&self) -> bool {
+        match self {
+            Block::Solid(_) => false,
+            Block::Redstone(_) => true,
+            Block::Trigger(_) => false,
+            Block::Repeater(_) => true,
+            Block::Torch(_) => true,
+            Block::Air => true,
+        }
+    }
+
     /// Returns (`Block`, `is_trigger`, `is_probe`)
     pub fn from_id(id: &str) -> (Self, bool, bool) {
         let (id, meta) = id
@@ -52,7 +63,9 @@ impl Block {
             "minecraft:redstone_wire" => (
                 Block::Redstone(Redstone {
                     signal: 0,
-                    in_dirs: ConnectionDirections {
+                    // Temporary values: Will be set during a later update
+                    in_dirs: heapless::Vec::new(),
+                    out_dirs: ConnectionDirections {
                         north: ConnectionDirection::from_str(meta["north"]),
                         east: ConnectionDirection::from_str(meta["east"]),
                         south: ConnectionDirection::from_str(meta["south"]),

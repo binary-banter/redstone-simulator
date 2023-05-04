@@ -19,6 +19,9 @@ fn test_connectivity() {
     let mut world = World::from_file(&file);
 
     world.step_with_trigger();
+
+    println!("{}", world);
+
     assert!(world.get_probe("straight"));
     assert!(world.get_probe("up"));
     assert!(world.get_probe("down"));

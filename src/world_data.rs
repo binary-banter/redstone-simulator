@@ -15,10 +15,12 @@ impl WorldData {
 
         vec.push(((x.wrapping_sub(1), y, z), Facing::West)).unwrap();
         vec.push(((x.wrapping_add(1), y, z), Facing::East)).unwrap();
-        vec.push(((x, y.wrapping_sub(1), z), Facing::Up)).unwrap();
-        vec.push(((x, y.wrapping_add(1), z), Facing::Down)).unwrap();
-        vec.push(((x, y, z.wrapping_sub(1)), Facing::North)).unwrap();
-        vec.push(((x, y, z.wrapping_add(1)), Facing::South)).unwrap();
+        vec.push(((x, y.wrapping_sub(1), z), Facing::Down)).unwrap();
+        vec.push(((x, y.wrapping_add(1), z), Facing::Up)).unwrap();
+        vec.push(((x, y, z.wrapping_sub(1)), Facing::North))
+            .unwrap();
+        vec.push(((x, y, z.wrapping_add(1)), Facing::South))
+            .unwrap();
 
         vec.into_iter()
     }
@@ -28,7 +30,12 @@ impl Index<(usize, usize, usize)> for WorldData {
     type Output = Block;
 
     fn index(&self, (x, y, z): (usize, usize, usize)) -> &Self::Output {
-        self.0.get(x).map(|l| l.get(y).map(|l| l.get(z))).flatten().flatten().unwrap_or(&Block::Air)
+        self.0
+            .get(x)
+            .map(|l| l.get(y).map(|l| l.get(z)))
+            .flatten()
+            .flatten()
+            .unwrap_or(&Block::Air)
     }
 }
 
