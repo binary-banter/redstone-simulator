@@ -14,22 +14,6 @@ pub struct Torch {
     pub next_signal: u8,
 }
 
-impl Torch {
-    fn out_nbs(
-        &self,
-        (x, y, z): (usize, usize, usize),
-        _world: &WorldData,
-    ) -> Vec<(usize, usize, usize)> {
-        vec![
-            (x.wrapping_sub(1), y, z),
-            (x.wrapping_add(1), y, z),
-            (x, y.wrapping_sub(1), z),
-            (x, y.wrapping_add(1), z),
-            (x, y, z.wrapping_sub(1)),
-            (x, y, z.wrapping_add(1)),
-        ]
-    }
-}
 
 impl BlockTrait for Torch {
     fn update(
@@ -57,7 +41,7 @@ impl BlockTraitLate for Torch {
     ) -> Vec<(usize, usize, usize)> {
         if self.signal != self.next_signal {
             self.signal = self.next_signal;
-            self.out_nbs(p, world)
+            world.neighbours(p)
         } else {
             vec![]
         }

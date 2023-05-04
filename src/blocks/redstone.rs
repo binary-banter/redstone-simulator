@@ -51,12 +51,15 @@ impl Redstone {
             (x.wrapping_add(1), y.wrapping_sub(1), z),
             (x.wrapping_add(1), y, z),
             (x.wrapping_add(1), y.wrapping_add(1), z),
+
             (x, y.wrapping_sub(1), z.wrapping_sub(1)),
             (x, y, z.wrapping_sub(1)),
             (x, y.wrapping_add(1), z.wrapping_sub(1)),
+
             (x, y.wrapping_sub(1), z.wrapping_add(1)),
             (x, y, z.wrapping_add(1)),
             (x, y.wrapping_add(1), z.wrapping_add(1)),
+
             (x, y.wrapping_sub(1), z),
         ]
     }
