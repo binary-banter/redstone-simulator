@@ -89,7 +89,8 @@ impl World {
                         let name: String = world
                             .data
                             .neighbours((x, y, z))
-                            .find_map(|(nb, _)| signs.get(&nb).cloned())
+                            .into_iter()
+                            .find_map(|nb| signs.get(&nb).cloned())
                             .unwrap_or(format!("{x},{y},{z}"));
                         world.probes.insert((x, y, z), name);
                     }

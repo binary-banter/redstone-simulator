@@ -6,23 +6,29 @@ use std::ops::{Index, IndexMut};
 pub struct WorldData(pub Vec<Vec<Vec<Block>>>);
 
 impl WorldData {
+    /// Returns the coordinates of neighbouring blocks relative to the given position.
+    pub fn neighbours(&self, p: (usize, usize, usize)) -> Vec<(usize, usize, usize)> {
+        self.neighbours_and_facings(p)
+            .into_iter()
+            .map(|(n, _)| n)
+            .collect()
+    }
+
     /// Returns the coordinates and facing of neighbouring blocks relative to the given position.
-    pub fn neighbours(
+    pub fn neighbours_and_facings(
         &self,
         (x, y, z): (usize, usize, usize),
-    ) -> impl Iterator<Item = ((usize, usize, usize), Facing)> {
-        let mut vec: heapless::Vec<_, 6> = heapless::Vec::new();
+    ) -> Vec<((usize, usize, usize), Facing)> {
+        let mut vec = Vec::new();
 
-        vec.push(((x.wrapping_sub(1), y, z), Facing::West)).unwrap();
-        vec.push(((x.wrapping_add(1), y, z), Facing::East)).unwrap();
-        vec.push(((x, y.wrapping_sub(1), z), Facing::Down)).unwrap();
-        vec.push(((x, y.wrapping_add(1), z), Facing::Up)).unwrap();
-        vec.push(((x, y, z.wrapping_sub(1)), Facing::North))
-            .unwrap();
-        vec.push(((x, y, z.wrapping_add(1)), Facing::South))
-            .unwrap();
+        vec.push(((x.wrapping_sub(1), y, z), Facing::West));
+        vec.push(((x.wrapping_add(1), y, z), Facing::East));
+        vec.push(((x, y.wrapping_sub(1), z), Facing::Down));
+        vec.push(((x, y.wrapping_add(1), z), Facing::Up));
+        vec.push(((x, y, z.wrapping_sub(1)), Facing::North));
+        vec.push(((x, y, z.wrapping_add(1)), Facing::South));
 
-        vec.into_iter()
+        vec
     }
 }
 

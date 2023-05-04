@@ -26,6 +26,8 @@ pub enum Block {
 }
 
 pub trait BlockTrait {
+    fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)>;
+
     /// Updates the block using its neighbours.
     /// Returns the neighbours that need to be updated and whether the block needs to be updated next tick.
     fn update(
@@ -64,7 +66,7 @@ impl Block {
                 Block::Redstone(Redstone {
                     signal: 0,
                     // Temporary values: Will be set during a later update
-                    in_dirs: heapless::Vec::new(),
+                    in_dirs: Vec::new(),
                     out_dirs: ConnectionDirections {
                         north: ConnectionDirection::from_str(meta["north"]),
                         east: ConnectionDirection::from_str(meta["east"]),

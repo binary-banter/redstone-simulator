@@ -10,6 +10,10 @@ pub struct Solid {
 }
 
 impl BlockTrait for Solid {
+    fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)> {
+        world.neighbours(p)
+    }
+
     fn update(
         &mut self,
         p: (usize, usize, usize),
@@ -20,7 +24,8 @@ impl BlockTrait for Solid {
 
         // find biggest signal strength around this block
         let s_new = in_nbs
-            .map(|(n, _)| {
+            .into_iter()
+            .map(|n| {
                 let n_block = &world[n];
                 match n_block {
                     Block::Redstone(Redstone { signal: 1.., .. }) => 1,
@@ -43,7 +48,7 @@ impl BlockTrait for Solid {
         // if signal strength has changed, update neighbours
         let marked_neighbours = if self.signal != s_new {
             self.signal = s_new;
-            out_nbs.map(|(p, _)| p).collect()
+            out_nbs
         } else {
             vec![]
         };

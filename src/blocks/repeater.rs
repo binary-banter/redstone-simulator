@@ -24,12 +24,19 @@ pub struct Repeater {
 }
 
 impl BlockTrait for Repeater {
+    fn out_nbs(&self, p: (usize, usize, usize), _world: &WorldData) -> Vec<(usize, usize, usize)> {
+        vec![self.facing.back(p)]
+    }
+
     fn update(
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        let in_nbs = world.neighbours(p).find(|(_, f)| *f == self.facing);
+        let in_nbs = world
+            .neighbours_and_facings(p)
+            .into_iter()
+            .find(|(_, f)| *f == self.facing);
 
         // find signal strength of input
         let s_new = match in_nbs {

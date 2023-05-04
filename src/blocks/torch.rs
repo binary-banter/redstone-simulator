@@ -18,6 +18,10 @@ pub struct Torch {
 }
 
 impl BlockTrait for Torch {
+    fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)> {
+        todo!()
+    }
+
     fn update(
         &mut self,
         _p: (usize, usize, usize),

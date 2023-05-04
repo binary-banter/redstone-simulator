@@ -40,7 +40,8 @@ impl World {
 
                         if let Some((p, _)) = self
                             .data
-                            .neighbours(p)
+                            .neighbours_and_facings(p)
+                            .into_iter()
                             .find(|(_, f)| *f == v.facing.reverse())
                         {
                             self.updatable.push(p);
@@ -58,7 +59,7 @@ impl World {
         // put redstone power on triggers
         for &t in &self.triggers {
             self.data[t] = Block::Trigger(Trigger { signal: 16 });
-            for (n, _) in self.data.neighbours(t) {
+            for n in self.data.neighbours(t) {
                 self.updatable.push(n);
             }
         }
@@ -68,7 +69,7 @@ impl World {
         // take redstone power off triggers
         for &t in &self.triggers {
             self.data[t] = Block::Trigger(Trigger { signal: 0 });
-            for (n, _) in self.data.neighbours(t) {
+            for n in self.data.neighbours(t) {
                 self.updatable.push(n);
             }
         }

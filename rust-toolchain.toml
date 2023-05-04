@@ -1,0 +1,4 @@
+# On nightly until `return_position_impl_trait_in_trait` gets stabilized.
+# See: https://github.com/rust-lang/rust/issues/91611.
+[toolchain]
+channel = "nightly"

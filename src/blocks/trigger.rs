@@ -8,6 +8,10 @@ pub struct Trigger {
 }
 
 impl BlockTrait for Trigger {
+    fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)> {
+        world.neighbours(p)
+    }
+
     fn update(
         &mut self,
         _pos: (usize, usize, usize),

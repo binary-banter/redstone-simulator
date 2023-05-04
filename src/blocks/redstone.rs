@@ -1,4 +1,3 @@
-use crate::blocks::facing::Facing;
 use crate::blocks::repeater::Repeater;
 use crate::blocks::solid::Solid;
 use crate::blocks::trigger::Trigger;
@@ -37,24 +36,36 @@ pub struct Redstone {
     /// Ranges from 0 to 15 inclusive.
     pub signal: u8,
     /// North East South West
-    pub in_dirs: heapless::Vec<(usize, usize, usize), 4>,
+    pub in_dirs: Vec<(usize, usize, usize)>,
     pub out_dirs: ConnectionDirections,
 }
 
 impl BlockTrait for Redstone {
+    fn out_nbs(
+        &self,
+        (x, y, z): (usize, usize, usize),
+        _world: &WorldData,
+    ) -> Vec<(usize, usize, usize)> {
+        vec![
+            (x.wrapping_sub(1), y, z),
+            (x.wrapping_add(1), y, z),
+            (x, y.wrapping_sub(1), z),
+            (x, y, z.wrapping_sub(1)),
+            (x, y, z.wrapping_add(1)),
+        ]
+    }
+
     fn update(
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        let in_nbs = world
-            .neighbours(p)
-            .map(|(n, _)| n)
-            .chain(self.in_dirs.iter().cloned());
-        let out_nbs = world.neighbours(p).filter(|(_, f)| *f != Facing::Up);
+        let mut in_nbs = world.neighbours(p);
+        in_nbs.extend(&self.in_dirs);
 
         // find biggest signal strength around this block
         let s_new = in_nbs
+            .into_iter()
             .map(|n| {
                 let n_block = &world[n];
                 match n_block {
@@ -77,7 +88,7 @@ impl BlockTrait for Redstone {
         // if signal strength has changed, update neighbours
         let marked_neighbours = if self.signal != s_new {
             self.signal = s_new;
-            out_nbs.map(|(p, _)| p).collect()
+            self.out_nbs(p, world)
         } else {
             vec![]
         };

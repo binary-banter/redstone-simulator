@@ -30,3 +30,14 @@ fn connectivity() {
     assert!(world.get_probe("side_bent_rep"));
     assert!(world.get_probe("side_bent_under"));
 }
+
+#[test]
+fn indirect() {
+    let file = File::open("./schematics/indirect.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    world.step_with_trigger();
+
+    assert!(world.get_probe("indirect_down"));
+    assert!(world.get_probe("indirect_up"));
+}
