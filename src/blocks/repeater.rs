@@ -29,7 +29,7 @@ impl BlockTrait for Repeater {
         // find signal strength of input
         let s_new = if world[self.facing.front(p)].weak_power_dir(self.facing) > 0 {
             16
-        } else{
+        } else {
             0
         };
 

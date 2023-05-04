@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::redstone::{ConnectionDirection, ConnectionDirections, Redstone};
+use crate::blocks::redstone::{Connections, Redstone};
 use crate::blocks::repeater::Repeater;
 use crate::blocks::solid::Solid;
 use crate::blocks::torch::Torch;
@@ -50,25 +50,13 @@ impl Block {
     fn weak_power_dir(&self, f: Facing) -> u8 {
         match self {
             Block::Solid(v) => v.signal,
-            Block::Redstone(v) => v.signal, //TODO output dirs
+            Block::Redstone(v) if v.connections[f.reverse()] => v.signal,
+            Block::Redstone(_) => 0,
             Block::Trigger(v) => v.signal,
             Block::Repeater(v) if v.facing == f => v.signal,
             Block::Repeater(_) => 0,
             Block::Torch(v) if v.facing == f => 0, // Torch does not output where it's hanging
             Block::Torch(v) => v.signal,
-            Block::Air => 0,
-        }
-    }
-
-    fn strong_power_dir(&self, f: Facing) -> u8 {
-        match self {
-            Block::Solid(_) => 0,
-            Block::Redstone(_) => 0,
-            Block::Trigger(_) => 0,
-            Block::Repeater(v) if v.facing == f => v.signal,
-            Block::Repeater(_) => 0,
-            Block::Torch(_) if f == Facing::Down => 16,
-            Block::Torch(_) => 0,
             Block::Air => 0,
         }
     }
@@ -100,11 +88,11 @@ impl Block {
             "minecraft:redstone_wire" => (
                 Block::Redstone(Redstone {
                     signal: meta["power"].parse().unwrap(),
-                    out_dirs: ConnectionDirections {
-                        north: ConnectionDirection::from_str(meta["north"]),
-                        east: ConnectionDirection::from_str(meta["east"]),
-                        south: ConnectionDirection::from_str(meta["south"]),
-                        west: ConnectionDirection::from_str(meta["west"]),
+                    connections: Connections {
+                        north: meta["north"] != "none",
+                        east: meta["east"] != "none",
+                        south: meta["south"] != "none",
+                        west: meta["west"] != "none",
                     },
                 }),
                 false,

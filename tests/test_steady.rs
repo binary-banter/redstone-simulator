@@ -27,8 +27,12 @@ fn connectivity() {
     assert!(!world.get_probe("down_blocked"));
     assert!(!world.get_probe("side_bent"));
     assert!(world.get_probe("side_bent_over"));
-    assert!(world.get_probe("side_bent_rep"));
+    assert!(!world.get_probe("side_bent_rep"));
     assert!(world.get_probe("side_bent_under"));
+
+    world.step();
+
+    assert!(world.get_probe("side_bent_rep"));
 }
 
 #[test]

@@ -1,32 +1,29 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockTrait};
 use crate::world_data::WorldData;
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum ConnectionDirection {
-    None,
-    Up,
-    Side,
-}
-
-impl ConnectionDirection {
-    pub fn from_str(s: &str) -> ConnectionDirection {
-        // `down` is not supported by minecraft so it deliberately not an option.
-        match s {
-            "none" => ConnectionDirection::None,
-            "side" => ConnectionDirection::Side,
-            "up" => ConnectionDirection::Up,
-            _ => unreachable!(),
-        }
-    }
-}
+use std::ops::Index;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct ConnectionDirections {
-    pub north: ConnectionDirection,
-    pub east: ConnectionDirection,
-    pub south: ConnectionDirection,
-    pub west: ConnectionDirection,
+pub struct Connections {
+    pub north: bool,
+    pub east: bool,
+    pub south: bool,
+    pub west: bool,
+}
+
+impl Index<Facing> for Connections {
+    type Output = bool;
+
+    fn index(&self, index: Facing) -> &Self::Output {
+        match index {
+            Facing::North => &self.north,
+            Facing::East => &self.east,
+            Facing::South => &self.south,
+            Facing::West => &self.west,
+            Facing::Up => &false,
+            Facing::Down => &true,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -35,7 +32,7 @@ pub struct Redstone {
     pub signal: u8,
 
     /// North East South West
-    pub out_dirs: ConnectionDirections,
+    pub connections: Connections,
 }
 
 impl Redstone {
@@ -51,15 +48,12 @@ impl Redstone {
             (x.wrapping_add(1), y.wrapping_sub(1), z),
             (x.wrapping_add(1), y, z),
             (x.wrapping_add(1), y.wrapping_add(1), z),
-
             (x, y.wrapping_sub(1), z.wrapping_sub(1)),
             (x, y, z.wrapping_sub(1)),
             (x, y.wrapping_add(1), z.wrapping_sub(1)),
-
             (x, y.wrapping_sub(1), z.wrapping_add(1)),
             (x, y, z.wrapping_add(1)),
             (x, y.wrapping_add(1), z.wrapping_add(1)),
-
             (x, y.wrapping_sub(1), z),
         ]
     }
@@ -69,7 +63,7 @@ impl Redstone {
         (x, y, z): (usize, usize, usize),
         world: &WorldData,
     ) -> Vec<((usize, usize, usize), Facing)> {
-        let mut in_nbs = world.neighbours_and_facings((x,y,z));
+        let mut in_nbs = world.neighbours_and_facings((x, y, z));
 
         let top = (x, y.wrapping_add(1), z);
         for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
@@ -99,16 +93,16 @@ impl BlockTrait for Redstone {
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
         // find biggest signal strength around this block
-        let s_new =
-            self.in_nbs(p, world)
-                .into_iter()
-                .map(|(n,f)| {
-                    let n_block = &world[n];
+        let s_new = self
+            .in_nbs(p, world)
+            .into_iter()
+            .map(|(n, f)| {
+                let n_block = &world[n];
 
-                    n_block.weak_power_dir(f).saturating_sub(1)
-                })
-                .max()
-                .unwrap_or(0);
+                n_block.weak_power_dir(f).saturating_sub(1)
+            })
+            .max()
+            .unwrap_or(0);
 
         // if signal strength has changed, update neighbours
         if self.signal != s_new {

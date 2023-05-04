@@ -7,7 +7,6 @@ use nbt::{from_gzip_reader, Value};
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
-use itertools::Itertools;
 
 pub struct World {
     pub size_x: usize,
@@ -95,7 +94,7 @@ impl World {
                         world.probes.insert((x, y, z), name);
                     }
 
-                    world.updatable.push((x,y,z));
+                    world.updatable.push((x, y, z));
 
                     i += 1;
                 }

@@ -7,14 +7,14 @@ pub struct WorldData(pub Vec<Vec<Vec<Block>>>);
 
 impl WorldData {
     /// Returns the coordinates of neighbouring blocks relative to the given position.
-    pub fn neighbours(&self, (x,y,z): (usize, usize, usize)) -> Vec<(usize, usize, usize)> {
+    pub fn neighbours(&self, (x, y, z): (usize, usize, usize)) -> Vec<(usize, usize, usize)> {
         vec![
             ((x.wrapping_sub(1), y, z)),
             ((x.wrapping_add(1), y, z)),
             ((x, y.wrapping_sub(1), z)),
             ((x, y.wrapping_add(1), z)),
             ((x, y, z.wrapping_sub(1))),
-            ((x, y, z.wrapping_add(1)))
+            ((x, y, z.wrapping_add(1))),
         ]
     }
 
@@ -29,7 +29,7 @@ impl WorldData {
             ((x, y.wrapping_sub(1), z), Facing::Down),
             ((x, y.wrapping_add(1), z), Facing::Up),
             ((x, y, z.wrapping_sub(1)), Facing::North),
-            ((x, y, z.wrapping_add(1)), Facing::South)
+            ((x, y, z.wrapping_add(1)), Facing::South),
         ]
     }
 }

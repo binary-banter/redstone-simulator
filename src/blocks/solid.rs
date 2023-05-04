@@ -1,11 +1,8 @@
-
-
-
-use crate::blocks::{Block, BlockTrait};
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
 use crate::blocks::repeater::Repeater;
 use crate::blocks::torch::Torch;
+use crate::blocks::{Block, BlockTrait};
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -21,30 +18,44 @@ impl Solid {
 }
 
 impl BlockTrait for Solid {
-
-
     fn update(
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-        let s_new = world.neighbours_and_facings(p)
+        let s_new = world
+            .neighbours_and_facings(p)
             .into_iter()
-            .map(|(n,f)| {
+            .map(|(n, f)| {
                 let n_block = &world[n];
                 match n_block {
-                    Block::Redstone(Redstone { signal: 1.., .. }) => 1,
+                    Block::Redstone(Redstone {
+                        signal: 1..,
+                        connections: c,
+                    }) => {
+                        if c[f.reverse()] {
+                            1
+                        } else {
+                            0
+                        }
+                    }
                     Block::Repeater(Repeater {
-                                        signal: 16,
-                                        facing: nf,
-                                        ..
-                                    }) if f == *nf => 16,
+                        signal: 16,
+                        facing: nf,
+                        ..
+                    }) if f == *nf => 16,
                     Block::Solid(_)
                     | Block::Redstone(_)
                     | Block::Trigger(_)
                     | Block::Repeater(_)
                     | Block::Air => 0,
-                    Block::Torch(Torch { signal: s, .. }) => if *s > 0 && f == Facing::Down { 16 } else { 0 },
+                    Block::Torch(Torch { signal: s, .. }) => {
+                        if *s > 0 && f == Facing::Down {
+                            16
+                        } else {
+                            0
+                        }
+                    }
                 }
             })
             .max()
