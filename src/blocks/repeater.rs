@@ -36,7 +36,7 @@ impl BlockTrait for Repeater {
             None => 0,
             Some((n, _)) => match world[n] {
                 Block::Solid(Solid { signal: 1.. })
-                | Block::Redstone(Redstone { signal: 1.. })
+                | Block::Redstone(Redstone { signal: 1.., .. })
                 | Block::Trigger(Trigger { signal: 16 }) => 16,
                 Block::Repeater(Repeater {
                     signal: 16,

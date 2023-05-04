@@ -1,6 +1,6 @@
 use crate::blocks::air::Air;
 use crate::blocks::facing::Facing;
-use crate::blocks::redstone::Redstone;
+use crate::blocks::redstone::{ConnectionDirection, ConnectionDirections, Redstone};
 use crate::blocks::repeater::Repeater;
 use crate::blocks::solid::Solid;
 use crate::blocks::torch::Torch;
@@ -51,7 +51,19 @@ impl Block {
             .collect::<HashMap<&str, &str>>();
 
         match id {
-            "minecraft:redstone_wire" => (Block::Redstone(Redstone { signal: 0 }), false, false),
+            "minecraft:redstone_wire" => (
+                Block::Redstone(Redstone {
+                    signal: 0,
+                    in_dirs: ConnectionDirections {
+                        north: ConnectionDirection::from_str(meta["north"]),
+                        east: ConnectionDirection::from_str(meta["east"]),
+                        south: ConnectionDirection::from_str(meta["south"]),
+                        west: ConnectionDirection::from_str(meta["west"]),
+                    },
+                }),
+                false,
+                false,
+            ),
             "minecraft:air" => (Block::Air(Air {}), false, false),
             "minecraft:stone" => (Block::Solid(Solid { signal: 0 }), false, false),
             "minecraft:gold_block" => (Block::Trigger(Trigger { signal: 0 }), true, false),
@@ -105,7 +117,7 @@ impl Display for Block {
                 16 => write!(f, "▣"),
                 _ => unreachable!(),
             },
-            Block::Redstone(Redstone { signal: s }) => {
+            Block::Redstone(Redstone { signal: s, .. }) => {
                 write!(
                     f,
                     "{}",

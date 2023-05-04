@@ -23,7 +23,7 @@ impl BlockTrait for Solid {
             .map(|(n, _)| {
                 let n_block = &world[n];
                 match n_block {
-                    Block::Redstone(Redstone { signal: 1.. }) => 1,
+                    Block::Redstone(Redstone { signal: 1.., .. }) => 1,
                     Block::Repeater(Repeater {
                         signal: 16,
                         facing: nf,

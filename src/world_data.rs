@@ -23,16 +23,56 @@ impl WorldData {
             vec.push(((x, y - 1, z), Facing::Up)).unwrap();
         }
         if y != self.0[0].len() - 1 {
-            match self[(x, y + 1, z)] {
-                Block::Redstone(_) => {}
-                _ => vec.push(((x, y + 1, z), Facing::Down)).unwrap(),
-            }
+            vec.push(((x, y + 1, z), Facing::Down)).unwrap();
         }
         if z != 0 {
             vec.push(((x, y, z - 1), Facing::North)).unwrap();
         }
         if z != self.0[0][0].len() - 1 {
             vec.push(((x, y, z + 1), Facing::South)).unwrap();
+        }
+
+        vec.into_iter()
+    }
+
+    /// Returns the coordinates and facing of extra neighbouring blocks relative to the given position.
+    pub fn extra_neighbours(
+        &self,
+        (x, y, z): (usize, usize, usize),
+    ) -> impl Iterator<Item = ((usize, usize, usize), Facing, Facing)> {
+        let mut vec: heapless::Vec<_, 8> = heapless::Vec::new();
+
+        if x != 0 && y != 0 {
+            vec.push(((x - 1, y - 1, z), Facing::West, Facing::Down))
+                .unwrap();
+        }
+        if x != 0 && y != self.0[0].len() - 1 {
+            vec.push(((x - 1, y + 1, z), Facing::West, Facing::Up))
+                .unwrap();
+        }
+        if x != self.0.len() - 1 && y != 0 {
+            vec.push(((x + 1, y - 1, z), Facing::East, Facing::Down))
+                .unwrap();
+        }
+        if x != self.0.len() - 1 && y != self.0[0].len() - 1 {
+            vec.push(((x + 1, y + 1, z), Facing::East, Facing::Up))
+                .unwrap();
+        }
+        if z != 0 && y != 0 {
+            vec.push(((x, y - 1, z - 1), Facing::North, Facing::Down))
+                .unwrap();
+        }
+        if z != 0 && y != self.0[0].len() - 1 {
+            vec.push(((x, y + 1, z - 1), Facing::North, Facing::Up))
+                .unwrap();
+        }
+        if z != self.0[0][0].len() - 1 && y != 0 {
+            vec.push(((x, y - 1, z + 1), Facing::South, Facing::Down))
+                .unwrap();
+        }
+        if z != self.0[0][0].len() - 1 && y != self.0[0].len() - 1 {
+            vec.push(((x, y + 1, z + 1), Facing::South, Facing::Up))
+                .unwrap();
         }
 
         vec.into_iter()

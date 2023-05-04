@@ -1,4 +1,5 @@
 use crate::blocks::air::Air;
+use crate::blocks::redstone::ConnectionDirection;
 use crate::blocks::solid::Solid;
 use crate::blocks::Block;
 use crate::schematic::SchemFormat;
@@ -95,6 +96,21 @@ impl World {
                     }
 
                     i += 1;
+                }
+            }
+        }
+
+        for y in 0..format.height as usize {
+            for z in 0..format.length as usize {
+                for x in 0..format.width as usize {
+                    if let Block::Redstone(v) = &world.data[(x, y, z)] {
+                        world.data.extra_neighbours((x,y,z));
+                        for (dir, con) in v.in_dirs {
+                            if con == ConnectionDirection::Up {
+                                // world.data[dir.front((x,y+1,z))] =
+                            }
+                        }
+                    }
                 }
             }
         }
