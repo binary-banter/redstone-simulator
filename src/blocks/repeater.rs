@@ -24,14 +24,6 @@ pub struct Repeater {
 }
 
 impl BlockTrait for Repeater {
-    fn out_nbs(&self, p: (usize, usize, usize), _world: &WorldData) -> Vec<(usize, usize, usize)> {
-        vec![self.facing.back(p)]
-    }
-
-    fn in_nbs(&self, p: (usize, usize, usize), _world: &WorldData) -> Vec<(usize, usize, usize)> {
-        vec![self.facing.front(p)]
-    }
-
     fn update(
         &mut self,
         p: (usize, usize, usize),
@@ -85,14 +77,17 @@ impl BlockTrait for Repeater {
 }
 
 impl BlockTraitLate for Repeater {
-    fn update_late(&mut self, p: (usize, usize, usize),
-                   world: &WorldData) -> Vec<(usize, usize, usize)> {
+    fn update_late(
+        &mut self,
+        p: (usize, usize, usize),
+        world: &WorldData,
+    ) -> Vec<(usize, usize, usize)> {
         self.count += 1;
         if self.count == self.delay {
             self.signal = self.next_signal;
             self.count = 0;
 
-            self.out_nbs(p, world)
+            vec![self.facing.back(p)]
         } else {
             vec![]
         }

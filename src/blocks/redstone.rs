@@ -41,7 +41,7 @@ pub struct Redstone {
     pub out_dirs: ConnectionDirections,
 }
 
-impl BlockTrait for Redstone {
+impl Redstone {
     fn out_nbs(
         &self,
         (x, y, z): (usize, usize, usize),
@@ -78,7 +78,7 @@ impl BlockTrait for Redstone {
             (x, y, z.wrapping_add(1)),
         ];
 
-        let top = (x,y.wrapping_add(1),z);
+        let top = (x, y.wrapping_add(1), z);
         for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
             let side = f.front((x, y, z));
             let side_down = (side.0, side.1.wrapping_sub(1), side.2);
@@ -97,34 +97,35 @@ impl BlockTrait for Redstone {
 
         in_nbs
     }
+}
 
+impl BlockTrait for Redstone {
     fn update(
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
-
         // find biggest signal strength around this block
-        let s_new = self.in_nbs(p,world)
-            .into_iter()
-            .map(|n| {
-                let n_block = &world[n];
-                match n_block {
-                    Block::Redstone(Redstone { signal: ns, .. }) => ns.saturating_sub(1),
-                    Block::Repeater(Repeater {
-                        signal: 16,
-                        facing: nf,
-                        ..
-                    }) if nf.back(n) == p => 15,
-                    Block::Trigger(Trigger { signal: 16 }) | Block::Solid(Solid { signal: 16 }) => {
-                        15
+        let s_new =
+            self.in_nbs(p, world)
+                .into_iter()
+                .map(|n| {
+                    let n_block = &world[n];
+                    match n_block {
+                        Block::Redstone(Redstone { signal: ns, .. }) => ns.saturating_sub(1),
+                        Block::Repeater(Repeater {
+                            signal: 16,
+                            facing: nf,
+                            ..
+                        }) if nf.back(n) == p => 15,
+                        Block::Trigger(Trigger { signal: 16 })
+                        | Block::Solid(Solid { signal: 16 }) => 15,
+                        Block::Air | Block::Repeater(_) | Block::Solid(_) | Block::Trigger(_) => 0,
+                        Block::Torch(_) => todo!(),
                     }
-                    Block::Air | Block::Repeater(_) | Block::Solid(_) | Block::Trigger(_) => 0,
-                    Block::Torch(_) => todo!(),
-                }
-            })
-            .max()
-            .unwrap_or(0);
+                })
+                .max()
+                .unwrap_or(0);
 
         // if signal strength has changed, update neighbours
         if self.signal != s_new {

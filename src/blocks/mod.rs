@@ -26,10 +26,6 @@ pub enum Block {
 }
 
 pub trait BlockTrait {
-    fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)>;
-
-    fn in_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)>;
-
     /// Updates the block using its neighbours.
     /// Returns the neighbours that need to be updated and whether the block needs to be updated next tick.
     fn update(
@@ -41,13 +37,15 @@ pub trait BlockTrait {
 
 pub trait BlockTraitLate {
     /// Updates after the game tick
-    fn update_late(&mut self,
-                   pos: (usize, usize, usize),
-                   world: &WorldData,) -> Vec<(usize, usize, usize)>;
+    fn update_late(
+        &mut self,
+        pos: (usize, usize, usize),
+        world: &WorldData,
+    ) -> Vec<(usize, usize, usize)>;
 }
 
 impl Block {
-    pub fn weak_power_dir(&self, f: Facing) -> u8 {
+    fn weak_power_dir(&self, f: Facing) -> u8 {
         match self {
             Block::Solid(v) => v.signal,
             Block::Redstone(v) => v.signal, //TODO output dirs
@@ -58,9 +56,10 @@ impl Block {
             Block::Torch(v) => v.signal,
             Block::Air => 0,
         }
+        .saturating_sub(1)
     }
 
-    pub fn strong_power_dir(&self, f: Facing) -> u8 {
+    fn strong_power_dir(&self, f: Facing) -> u8 {
         match self {
             Block::Solid(_) => 0,
             Block::Redstone(_) => 0,
