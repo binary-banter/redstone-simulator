@@ -80,7 +80,7 @@ impl BlockTraitLate for Repeater {
     fn update_late(
         &mut self,
         p: (usize, usize, usize),
-        world: &WorldData,
+        _world: &WorldData,
     ) -> Vec<(usize, usize, usize)> {
         self.count += 1;
         if self.count == self.delay {

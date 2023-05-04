@@ -7,11 +7,15 @@ pub struct WorldData(pub Vec<Vec<Vec<Block>>>);
 
 impl WorldData {
     /// Returns the coordinates of neighbouring blocks relative to the given position.
-    pub fn neighbours(&self, p: (usize, usize, usize)) -> Vec<(usize, usize, usize)> {
-        self.neighbours_and_facings(p)
-            .into_iter()
-            .map(|(n, _)| n)
-            .collect()
+    pub fn neighbours(&self, (x,y,z): (usize, usize, usize)) -> Vec<(usize, usize, usize)> {
+        vec![
+            ((x.wrapping_sub(1), y, z)),
+            ((x.wrapping_add(1), y, z)),
+            ((x, y.wrapping_sub(1), z)),
+            ((x, y.wrapping_add(1), z)),
+            ((x, y, z.wrapping_sub(1))),
+            ((x, y, z.wrapping_add(1)))
+        ]
     }
 
     /// Returns the coordinates and facing of neighbouring blocks relative to the given position.
@@ -19,16 +23,14 @@ impl WorldData {
         &self,
         (x, y, z): (usize, usize, usize),
     ) -> Vec<((usize, usize, usize), Facing)> {
-        let mut vec = Vec::new();
-
-        vec.push(((x.wrapping_sub(1), y, z), Facing::West));
-        vec.push(((x.wrapping_add(1), y, z), Facing::East));
-        vec.push(((x, y.wrapping_sub(1), z), Facing::Down));
-        vec.push(((x, y.wrapping_add(1), z), Facing::Up));
-        vec.push(((x, y, z.wrapping_sub(1)), Facing::North));
-        vec.push(((x, y, z.wrapping_add(1)), Facing::South));
-
-        vec
+        vec![
+            ((x.wrapping_sub(1), y, z), Facing::West),
+            ((x.wrapping_add(1), y, z), Facing::East),
+            ((x, y.wrapping_sub(1), z), Facing::Down),
+            ((x, y.wrapping_add(1), z), Facing::Up),
+            ((x, y, z.wrapping_sub(1)), Facing::North),
+            ((x, y, z.wrapping_add(1)), Facing::South)
+        ]
     }
 }
 
