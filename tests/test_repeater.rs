@@ -2,7 +2,7 @@ use redstone_simulator::world::World;
 use std::fs::File;
 
 #[test]
-fn test_repeater_1t() {
+fn repeater_1t() {
     let file = File::open("./schematics/repeater_1t.schem").unwrap();
     let mut world = World::from_file(&file);
 
@@ -16,7 +16,7 @@ fn test_repeater_1t() {
 }
 
 #[test]
-fn test_repeater_2t() {
+fn repeater_2t() {
     let file = File::open("./schematics/repeater_2t.schem").unwrap();
     let mut world = World::from_file(&file);
 
@@ -34,7 +34,7 @@ fn test_repeater_2t() {
 }
 
 #[test]
-fn test_repeater_3t() {
+fn repeater_3t() {
     let file = File::open("./schematics/repeater_3t.schem").unwrap();
     let mut world = World::from_file(&file);
 
@@ -56,7 +56,7 @@ fn test_repeater_3t() {
 }
 
 #[test]
-fn test_repeater_4t() {
+fn repeater_4t() {
     let file = File::open("./schematics/repeater_4t.schem").unwrap();
     let mut world = World::from_file(&file);
 
@@ -82,7 +82,7 @@ fn test_repeater_4t() {
 }
 
 #[test]
-fn test_extender() {
+fn extender() {
     let file = File::open("./schematics/repeater_extender.schem").unwrap();
     let mut world = World::from_file(&file);
 

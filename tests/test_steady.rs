@@ -2,7 +2,7 @@ use redstone_simulator::world::World;
 use std::fs::File;
 
 #[test]
-fn test_steady() {
+fn steady() {
     let file = File::open("./schematics/steady_state.schem").unwrap();
     let mut world = World::from_file(&file);
 
@@ -14,13 +14,11 @@ fn test_steady() {
 }
 
 #[test]
-fn test_connectivity() {
+fn connectivity() {
     let file = File::open("./schematics/redstone_connectivity.schem").unwrap();
     let mut world = World::from_file(&file);
 
     world.step_with_trigger();
-
-    println!("{}", world);
 
     assert!(world.get_probe("straight"));
     assert!(world.get_probe("up"));
