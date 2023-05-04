@@ -98,7 +98,7 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:air" => (Block::Air, false, false),
+            "minecraft:air" | "minecraft:glass" => (Block::Air, false, false),
             "minecraft:stone" => (Block::Solid(Solid { signal: 0 }), false, false),
             "minecraft:gold_block" => (Block::Trigger(Trigger { signal: 0 }), true, false),
             "minecraft:diamond_block" => (Block::Solid(Solid { signal: 0 }), false, true),
@@ -113,9 +113,8 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:oak_wall_sign" => (Block::Air, false, false),
-            "minecraft:oak_sign" => (Block::Air, false, false),
-            "minecraft:redstone_wall_torch" | "minecraft:redstone_torch" => {
+            "minecraft:oak_sign" | "minecraft:oak_wall_sign" => (Block::Air, false, false),
+            "minecraft:redstone_torch" | "minecraft:redstone_wall_torch"  => {
                 let s = meta
                     .get("lit")
                     .map(|&x| if x == "true" { 16 } else { 0 })
