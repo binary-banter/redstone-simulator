@@ -75,7 +75,7 @@ impl Redstone {
                 [Block::Redstone(_), b, _, _] if b.is_transparent() => {
                     in_nbs.push((side_down, f));
                 }
-                [_, Block::Solid(_), Block::Redstone(_), b] if b.is_transparent() => {
+                [_, b1, Block::Redstone(_), b2] if !b1.is_transparent() && b2.is_transparent() => {
                     in_nbs.push((side_up, f))
                 }
                 _ => {}

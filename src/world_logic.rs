@@ -13,6 +13,7 @@ impl World {
             let (mut updates, self_update) = match block {
                 Block::Solid(ref mut v) => v.update(p, &self.data),
                 Block::Redstone(ref mut v) => v.update(p, &self.data),
+                Block::RedstoneBlock => continue,
                 Block::Trigger(ref mut v) => v.update(p, &self.data),
                 Block::Repeater(ref mut v) => v.update(p, &self.data),
                 Block::Air => continue,

@@ -5,8 +5,9 @@ use crate::blocks::solid::Solid;
 use crate::blocks::torch::Torch;
 use crate::blocks::trigger::Trigger;
 use crate::world_data::WorldData;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
+use once_cell::sync::Lazy;
 
 pub mod facing;
 pub mod redstone;
@@ -15,10 +16,15 @@ pub mod solid;
 pub mod torch;
 pub mod trigger;
 
+static SOLID_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
+    include_str!("../../resources/solid.txt").lines().collect()
+});
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Block {
     Solid(Solid),
     Redstone(Redstone),
+    RedstoneBlock,
     Trigger(Trigger),
     Repeater(Repeater),
     Torch(Torch),
@@ -52,6 +58,7 @@ impl Block {
             Block::Solid(v) => v.signal,
             Block::Redstone(v) if v.connections[f.reverse()] => v.signal,
             Block::Redstone(_) => 0,
+            Block::RedstoneBlock => 16,
             Block::Trigger(v) => v.signal,
             Block::Repeater(v) if v.facing == f => v.signal,
             Block::Repeater(_) => 0,
@@ -65,6 +72,7 @@ impl Block {
         match self {
             Block::Solid(_) => false,
             Block::Redstone(_) => true,
+            Block::RedstoneBlock => false,
             Block::Trigger(_) => false,
             Block::Repeater(_) => true,
             Block::Torch(_) => true,
@@ -99,7 +107,6 @@ impl Block {
                 false,
             ),
             "minecraft:air" | "minecraft:glass" => (Block::Air, false, false),
-            "minecraft:stone" => (Block::Solid(Solid { signal: 0 }), false, false),
             "minecraft:gold_block" => (Block::Trigger(Trigger { signal: 0 }), true, false),
             "minecraft:diamond_block" => (Block::Solid(Solid { signal: 0 }), false, true),
             "minecraft:repeater" => (
@@ -135,6 +142,8 @@ impl Block {
                     false,
                 )
             }
+            "minecraft:redstone_block" => (Block::RedstoneBlock, false, false),
+            id if SOLID_BLOCKS.contains(id) => (Block::Solid(Solid { signal: 0 }), false, false),
             _ => todo!("Unimplemented identifier: {id}, with meta: {meta:?}."),
         }
     }
@@ -156,6 +165,7 @@ impl Display for Block {
                     "0123456789ABCDEF".chars().nth(*s as usize).unwrap()
                 )
             }
+            Block::RedstoneBlock => write!(f, "R"),
             Block::Air => write!(f, " "),
             Block::Trigger(Trigger { .. }) => write!(f, "T"),
             Block::Repeater(Repeater {

@@ -48,7 +48,8 @@ impl BlockTrait for Solid {
                     | Block::Redstone(_)
                     | Block::Trigger(_)
                     | Block::Repeater(_)
-                    | Block::Air => 0,
+                    | Block::Air
+                    | Block::RedstoneBlock => 0,
                     Block::Torch(Torch { signal: s, .. }) => {
                         if *s > 0 && f == Facing::Down {
                             16
