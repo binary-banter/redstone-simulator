@@ -1,4 +1,4 @@
-use crate::blocks::solid::Solid;
+use crate::blocks::solid::{Solid, SolidPower};
 use crate::blocks::Block;
 use crate::schematic::SchemFormat;
 use crate::world_data::WorldData;
@@ -82,7 +82,7 @@ impl World {
                     let mut ix: usize = 0;
                     for j in 0.. {
                         let next = format.block_data[i];
-                        ix |= (next as usize & 0b0111_1111) << (j*7);
+                        ix |= (next as usize & 0b0111_1111) << (j * 7);
                         i += 1;
 
                         if next >= 0 {
@@ -106,8 +106,6 @@ impl World {
                     }
 
                     world.updatable.push((x, y, z));
-
-
                 }
             }
         }
@@ -123,7 +121,7 @@ impl World {
             .get_by_right(name)
             .expect("Probe does not exist.")]
         {
-            Block::Solid(Solid { signal: s }) => s > 0,
+            Block::Solid(Solid { signal: s }) => <SolidPower as Into<u8>>::into(s) > 0,
             _ => unreachable!(),
         }
     }
@@ -135,7 +133,9 @@ impl World {
                 (
                     &s[..],
                     match self.data[(x, y, z)] {
-                        Block::Solid(Solid { signal: 0 }) => false,
+                        Block::Solid(Solid {
+                            signal: SolidPower::Weak(0) | SolidPower::Strong(0),
+                        }) => false,
                         Block::Solid(_) => true,
                         _ => unreachable!(),
                     },
@@ -147,7 +147,9 @@ impl World {
     pub fn display_probes(&self) {
         for (&(x, y, z), name) in &self.probes {
             match self.data[(x, y, z)] {
-                Block::Solid(Solid { signal: s }) => println!("Probe '{name}': {s}"),
+                Block::Solid(Solid { signal: s }) => {
+                    println!("Probe '{name}': {}", <SolidPower as Into<u8>>::into(s))
+                }
                 _ => unreachable!(),
             }
         }

@@ -38,6 +38,7 @@ fn cmp_off() {
     world.step_with_trigger();
     assert!(!world.get_probe("cmp_off"));
     world.step();
+    println!("{}", world);
     assert!(!world.get_probe("cmp_off"));
     world.step();
     assert!(!world.get_probe("cmp_off"));
@@ -165,15 +166,74 @@ fn cmp_ss2() {
     let file = File::open("./schematics/comparator.schem").unwrap();
     let mut world = World::from_file(&file);
 
-    assert!(!world.get_probe("cmp_ss_on2"));
-    assert!(!world.get_probe("cmp_ss_off2"));
+    assert!(!world.get_probe("cmp_ss_on_2"));
+    assert!(!world.get_probe("cmp_ss_off_2"));
     world.step_with_trigger();
-    assert!(!world.get_probe("cmp_ss_on2"));
-    assert!(!world.get_probe("cmp_ss_off2"));
+    assert!(!world.get_probe("cmp_ss_on_2"));
+    assert!(!world.get_probe("cmp_ss_off_2"));
     world.step();
-    assert!(world.get_probe("cmp_ss_on2"));
-    assert!(!world.get_probe("cmp_ss_off2"));
+    assert!(!world.get_probe("cmp_ss_on_2"));
+    assert!(!world.get_probe("cmp_ss_off_2"));
     world.step();
-    assert!(!world.get_probe("cmp_ss_on2"));
-    assert!(!world.get_probe("cmp_ss_off2"));
+    assert!(world.get_probe("cmp_ss_on_2"));
+    assert!(!world.get_probe("cmp_ss_off_2"));
+    world.step();
+    assert!(!world.get_probe("cmp_ss_on_2"));
+    assert!(!world.get_probe("cmp_ss_off_2"));
+}
+
+#[test]
+fn inp_redblock() {
+    let file = File::open("./schematics/comparator_inputs.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    assert!(!world.get_probe("sub_redblock"));
+    world.step_with_trigger();
+    assert!(!world.get_probe("sub_redblock"));
+    world.step();
+    assert!(!world.get_probe("sub_redblock"));
+    world.step();
+    assert!(!world.get_probe("sub_redblock"));
+}
+
+#[test]
+fn inp_solid() {
+    let file = File::open("./schematics/comparator_inputs.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    assert!(!world.get_probe("sub_solid"));
+    world.step_with_trigger();
+    assert!(!world.get_probe("sub_solid"));
+    world.step();
+    assert!(world.get_probe("sub_solid"));
+    world.step();
+    assert!(!world.get_probe("sub_solid"));
+}
+
+#[test]
+fn inp_repeater() {
+    let file = File::open("./schematics/comparator_inputs.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    assert!(!world.get_probe("sub_repeater"));
+    world.step_with_trigger();
+    assert!(!world.get_probe("sub_repeater"));
+    world.step();
+    assert!(!world.get_probe("sub_repeater"));
+    world.step();
+    assert!(!world.get_probe("sub_repeater"));
+}
+
+#[test]
+fn inp_torch() {
+    let file = File::open("./schematics/comparator_inputs.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    assert!(!world.get_probe("sub_torch"));
+    world.step_with_trigger();
+    assert!(!world.get_probe("sub_torch"));
+    world.step();
+    assert!(world.get_probe("sub_torch"));
+    world.step();
+    assert!(!world.get_probe("sub_torch"));
 }

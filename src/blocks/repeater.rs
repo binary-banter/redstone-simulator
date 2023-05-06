@@ -5,7 +5,7 @@ use crate::world_data::WorldData;
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Repeater {
     /// Can be 0 (off) or 16 (powered).
-    pub signal: u8,
+    pub powered: bool,
 
     /// Direction the input side of the repeater faces.
     pub facing: Facing,
@@ -17,7 +17,17 @@ pub struct Repeater {
     pub delay: u8,
 
     /// Next signal to be set when count reaches the repeater delay.
-    pub next_signal: u8,
+    pub next_powered: bool,
+}
+
+impl Repeater {
+    pub fn output_signal(&self, f: Facing) -> u8 {
+        if f == self.facing && self.powered {
+            15
+        } else {
+            0
+        }
+    }
 }
 
 impl BlockTrait for Repeater {
@@ -27,30 +37,26 @@ impl BlockTrait for Repeater {
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool) {
         // find signal strength of input
-        let s_new = if world[self.facing.front(p)].weak_power_dir(self.facing) > 0 {
-            16
-        } else {
-            0
-        };
+        let s_new = world[self.facing.front(p)].output_power(self.facing) > 0;
 
         // if signal strength has changed, update neighbours
-        match (s_new, self.next_signal == s_new, self.count == 0) {
+        match (s_new, self.next_powered == s_new, self.count == 0) {
             // Signal changed upwards: update next signal and reset count.
-            (16, false, _) => {
-                self.next_signal = s_new;
+            (true, false, _) => {
+                self.next_powered = s_new;
                 self.count = 0;
             }
 
             // Signal changed downward, and is not propagating already: update next signal.
-            (0, false, true) => {
-                self.next_signal = s_new;
+            (false, false, true) => {
+                self.next_powered = s_new;
             }
 
             // Other cases.
             (_, _, _) => {}
         };
 
-        (vec![], self.signal != self.next_signal)
+        (vec![], self.powered != self.next_powered)
     }
 }
 
@@ -62,7 +68,7 @@ impl BlockTraitLate for Repeater {
     ) -> Vec<(usize, usize, usize)> {
         self.count += 1;
         if self.count == self.delay {
-            self.signal = self.next_signal;
+            self.powered = self.next_powered;
             self.count = 0;
 
             vec![self.facing.back(p)]

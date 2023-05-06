@@ -1,28 +1,29 @@
+use crate::blocks::comparator::{Comparator, ComparatorMode};
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::{Connections, Redstone};
 use crate::blocks::repeater::Repeater;
-use crate::blocks::solid::Solid;
+use crate::blocks::solid::{Solid, SolidPower};
 use crate::blocks::torch::Torch;
 use crate::blocks::trigger::Trigger;
 use crate::world_data::WorldData;
+use once_cell::sync::Lazy;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
-use once_cell::sync::Lazy;
-use crate::blocks::comparator::{Comparator, ComparatorMode};
 
+pub mod comparator;
 pub mod facing;
 pub mod redstone;
 pub mod repeater;
 pub mod solid;
 pub mod torch;
 pub mod trigger;
-pub mod comparator;
 
-static SOLID_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
-    include_str!("../../resources/solid.txt").lines().collect()
-});
+static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
+    Lazy::new(|| include_str!("../../resources/solid.txt").lines().collect());
 static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
-    include_str!("../../resources/transparent.txt").lines().collect()
+    include_str!("../../resources/transparent.txt")
+        .lines()
+        .collect()
 });
 
 #[derive(Debug, Clone, PartialEq)]
@@ -45,6 +46,10 @@ pub trait BlockTrait {
         pos: (usize, usize, usize),
         world: &WorldData,
     ) -> (Vec<(usize, usize, usize)>, bool);
+
+    // fn signal(&self, b: &Block, f: Facing) -> u8;
+    //
+    // fn output_signal(&self, f: Facing) -> u8;
 }
 
 pub trait BlockTraitLate {
@@ -57,21 +62,15 @@ pub trait BlockTraitLate {
 }
 
 impl Block {
-    /// Facing is from the perspective of the updated block, not the powering block
-    /// So this is the weak power delivered TO the reverse of f.
-    fn weak_power_dir(&self, f: Facing) -> u8 {
+    pub fn output_power(&self, f: Facing) -> u8 {
         match self {
-            Block::Solid(v) => v.signal,
-            Block::Redstone(v) if v.connections[f.reverse()] => v.signal,
-            Block::Redstone(_) => 0,
-            Block::RedstoneBlock => 16,
-            Block::Trigger(v) => v.signal,
-            Block::Repeater(v) if v.facing == f => v.signal,
-            Block::Repeater(_) => 0,
-            Block::Comparator(v) if v.facing == f => v.signal,
-            Block::Comparator(_) => 0,
-            Block::Torch(v) if v.facing == f => 0, // Torch does not output where it's hanging
-            Block::Torch(v) => v.signal,
+            Block::Solid(v) => v.output_signal().into(),
+            Block::Redstone(v) => v.output_signal(f),
+            Block::RedstoneBlock => 15,
+            Block::Trigger(v) => v.output_signal(),
+            Block::Repeater(v) => v.output_signal(f),
+            Block::Comparator(v) => v.output_signal(f),
+            Block::Torch(v) => v.output_signal(f),
             Block::Air => 0,
         }
     }
@@ -115,24 +114,29 @@ impl Block {
                 false,
                 false,
             ),
-            "minecraft:gold_block" | "minecraft:lightning_rod" => (Block::Trigger(Trigger { signal: 0 }), true, false),
-            "minecraft:diamond_block" => (Block::Solid(Solid { signal: 0 }), false, true),
+            "minecraft:gold_block" | "minecraft:lightning_rod" => {
+                (Block::Trigger(Trigger { powered: false }), true, false)
+            }
+            "minecraft:diamond_block" => (
+                Block::Solid(Solid {
+                    signal: SolidPower::Weak(0),
+                }),
+                false,
+                true,
+            ),
             "minecraft:repeater" => (
                 Block::Repeater(Repeater {
-                    signal: 0,
+                    powered: false,
                     facing: Facing::from(meta["facing"]),
                     count: 0,
                     delay: meta["delay"].parse().unwrap(),
-                    next_signal: 0,
+                    next_powered: false,
                 }),
                 false,
                 false,
             ),
-            "minecraft:redstone_torch" | "minecraft:redstone_wall_torch"  => {
-                let s = meta
-                    .get("lit")
-                    .map(|&x| if x == "true" { 16 } else { 0 })
-                    .unwrap();
+            "minecraft:redstone_torch" | "minecraft:redstone_wall_torch" => {
+                let s = meta.get("lit").map(|&x| x == "true").unwrap();
 
                 let f = meta
                     .get("facing")
@@ -141,9 +145,8 @@ impl Block {
 
                 (
                     Block::Torch(Torch {
-                        signal: s,
+                        powered: s,
                         facing: f,
-                        next_signal: s,
                     }),
                     false,
                     false,
@@ -151,14 +154,24 @@ impl Block {
             }
             "minecraft:redstone_block" => (Block::RedstoneBlock, false, false),
 
-            "minecraft:comparator" => (Block::Comparator(Comparator {
-                signal: 0,
-                next_signal: 0,
-                facing: Facing::from(meta["facing"]),
-                mode: ComparatorMode::from(meta["mode"]),
-            }), false, false), //TODO
+            "minecraft:comparator" => (
+                Block::Comparator(Comparator {
+                    signal: 0,
+                    next_signal: 0,
+                    facing: Facing::from(meta["facing"]),
+                    mode: ComparatorMode::from(meta["mode"]),
+                }),
+                false,
+                false,
+            ), //TODO
 
-            id if SOLID_BLOCKS.contains(id) => (Block::Solid(Solid { signal: 0 }), false, false),
+            id if SOLID_BLOCKS.contains(id) => (
+                Block::Solid(Solid {
+                    signal: SolidPower::Weak(0),
+                }),
+                false,
+                false,
+            ),
             id if TRANSPARENT_BLOCKS.contains(id) => (Block::Air, false, false),
             _ => todo!("Unimplemented identifier: {id}, with meta: {meta:?}."),
         }
@@ -169,10 +182,9 @@ impl Display for Block {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Block::Solid(Solid { signal: s }) => match s {
-                0 => write!(f, "□"),
-                1 => write!(f, "■"),
-                16 => write!(f, "▣"),
-                _ => unreachable!(),
+                SolidPower::Weak(0) | SolidPower::Strong(0) => write!(f, "□"),
+                SolidPower::Weak(_) => write!(f, "■"),
+                SolidPower::Strong(_) => write!(f, "▣"),
             },
             Block::Redstone(Redstone { signal: s, .. }) => {
                 write!(
@@ -202,7 +214,7 @@ impl Display for Block {
             }) => write!(f, ">"),
             Block::Repeater(Repeater { .. }) => unreachable!(),
             Block::Comparator(Comparator { .. }) => write!(f, "-"),
-            Block::Torch(v) if v.signal == 0 => write!(f, "*"),
+            Block::Torch(v) if !v.powered => write!(f, "*"),
             Block::Torch(_) => write!(f, "+"),
         }
     }

@@ -1,4 +1,5 @@
 use crate::blocks::facing::Facing;
+use crate::blocks::solid::SolidPower;
 use crate::blocks::{Block, BlockTrait};
 use crate::world_data::WorldData;
 use std::ops::Index;
@@ -36,6 +37,33 @@ pub struct Redstone {
 }
 
 impl Redstone {
+    pub fn output_signal(&self, f: Facing) -> u8 {
+        if self.connections[f.reverse()] {
+            self.signal
+        } else {
+            0
+        }
+    }
+
+    fn input_signal(&self, b: &Block, f: Facing) -> u8 {
+        match b {
+            Block::Solid(v) => {
+                if let SolidPower::Strong(s) = v.output_signal() {
+                    s
+                } else {
+                    0
+                }
+            }
+            Block::Redstone(v) => v.output_signal(f).saturating_sub(1),
+            Block::RedstoneBlock => 15,
+            Block::Trigger(v) => v.output_signal(),
+            Block::Repeater(v) => v.output_signal(f),
+            Block::Comparator(v) => v.output_signal(f),
+            Block::Torch(v) => v.output_signal(f),
+            Block::Air => 0,
+        }
+    }
+
     fn out_nbs(
         &self,
         (x, y, z): (usize, usize, usize),
@@ -96,11 +124,7 @@ impl BlockTrait for Redstone {
         let s_new = self
             .in_nbs(p, world)
             .into_iter()
-            .map(|(n, f)| {
-                let n_block = &world[n];
-
-                n_block.weak_power_dir(f).saturating_sub(1)
-            })
+            .map(|(n, f)| self.input_signal(&world[n], f))
             .max()
             .unwrap_or(0);
 
