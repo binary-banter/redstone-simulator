@@ -35,7 +35,8 @@ impl BlockTrait for Repeater {
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
-    ) -> (Vec<(usize, usize, usize)>, bool) {
+        _updates: &mut Vec<(usize, usize, usize)>,
+    ) -> bool {
         // find signal strength of input
         let s_new = world[self.facing.front(p)].output_power(self.facing) > 0;
 
@@ -56,7 +57,7 @@ impl BlockTrait for Repeater {
             (_, _, _) => {}
         };
 
-        (vec![], self.powered != self.next_powered)
+        self.powered != self.next_powered
     }
 }
 
@@ -65,15 +66,14 @@ impl BlockTraitLate for Repeater {
         &mut self,
         p: (usize, usize, usize),
         _world: &WorldData,
-    ) -> Vec<(usize, usize, usize)> {
+        updates: &mut Vec<(usize, usize, usize)>,
+    ) {
         self.count += 1;
         if self.count == self.delay {
             self.powered = self.next_powered;
             self.count = 0;
 
-            vec![self.facing.back(p)]
-        } else {
-            vec![]
+            updates.push(self.facing.back(p))
         }
     }
 }

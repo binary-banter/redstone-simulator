@@ -68,8 +68,8 @@ impl Redstone {
         &self,
         (x, y, z): (usize, usize, usize),
         _world: &WorldData,
-    ) -> Vec<(usize, usize, usize)> {
-        vec![
+    ) -> impl Iterator<Item = (usize, usize, usize)> {
+        [
             (x.wrapping_sub(1), y.wrapping_sub(1), z),
             (x.wrapping_sub(1), y, z),
             (x.wrapping_sub(1), y.wrapping_add(1), z),
@@ -84,14 +84,16 @@ impl Redstone {
             (x, y.wrapping_add(1), z.wrapping_add(1)),
             (x, y.wrapping_sub(1), z),
         ]
+        .into_iter()
     }
 
+    //TODO also make this iterator?
     fn in_nbs(
         &self,
         (x, y, z): (usize, usize, usize),
         world: &WorldData,
-    ) -> Vec<((usize, usize, usize), Facing)> {
-        let mut in_nbs = world.neighbours_and_facings((x, y, z));
+    ) -> impl Iterator<Item = ((usize, usize, usize), Facing)> {
+        let mut in_nbs = heapless::Vec::<((usize, usize, usize), Facing), 4>::new();
 
         let top = (x, y.wrapping_add(1), z);
         for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
@@ -101,16 +103,16 @@ impl Redstone {
 
             match [side_down, side, side_up, top].map(|n| &world[n]) {
                 [Block::Redstone(_), b, _, _] if b.is_transparent() => {
-                    in_nbs.push((side_down, f));
+                    in_nbs.push((side_down, f)).unwrap();
                 }
                 [_, b1, Block::Redstone(_), b2] if !b1.is_transparent() && b2.is_transparent() => {
-                    in_nbs.push((side_up, f))
+                    in_nbs.push((side_up, f)).unwrap();
                 }
                 _ => {}
             }
         }
 
-        in_nbs
+        world.neighbours_and_facings((x, y, z)).chain(in_nbs)
     }
 }
 
@@ -119,7 +121,8 @@ impl BlockTrait for Redstone {
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
-    ) -> (Vec<(usize, usize, usize)>, bool) {
+        updates: &mut Vec<(usize, usize, usize)>,
+    ) -> bool {
         // find biggest signal strength around this block
         let s_new = self
             .in_nbs(p, world)
@@ -131,9 +134,9 @@ impl BlockTrait for Redstone {
         // if signal strength has changed, update neighbours
         if self.signal != s_new {
             self.signal = s_new;
-            (self.out_nbs(p, world), false)
-        } else {
-            (vec![], false)
+            updates.extend(self.out_nbs(p, world));
         }
+
+        false
     }
 }

@@ -45,7 +45,8 @@ pub trait BlockTrait {
         &mut self,
         pos: (usize, usize, usize),
         world: &WorldData,
-    ) -> (Vec<(usize, usize, usize)>, bool);
+        updates: &mut Vec<(usize, usize, usize)>,
+    ) -> bool;
 
     // fn signal(&self, b: &Block, f: Facing) -> u8;
     //
@@ -58,7 +59,8 @@ pub trait BlockTraitLate {
         &mut self,
         pos: (usize, usize, usize),
         world: &WorldData,
-    ) -> Vec<(usize, usize, usize)>;
+        updates: &mut Vec<(usize, usize, usize)>,
+    );
 }
 
 impl Block {

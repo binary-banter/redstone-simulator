@@ -7,8 +7,11 @@ pub struct WorldData(pub Vec<Vec<Vec<Block>>>);
 
 impl WorldData {
     /// Returns the coordinates of neighbouring blocks relative to the given position.
-    pub fn neighbours(&self, (x, y, z): (usize, usize, usize)) -> Vec<(usize, usize, usize)> {
-        vec![
+    pub fn neighbours(
+        &self,
+        (x, y, z): (usize, usize, usize),
+    ) -> impl Iterator<Item = (usize, usize, usize)> {
+        [
             (x.wrapping_sub(1), y, z),
             (x.wrapping_add(1), y, z),
             (x, y.wrapping_sub(1), z),
@@ -16,14 +19,15 @@ impl WorldData {
             (x, y, z.wrapping_sub(1)),
             (x, y, z.wrapping_add(1)),
         ]
+        .into_iter()
     }
 
     /// Returns the coordinates and facing of neighbouring blocks relative to the given position.
     pub fn neighbours_and_facings(
         &self,
         (x, y, z): (usize, usize, usize),
-    ) -> Vec<((usize, usize, usize), Facing)> {
-        vec![
+    ) -> impl Iterator<Item = ((usize, usize, usize), Facing)> {
+        [
             ((x.wrapping_sub(1), y, z), Facing::West),
             ((x.wrapping_add(1), y, z), Facing::East),
             ((x, y.wrapping_sub(1), z), Facing::Down),
@@ -31,6 +35,7 @@ impl WorldData {
             ((x, y, z.wrapping_sub(1)), Facing::North),
             ((x, y, z.wrapping_add(1)), Facing::South),
         ]
+        .into_iter()
     }
 }
 

@@ -12,7 +12,7 @@ fn main() {
     let mut world = World::from_file(&file);
 
     // println!("{}", world);
-    for _ in 0..50000 {
+    for _ in 0..500 {
         world.step_with_trigger();
         for _ in 0..10 {
             world.step();

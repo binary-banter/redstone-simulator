@@ -22,7 +22,8 @@ impl BlockTrait for Trigger {
         &mut self,
         _pos: (usize, usize, usize),
         _world: &WorldData,
-    ) -> (Vec<(usize, usize, usize)>, bool) {
-        (vec![], false)
+        _updates: &mut Vec<(usize, usize, usize)>,
+    ) -> bool {
+        false
     }
 }

@@ -10,38 +10,35 @@ impl World {
 
         while let Some(p) = tick_updatable.pop() {
             let mut block = self.data[p].clone();
-            let (mut updates, self_update) = match block {
-                Block::Solid(ref mut v) => v.update(p, &self.data),
-                Block::Redstone(ref mut v) => v.update(p, &self.data),
-                Block::RedstoneBlock => continue,
-                Block::Trigger(ref mut v) => v.update(p, &self.data),
-                Block::Repeater(ref mut v) => v.update(p, &self.data),
-                Block::Air => continue,
-                Block::Torch(ref mut v) => v.update(p, &self.data),
-                Block::Comparator(ref mut v) => v.update(p, &self.data),
-            };
-            self.data[p] = block;
 
-            tick_updatable.append(&mut updates);
-            if self_update {
+            if match block {
+                Block::Solid(ref mut v) => v.update(p, &self.data, &mut tick_updatable),
+                Block::Redstone(ref mut v) => v.update(p, &self.data, &mut tick_updatable),
+                Block::RedstoneBlock => continue,
+                Block::Trigger(ref mut v) => v.update(p, &self.data, &mut tick_updatable),
+                Block::Repeater(ref mut v) => v.update(p, &self.data, &mut tick_updatable),
+                Block::Air => continue,
+                Block::Torch(ref mut v) => v.update(p, &self.data, &mut tick_updatable),
+                Block::Comparator(ref mut v) => v.update(p, &self.data, &mut tick_updatable),
+            } {
                 self.updatable.push(p);
             }
+
+            self.data[p] = block;
         }
 
         // perform end-of-tick updates.
         for &p in self.updatable.clone().iter().unique() {
             let mut block = self.data[p].clone();
 
-            #[allow(clippy::single_match)]
-            let mut updates = match block {
-                Block::Repeater(ref mut v) => v.update_late(p, &self.data),
-                Block::Comparator(ref mut v) => v.update_late(p, &self.data),
-                Block::Torch(ref mut v) => v.update_late(p, &self.data),
-                _ => vec![],
+            match block {
+                Block::Repeater(ref mut v) => v.update_late(p, &self.data, &mut self.updatable),
+                Block::Comparator(ref mut v) => v.update_late(p, &self.data, &mut self.updatable),
+                Block::Torch(ref mut v) => v.update_late(p, &self.data, &mut self.updatable),
+                _ => {}
             };
 
             self.data[p] = block;
-            self.updatable.append(&mut updates);
         }
     }
 

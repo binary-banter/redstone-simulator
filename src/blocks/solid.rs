@@ -49,7 +49,11 @@ pub struct Solid {
 }
 
 impl Solid {
-    fn out_nbs(&self, p: (usize, usize, usize), world: &WorldData) -> Vec<(usize, usize, usize)> {
+    fn out_nbs(
+        &self,
+        p: (usize, usize, usize),
+        world: &WorldData,
+    ) -> impl Iterator<Item = (usize, usize, usize)> {
         world.neighbours(p)
     }
 
@@ -80,7 +84,8 @@ impl BlockTrait for Solid {
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
-    ) -> (Vec<(usize, usize, usize)>, bool) {
+        updates: &mut Vec<(usize, usize, usize)>,
+    ) -> bool {
         let s_new = world
             .neighbours_and_facings(p)
             .into_iter()
@@ -91,9 +96,8 @@ impl BlockTrait for Solid {
         // if signal strength has changed, update neighbours
         if self.signal != s_new {
             self.signal = s_new;
-            (self.out_nbs(p, world), false)
-        } else {
-            (vec![], false)
+            updates.extend(self.out_nbs(p, world));
         }
+        false
     }
 }

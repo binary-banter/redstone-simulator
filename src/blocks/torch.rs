@@ -30,10 +30,11 @@ impl BlockTrait for Torch {
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
-    ) -> (Vec<(usize, usize, usize)>, bool) {
+        _updates: &mut Vec<(usize, usize, usize)>,
+    ) -> bool {
         let new_s = world[self.facing.back(p)].output_power(self.facing.reverse()) == 0;
 
-        (vec![], new_s != self.powered)
+        new_s != self.powered
     }
 }
 
@@ -42,8 +43,9 @@ impl BlockTraitLate for Torch {
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
-    ) -> Vec<(usize, usize, usize)> {
+        updates: &mut Vec<(usize, usize, usize)>,
+    ) {
         self.powered = !self.powered;
-        world.neighbours(p)
+        updates.extend(world.neighbours(p));
     }
 }

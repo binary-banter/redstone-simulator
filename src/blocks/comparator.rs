@@ -62,7 +62,8 @@ impl BlockTrait for Comparator {
         &mut self,
         p: (usize, usize, usize),
         world: &WorldData,
-    ) -> (Vec<(usize, usize, usize)>, bool) {
+        _updates: &mut Vec<(usize, usize, usize)>,
+    ) -> bool {
         let rear = self.input_signal_back(&world[self.facing.front(p)], self.facing);
         let left = self.input_signal_side(
             &world[self.facing.rotate_right().front(p)],
@@ -79,7 +80,7 @@ impl BlockTrait for Comparator {
             ComparatorMode::Subtract => rear.saturating_sub(max(left, right)),
         };
 
-        (vec![], self.signal != self.next_signal)
+        self.signal != self.next_signal
     }
 }
 
@@ -88,8 +89,9 @@ impl BlockTraitLate for Comparator {
         &mut self,
         pos: (usize, usize, usize),
         world: &WorldData,
-    ) -> Vec<(usize, usize, usize)> {
+        updates: &mut Vec<(usize, usize, usize)>,
+    ) {
         self.signal = self.next_signal;
-        world.neighbours(pos)
+        updates.extend(world.neighbours(pos))
     }
 }
