@@ -12,5 +12,17 @@ fn redstone_stress(c: &mut Criterion) {
     }));
 }
 
-criterion_group!(benches, redstone_stress);
+fn cpu(c: &mut Criterion) {
+    let file = File::open("./schematics/8bit_cpu_1.1.schem").unwrap();
+    let mut world = World::from_file(&file);
+
+    c.bench_function("cpu", |b| b.iter(|| {
+        black_box(&mut world).step_with_trigger();
+        for _ in 0..40 {
+            black_box(&mut world).step();
+        }
+    }));
+}
+
+criterion_group!(benches, redstone_stress, cpu);
 criterion_main!(benches);
