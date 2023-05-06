@@ -10,7 +10,6 @@ minecraft:gold_ore
 minecraft:iron_ore
 minecraft:coal_ore
 minecraft:log
-minecraft:glass
 minecraft:lapis_ore
 minecraft:lapis_block
 minecraft:dispenser

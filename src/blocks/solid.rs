@@ -3,6 +3,7 @@ use crate::blocks::redstone::Redstone;
 use crate::blocks::repeater::Repeater;
 use crate::blocks::torch::Torch;
 use crate::blocks::{Block, BlockTrait};
+use crate::blocks::comparator::Comparator;
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -44,10 +45,16 @@ impl BlockTrait for Solid {
                         facing: nf,
                         ..
                     }) if f == *nf => 16,
+                    Block::Comparator(Comparator {
+                        signal: s,
+                        facing: nf,
+                        ..
+                    }) if f == *nf => *s,
                     Block::Solid(_)
                     | Block::Redstone(_)
                     | Block::Trigger(_)
                     | Block::Repeater(_)
+                    | Block::Comparator(_)
                     | Block::Air
                     | Block::RedstoneBlock => 0,
                     Block::Torch(Torch { signal: s, .. }) => {

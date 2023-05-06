@@ -18,6 +18,7 @@ impl World {
                 Block::Repeater(ref mut v) => v.update(p, &self.data),
                 Block::Air => continue,
                 Block::Torch(ref mut v) => v.update(p, &self.data),
+                Block::Comparator(ref mut v) => v.update(p, &self.data),
             };
             self.data[p] = block;
 
@@ -34,6 +35,7 @@ impl World {
             #[allow(clippy::single_match)]
             let mut updates = match block {
                 Block::Repeater(ref mut v) => v.update_late(p, &self.data),
+                Block::Comparator(ref mut v) => v.update_late(p, &self.data),
                 Block::Torch(ref mut v) => v.update_late(p, &self.data),
                 _ => vec![],
             };

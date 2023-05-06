@@ -33,7 +33,6 @@ impl World {
 
     pub fn from_file(file: &File) -> Self {
         let format: SchemFormat = from_gzip_reader(file).unwrap();
-        println!("{:?}", format.block_data);
         World::from_format(&format)
     }
 

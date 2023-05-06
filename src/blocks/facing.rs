@@ -21,6 +21,20 @@ impl From<&str> for Facing {
 }
 
 impl Facing {
+    pub fn rotate_left(self) -> Self {
+        self.rotate_right().rotate_right().rotate_right()
+    }
+
+    pub fn rotate_right(self) -> Self {
+        match self {
+            Facing::North => Facing::East,
+            Facing::East => Facing::South,
+            Facing::South => Facing::West,
+            Facing::West => Facing::North,
+            _ => unreachable!(),
+        }
+    }
+
     pub fn reverse(self) -> Self {
         match self {
             Facing::North => Facing::South,

@@ -8,6 +8,7 @@ use crate::world_data::WorldData;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 use once_cell::sync::Lazy;
+use crate::blocks::comparator::{Comparator, ComparatorMode};
 
 pub mod facing;
 pub mod redstone;
@@ -15,6 +16,7 @@ pub mod repeater;
 pub mod solid;
 pub mod torch;
 pub mod trigger;
+pub mod comparator;
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
     include_str!("../../resources/solid.txt").lines().collect()
@@ -30,6 +32,7 @@ pub enum Block {
     RedstoneBlock,
     Trigger(Trigger),
     Repeater(Repeater),
+    Comparator(Comparator),
     Torch(Torch),
     Air,
 }
@@ -65,6 +68,8 @@ impl Block {
             Block::Trigger(v) => v.signal,
             Block::Repeater(v) if v.facing == f => v.signal,
             Block::Repeater(_) => 0,
+            Block::Comparator(v) if v.facing == f => v.signal,
+            Block::Comparator(_) => 0,
             Block::Torch(v) if v.facing == f => 0, // Torch does not output where it's hanging
             Block::Torch(v) => v.signal,
             Block::Air => 0,
@@ -78,6 +83,7 @@ impl Block {
             Block::RedstoneBlock => false,
             Block::Trigger(_) => false,
             Block::Repeater(_) => true,
+            Block::Comparator(_) => true,
             Block::Torch(_) => true,
             Block::Air => true,
         }
@@ -145,7 +151,12 @@ impl Block {
             }
             "minecraft:redstone_block" => (Block::RedstoneBlock, false, false),
 
-            "minecraft:comparator" => (Block::Air, false, false), //TODO
+            "minecraft:comparator" => (Block::Comparator(Comparator {
+                signal: 0,
+                next_signal: 0,
+                facing: Facing::from(meta["facing"]),
+                mode: ComparatorMode::from(meta["mode"]),
+            }), false, false), //TODO
 
             id if SOLID_BLOCKS.contains(id) => (Block::Solid(Solid { signal: 0 }), false, false),
             id if TRANSPARENT_BLOCKS.contains(id) => (Block::Air, false, false),
@@ -190,6 +201,7 @@ impl Display for Block {
                 ..
             }) => write!(f, ">"),
             Block::Repeater(Repeater { .. }) => unreachable!(),
+            Block::Comparator(Comparator { .. }) => write!(f, "-"),
             Block::Torch(v) if v.signal == 0 => write!(f, "*"),
             Block::Torch(_) => write!(f, "+"),
         }
