@@ -87,7 +87,6 @@ impl Redstone {
         .into_iter()
     }
 
-    //TODO also make this iterator?
     fn in_nbs(
         &self,
         (x, y, z): (usize, usize, usize),
