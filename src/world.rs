@@ -1,5 +1,6 @@
 use crate::block::Block;
 use crate::construction_block::CBlock;
+use crate::facing::Facing;
 use crate::schematic::SchemFormat;
 use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
@@ -7,7 +8,6 @@ use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
 use std::fs::File;
-use crate::facing::Facing;
 
 use crate::world_data::WorldData;
 
@@ -15,7 +15,7 @@ use crate::world_data::WorldData;
 pub struct World {
     pub blocks: StableGraph<Block, u8, petgraph::Directed, u32>,
     pub triggers: Vec<NodeIndex>,
-    probes: BiMap<NodeIndex, String>,
+    pub probes: BiMap<NodeIndex, String>,
     pub updatable: Vec<NodeIndex>,
 }
 
@@ -173,7 +173,9 @@ impl From<SchemFormat> for World {
                         CBlock::Torch { lit, node, .. } => {
                             *node = Some(blocks.add_node(Block::Torch { lit: *lit }))
                         }
-                        CBlock::Comparator { signal, mode, node, .. } => {
+                        CBlock::Comparator {
+                            signal, mode, node, ..
+                        } => {
                             let rear = blocks.add_node(Block::Redstone(0));
                             let side = blocks.add_node(Block::Redstone(0));
                             let comp = blocks.add_node(Block::Comparator {
@@ -200,23 +202,17 @@ impl From<SchemFormat> for World {
                 }
             }
         }
-
-        //TODO find fixpoint
-        // for _ in 0..20 {
-        //     blocks.retain_nodes(|x, y| {
-        //         (x.neighbors_directed(y, Outgoing).count() > 0 && x.neighbors_directed(y, Incoming).count() > 0) || probes.contains_left(&y) || triggers.contains(&y)
-        //     });
-        // }
-
-        let updatable = blocks.node_indices().collect();
-
+        
         let mut world = World {
             blocks,
             triggers,
             probes,
-            updatable,
+            updatable: vec![],
         };
 
+        world.prune_graph();
+
+        world.updatable = world.blocks.node_indices().collect();
         world.step();
 
         world
@@ -384,7 +380,10 @@ fn add_connecting_edges(
         };
 
         // redstone up/down connections
-        if let CBlock::Redstone { node: Some(idx), .. } = cblock {
+        if let CBlock::Redstone {
+            node: Some(idx), ..
+        } = cblock
+        {
             let top = (p.0, p.1.wrapping_add(1), p.2);
             let bottom = (p.0, p.1.wrapping_sub(1), p.2);
             for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
@@ -394,17 +393,24 @@ fn add_connecting_edges(
 
                 match [side_down, side, side_up, bottom, top].map(|n| &world[n]) {
                     //Down
-                    [CBlock::Redstone{ node: Some(n_idx) , ..}, b1, _, b2, _] if b1.is_transparent() && !b2.is_transparent() => {
+                    [CBlock::Redstone {
+                        node: Some(n_idx), ..
+                    }, b1, _, b2, _]
+                        if b1.is_transparent() && !b2.is_transparent() =>
+                    {
                         blocks.add_edge(idx, *n_idx, 1);
-                    },
+                    }
                     //Up
-                    [_, _, CBlock::Redstone { node: Some(n_idx), .. }, _, b2] if b2.is_transparent() => {
+                    [_, _, CBlock::Redstone {
+                        node: Some(n_idx), ..
+                    }, _, b2]
+                        if b2.is_transparent() =>
+                    {
                         blocks.add_edge(idx, *n_idx, 1);
-                    },
+                    }
                     _ => {}
                 }
             }
         }
-
     }
 }

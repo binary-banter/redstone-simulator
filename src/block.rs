@@ -40,7 +40,7 @@ pub enum Block {
         mode: ComparatorMode,
         rear: NodeIndex,
         side: NodeIndex,
-    }
+    },
 }
 
 impl Block {
@@ -50,9 +50,9 @@ impl Block {
             Block::RedstoneBlock => 15,
             Block::Repeater { powered: true, .. } => 15,
             Block::Repeater { powered: false, .. } => 0,
-            Block::Comparator {signal, ..} => signal,
-            Block::Torch { lit: true} => 15,
-            Block::Torch { lit: false} => 0,
+            Block::Comparator { signal, .. } => signal,
+            Block::Torch { lit: true } => 15,
+            Block::Torch { lit: false } => 0,
         }
     }
 }

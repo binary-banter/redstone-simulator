@@ -1,9 +1,9 @@
+use crate::block::ComparatorMode;
 use crate::facing::Facing;
 use once_cell::sync::Lazy;
 use petgraph::prelude::NodeIndex;
 use std::collections::{HashMap, HashSet};
 use std::ops::Index;
-use crate::block::ComparatorMode;
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
     Lazy::new(|| include_str!("../resources/solid.txt").lines().collect());
@@ -59,15 +59,15 @@ pub enum CBlock {
         node: Option<NodeIndex>,
         facing: Facing,
     },
-    RedstoneBlock{
-        node: Option<NodeIndex>
+    RedstoneBlock {
+        node: Option<NodeIndex>,
     },
-    Torch{
+    Torch {
         lit: bool,
         facing: Facing,
         node: Option<NodeIndex>,
     },
-    Comparator{
+    Comparator {
         signal: u8,
         facing: Facing,
         mode: ComparatorMode,
@@ -79,13 +79,13 @@ pub enum CBlock {
 impl CBlock {
     pub fn is_transparent(&self) -> bool {
         match self {
-            CBlock::Solid {..} => false,
-            CBlock::Redstone{..} => true,
-            CBlock::RedstoneBlock{..} => false,
-            CBlock::Trigger{..} => false,
-            CBlock::Repeater{..} => true,
-            CBlock::Comparator{..} => true,
-            CBlock::Torch{..} => true,
+            CBlock::Solid { .. } => false,
+            CBlock::Redstone { .. } => true,
+            CBlock::RedstoneBlock { .. } => false,
+            CBlock::Trigger { .. } => false,
+            CBlock::Repeater { .. } => true,
+            CBlock::Comparator { .. } => true,
+            CBlock::Torch { .. } => true,
             CBlock::Air => true,
             CBlock::Probe { .. } => false,
         }
@@ -116,7 +116,7 @@ impl CBlock {
             },
             "minecraft:gold_block" | "minecraft:lightning_rod" => CBlock::Trigger { node: None },
             "minecraft:diamond_block" => CBlock::Probe { node: None },
-            "minecraft:redstone_block" => CBlock::RedstoneBlock { node: None},
+            "minecraft:redstone_block" => CBlock::RedstoneBlock { node: None },
             "minecraft:redstone_torch" | "minecraft:redstone_wall_torch" => {
                 let s = meta.get("lit").map(|&x| x == "true").unwrap();
 
@@ -128,16 +128,15 @@ impl CBlock {
                 CBlock::Torch {
                     lit: s,
                     facing: f,
-                    node: None
+                    node: None,
                 }
             }
-            "minecraft:comparator" =>
-                CBlock::Comparator{
-                    signal: 0,
-                    facing: Facing::from(meta["facing"]),
-                    mode: ComparatorMode::from(meta["mode"]),
-                    node: None,
-                },
+            "minecraft:comparator" => CBlock::Comparator {
+                signal: 0,
+                facing: Facing::from(meta["facing"]),
+                mode: ComparatorMode::from(meta["mode"]),
+                node: None,
+            },
             "minecraft:repeater" => CBlock::Repeater {
                 powered: false,
                 facing: Facing::from(meta["facing"]),

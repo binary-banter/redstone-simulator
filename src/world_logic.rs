@@ -1,10 +1,10 @@
 use crate::block::{Block, ComparatorMode};
 use crate::world::World;
+use itertools::Itertools;
 use petgraph::prelude::*;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
 use std::mem;
-use itertools::Itertools;
 
 impl World {
     pub fn step(&mut self) {
@@ -58,12 +58,16 @@ impl World {
                     *powered != *next_powered
                 }
                 Block::RedstoneBlock => false,
-                Block::Torch { lit, .. } => {
-                    (s_new == 0) != *lit
-                }
-                Block::Comparator { signal, next_signal, mode, rear, side } => {
-                    let rear = self.blocks[*rear].output_power();
-                    let side = self.blocks[*side].output_power();
+                Block::Torch { lit, .. } => (s_new == 0) != *lit,
+                Block::Comparator {
+                    signal,
+                    next_signal,
+                    mode,
+                    rear,
+                    side,
+                } => {
+                    let rear = self.blocks.node_weight(*rear).map(|b| b.output_power()).unwrap_or(0);
+                    let side = self.blocks.node_weight(*side).map(|b| b.output_power()).unwrap_or(0);
 
                     *next_signal = match *mode {
                         ComparatorMode::Compare if side <= rear => rear,
@@ -83,21 +87,33 @@ impl World {
         // End-of-tick updates
         for &idx in self.updatable.clone().iter().unique() {
             match &mut self.blocks[idx] {
-                Block::Repeater { powered, next_powered, delay, count } => {
+                Block::Repeater {
+                    powered,
+                    next_powered,
+                    delay,
+                    count,
+                } => {
                     *count += 1;
                     if *count == *delay {
                         *powered = *next_powered;
                         *count = 0;
-                        self.updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
+                        self.updatable
+                            .extend(self.blocks.neighbors_directed(idx, Outgoing));
                     }
-                },
+                }
                 Block::Torch { lit } => {
                     *lit = !*lit;
-                    self.updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
+                    self.updatable
+                        .extend(self.blocks.neighbors_directed(idx, Outgoing));
                 }
-                Block::Comparator { signal, next_signal, .. } => {
+                Block::Comparator {
+                    signal,
+                    next_signal,
+                    ..
+                } => {
                     *signal = *next_signal;
-                    self.updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
+                    self.updatable
+                        .extend(self.blocks.neighbors_directed(idx, Outgoing));
                 }
                 _ => {}
             };
