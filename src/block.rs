@@ -13,6 +13,10 @@ pub enum Block {
         count: u8,
     },
     RedstoneBlock,
+    Torch {
+        /// Whether the torch is currently lit
+        lit: bool,
+    }
 }
 
 impl Block {
@@ -21,12 +25,11 @@ impl Block {
             Block::Solid(v) => v,
             Block::Redstone(v) => v,
             Block::RedstoneBlock => 15,
-            // Block::Trigger(v) => v.output_signal(),
             Block::Repeater { powered: true, .. } => 15,
             Block::Repeater { powered: false, .. } => 0,
             // Block::Comparator(v) => v.output_signal(f),
-            // Block::Torch(v) => v.output_signal(f),
-            // Block::Air => 0,
+            Block::Torch { lit: true} => 15,
+            Block::Torch { lit: false} => 0,
         }
     }
 }

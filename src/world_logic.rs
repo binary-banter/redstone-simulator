@@ -65,6 +65,9 @@ impl World {
                     *powered != *next_powered
                 }
                 Block::RedstoneBlock => false,
+                Block::Torch { lit, .. } => {
+                    (s_new == 0) != *lit
+                }
             } {
                 self.updatable.push(idx);
             }
@@ -83,6 +86,10 @@ impl World {
                         self.updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
                     }
                 },
+                Block::Torch { lit } => {
+                    *lit = !*lit;
+                    self.updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
+                }
                 _ => {}
             };
         }

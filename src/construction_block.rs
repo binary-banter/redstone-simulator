@@ -61,6 +61,11 @@ pub enum CBlock {
     RedstoneBlock{
         node: Option<NodeIndex>
     },
+    Torch{
+        lit: bool,
+        facing: Facing,
+        node: Option<NodeIndex>,
+    },
     Air,
 }
 
@@ -73,7 +78,7 @@ impl CBlock {
             CBlock::Trigger{..} => false,
             CBlock::Repeater{..} => true,
             // CBlock::Comparator{..} => true,
-            // CBlock::Torch{..} => true,
+            CBlock::Torch{..} => true,
             CBlock::Air => true,
             CBlock::Probe { .. } => false,
         }
@@ -106,8 +111,18 @@ impl CBlock {
             "minecraft:diamond_block" => CBlock::Probe { node: None },
             "minecraft:redstone_block" => CBlock::RedstoneBlock { node: None},
             "minecraft:redstone_torch" | "minecraft:redstone_wall_torch" => {
-                //TODO
-                CBlock::Air
+                let s = meta.get("lit").map(|&x| x == "true").unwrap();
+
+                let f = meta
+                    .get("facing")
+                    .map(|&f| Facing::from(f))
+                    .unwrap_or(Facing::Up);
+
+                CBlock::Torch {
+                    lit: s,
+                    facing: f,
+                    node: None
+                }
             }
             "minecraft:repeater" => CBlock::Repeater {
                 powered: false,

@@ -170,6 +170,9 @@ impl From<SchemFormat> for World {
                         CBlock::RedstoneBlock { node } => {
                             *node = Some(blocks.add_node(Block::RedstoneBlock));
                         }
+                        CBlock::Torch { lit, node, .. } => {
+                            *node = Some(blocks.add_node(Block::Torch { lit: *lit }))
+                        }
                     };
                 }
             }
@@ -237,11 +240,18 @@ fn add_connecting_edges(
             (CBlock::Trigger { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+            (CBlock::Trigger { node: Some(idx), ..}, CBlock::Torch { node: Some(n_idx), facing, .. }) if facing == f => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
 
             (CBlock::Solid { strong: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
             }
             (CBlock::Solid { weak: Some(w_idx), strong: Some(s_idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
+                blocks.add_edge(w_idx, n_idx, 0);
+                blocks.add_edge(s_idx, n_idx, 0);
+            }
+            (CBlock::Solid {weak: Some(w_idx), strong: Some(s_idx), ..}, CBlock::Torch { node: Some(n_idx), facing, .. }) if facing == f => {
                 blocks.add_edge(w_idx, n_idx, 0);
                 blocks.add_edge(s_idx, n_idx, 0);
             }
@@ -265,6 +275,23 @@ fn add_connecting_edges(
             (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Repeater { node: Some(n_idx), facing, .. })  if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Torch { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+
+            (CBlock::Torch { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Torch { node: Some(idx), .. }, CBlock::Solid { strong: Some(s_idx), .. }) if f == Facing::Up => {
+                blocks.add_edge(idx, s_idx, 0);
+            }
+            (CBlock::Torch { node: Some(idx), .. }, CBlock::Probe { node: Some(n_idx), .. }) if f == Facing::Up => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Torch { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+
             _ => {}
         };
 
