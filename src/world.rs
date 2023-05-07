@@ -173,6 +173,20 @@ impl From<SchemFormat> for World {
                         CBlock::Torch { lit, node, .. } => {
                             *node = Some(blocks.add_node(Block::Torch { lit: *lit }))
                         }
+                        CBlock::Comparator { signal, mode, node, .. } => {
+                            let rear = blocks.add_node(Block::Redstone(0));
+                            let side = blocks.add_node(Block::Redstone(0));
+                            let comp = blocks.add_node(Block::Comparator {
+                                signal: *signal,
+                                next_signal: *signal,
+                                mode: *mode,
+                                rear,
+                                side,
+                            });
+                            blocks.add_edge(rear, comp, 0);
+                            blocks.add_edge(side, comp, 0);
+                            *node = Some(comp)
+                        }
                     };
                 }
             }
@@ -233,6 +247,18 @@ fn add_connecting_edges(
             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
+                let Block::Comparator { rear, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, rear, 0);
+            }
+            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.rotate_right() || n_facing == f.rotate_left() => {
+                let Block::Comparator { side, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, side, 0);
+            }
 
             (CBlock::Trigger { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
@@ -242,6 +268,12 @@ fn add_connecting_edges(
             }
             (CBlock::Trigger { node: Some(idx), ..}, CBlock::Torch { node: Some(n_idx), facing, .. }) if facing == f => {
                 blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Trigger { node: Some(idx), ..}, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
+                let Block::Comparator { rear, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, rear, 0);
             }
 
             (CBlock::Solid { strong: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
@@ -254,6 +286,13 @@ fn add_connecting_edges(
             (CBlock::Solid {weak: Some(w_idx), strong: Some(s_idx), ..}, CBlock::Torch { node: Some(n_idx), facing, .. }) if facing == f => {
                 blocks.add_edge(w_idx, n_idx, 0);
                 blocks.add_edge(s_idx, n_idx, 0);
+            }
+            (CBlock::Solid {weak: Some(w_idx), strong: Some(s_idx), ..}, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
+                let Block::Comparator { rear, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(w_idx, rear, 0);
+                blocks.add_edge(s_idx, rear, 0);
             }
 
             (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Redstone { node: Some(n_idx), .. }) if facing == f.reverse() => {
@@ -268,6 +307,18 @@ fn add_connecting_edges(
             (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Repeater { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
+                let Block::Comparator { rear, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, rear, 0);
+            }
+            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && (n_facing == f.rotate_right() || n_facing == f.rotate_left()) => {
+                let Block::Comparator { side, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, side, 0);
+            }
 
             (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
@@ -277,6 +328,18 @@ fn add_connecting_edges(
             }
             (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Torch { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
+                let Block::Comparator { rear, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, rear, 0);
+            }
+            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.rotate_right() || n_facing == f.rotate_left() => {
+                let Block::Comparator { side, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, side, 0);
             }
 
             (CBlock::Torch { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
@@ -290,6 +353,31 @@ fn add_connecting_edges(
             }
             (CBlock::Torch { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Torch { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
+                let Block::Comparator { rear, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, rear, 0);
+            }
+
+            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Redstone { node: Some(n_idx), .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Solid { strong: Some(n_idx), .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Probe { node: Some(n_idx), .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Repeater { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
+                let Block::Comparator { rear, ..} = blocks[n_idx] else {
+                    unreachable!();
+                };
+                blocks.add_edge(idx, rear, 0);
             }
 
             _ => {}

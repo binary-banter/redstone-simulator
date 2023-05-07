@@ -3,6 +3,7 @@ use once_cell::sync::Lazy;
 use petgraph::prelude::NodeIndex;
 use std::collections::{HashMap, HashSet};
 use std::ops::Index;
+use crate::block::ComparatorMode;
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
     Lazy::new(|| include_str!("../resources/solid.txt").lines().collect());
@@ -66,6 +67,12 @@ pub enum CBlock {
         facing: Facing,
         node: Option<NodeIndex>,
     },
+    Comparator{
+        signal: u8,
+        facing: Facing,
+        mode: ComparatorMode,
+        node: Option<NodeIndex>,
+    },
     Air,
 }
 
@@ -77,7 +84,7 @@ impl CBlock {
             CBlock::RedstoneBlock{..} => false,
             CBlock::Trigger{..} => false,
             CBlock::Repeater{..} => true,
-            // CBlock::Comparator{..} => true,
+            CBlock::Comparator{..} => true,
             CBlock::Torch{..} => true,
             CBlock::Air => true,
             CBlock::Probe { .. } => false,
@@ -124,6 +131,13 @@ impl CBlock {
                     node: None
                 }
             }
+            "minecraft:comparator" =>
+                CBlock::Comparator{
+                    signal: 0,
+                    facing: Facing::from(meta["facing"]),
+                    mode: ComparatorMode::from(meta["mode"]),
+                    node: None,
+                },
             "minecraft:repeater" => CBlock::Repeater {
                 powered: false,
                 facing: Facing::from(meta["facing"]),

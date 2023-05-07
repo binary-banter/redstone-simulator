@@ -56,8 +56,4 @@ impl Facing {
             Facing::Down => (x, y.wrapping_sub(1), z),
         }
     }
-
-    pub fn back(self, p: (usize, usize, usize)) -> (usize, usize, usize) {
-        self.reverse().front(p)
-    }
 }

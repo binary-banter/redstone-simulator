@@ -1,5 +1,24 @@
+use petgraph::graph::NodeIndex;
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum ComparatorMode {
+    Compare,
+    Subtract,
+}
+
+impl From<&str> for ComparatorMode {
+    fn from(s: &str) -> Self {
+        match s {
+            "compare" => Self::Compare,
+            "subtract" => Self::Subtract,
+            _ => unreachable!(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Block {
+    //TODO unify redstone and solid
     Redstone(u8),
     Solid(u8),
     Repeater {
@@ -16,6 +35,13 @@ pub enum Block {
     Torch {
         /// Whether the torch is currently lit
         lit: bool,
+    },
+    Comparator {
+        signal: u8,
+        next_signal: u8,
+        mode: ComparatorMode,
+        rear: NodeIndex,
+        side: NodeIndex,
     }
 }
 
@@ -27,7 +53,7 @@ impl Block {
             Block::RedstoneBlock => 15,
             Block::Repeater { powered: true, .. } => 15,
             Block::Repeater { powered: false, .. } => 0,
-            // Block::Comparator(v) => v.output_signal(f),
+            Block::Comparator {signal, ..} => signal,
             Block::Torch { lit: true} => 15,
             Block::Torch { lit: false} => 0,
         }

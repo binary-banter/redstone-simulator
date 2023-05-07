@@ -8,7 +8,6 @@ fn steady() {
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
-    println!("{:?}", world.blocks);
     assert!(world.get_probe("probe_1"));
     world.step();
     assert!(!world.get_probe("probe_1"));

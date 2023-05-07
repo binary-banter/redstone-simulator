@@ -1,4 +1,4 @@
-use crate::block::Block;
+use crate::block::{Block, ComparatorMode};
 use crate::world::World;
 use petgraph::prelude::*;
 use petgraph::stable_graph::NodeIndex;
@@ -68,6 +68,18 @@ impl World {
                 Block::Torch { lit, .. } => {
                     (s_new == 0) != *lit
                 }
+                Block::Comparator { signal, next_signal, mode, rear, side } => {
+                    let rear = self.blocks[*rear].output_power();
+                    let side = self.blocks[*side].output_power();
+
+                    *next_signal = match *mode {
+                        ComparatorMode::Compare if side <= rear => rear,
+                        ComparatorMode::Compare => 0,
+                        ComparatorMode::Subtract => rear.saturating_sub(side),
+                    };
+
+                    *signal != *next_signal
+                }
             } {
                 self.updatable.push(idx);
             }
@@ -88,6 +100,10 @@ impl World {
                 },
                 Block::Torch { lit } => {
                     *lit = !*lit;
+                    self.updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
+                }
+                Block::Comparator { signal, next_signal, .. } => {
+                    *signal = *next_signal;
                     self.updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
                 }
                 _ => {}
