@@ -8,14 +8,7 @@ use crate::world::World;
 use std::fs::File;
 
 fn main() {
-    let file = File::open("./schematics/8bit_cpu_1.1.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let world = World::from(File::open("./schematics/8bit_cpu_1.1.schem").unwrap());
 
-    // println!("{}", world);
-    for _ in 0..500 {
-        world.step_with_trigger();
-        for _ in 0..10 {
-            world.step();
-        }
-    }
+    println!("{:?}", world);
 }
