@@ -88,10 +88,10 @@ impl BlockTraitLate for Comparator {
     fn update_late(
         &mut self,
         pos: (usize, usize, usize),
-        world: &WorldData,
+        _world: &WorldData,
         updates: &mut Vec<(usize, usize, usize)>,
     ) {
         self.signal = self.next_signal;
-        updates.extend(world.neighbours(pos))
+        updates.push(self.facing.back(pos))
     }
 }

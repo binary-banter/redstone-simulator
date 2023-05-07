@@ -49,14 +49,6 @@ pub struct Solid {
 }
 
 impl Solid {
-    fn out_nbs(
-        &self,
-        p: (usize, usize, usize),
-        world: &WorldData,
-    ) -> impl Iterator<Item = (usize, usize, usize)> {
-        world.neighbours(p)
-    }
-
     fn input_signal(&self, b: &Block, f: Facing) -> SolidPower {
         match b {
             Block::Solid(_) => Weak(0),
@@ -96,7 +88,16 @@ impl BlockTrait for Solid {
         // if signal strength has changed, update neighbours
         if self.signal != s_new {
             self.signal = s_new;
-            updates.extend(self.out_nbs(p, world));
+            updates.extend(world.neighbours(p).filter(|&p| match world[p] {
+                Block::Solid(_) => false,
+                Block::Redstone(_) => true,
+                Block::RedstoneBlock => false,
+                Block::Trigger(_) => false,
+                Block::Repeater(_) => true,
+                Block::Comparator(_) => true,
+                Block::Torch(_) => true,
+                Block::Air => false,
+            }));
         }
         false
     }

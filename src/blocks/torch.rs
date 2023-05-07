@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockTrait, BlockTraitLate};
+use crate::blocks::{Block, BlockTrait, BlockTraitLate};
 use crate::world_data::WorldData;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -46,6 +46,16 @@ impl BlockTraitLate for Torch {
         updates: &mut Vec<(usize, usize, usize)>,
     ) {
         self.powered = !self.powered;
-        updates.extend(world.neighbours(p));
+
+        updates.extend(world.neighbours(p).filter(|&p| match world[p] {
+            Block::Solid(_) => true,
+            Block::Redstone(_) => true,
+            Block::RedstoneBlock => false,
+            Block::Trigger(_) => false,
+            Block::Repeater(_) => true,
+            Block::Comparator(_) => true,
+            Block::Torch(_) => false,
+            Block::Air => false,
+        }));
     }
 }

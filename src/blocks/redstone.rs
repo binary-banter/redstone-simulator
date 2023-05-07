@@ -64,27 +64,35 @@ impl Redstone {
         }
     }
 
-    fn out_nbs(
-        &self,
+    fn out_nbs<'a>(
+        &'a self,
         (x, y, z): (usize, usize, usize),
-        _world: &WorldData,
-    ) -> impl Iterator<Item = (usize, usize, usize)> {
-        [
-            (x.wrapping_sub(1), y.wrapping_sub(1), z),
+        world: &'a WorldData,
+    ) -> impl Iterator<Item = (usize, usize, usize)> + '_ {
+        let nbs = [
             (x.wrapping_sub(1), y, z),
-            (x.wrapping_sub(1), y.wrapping_add(1), z),
-            (x.wrapping_add(1), y.wrapping_sub(1), z),
             (x.wrapping_add(1), y, z),
-            (x.wrapping_add(1), y.wrapping_add(1), z),
-            (x, y.wrapping_sub(1), z.wrapping_sub(1)),
             (x, y, z.wrapping_sub(1)),
+            (x, y, z.wrapping_add(1)),
+            (x, y.wrapping_sub(1), z),
+        ];
+
+        let extra = [
+            (x.wrapping_sub(1), y.wrapping_add(1), z),
+            (x.wrapping_sub(1), y.wrapping_sub(1), z),
+            (x.wrapping_add(1), y.wrapping_sub(1), z),
+            (x, y.wrapping_sub(1), z.wrapping_sub(1)),
+            (x.wrapping_add(1), y.wrapping_add(1), z),
             (x, y.wrapping_add(1), z.wrapping_sub(1)),
             (x, y.wrapping_sub(1), z.wrapping_add(1)),
-            (x, y, z.wrapping_add(1)),
             (x, y.wrapping_add(1), z.wrapping_add(1)),
-            (x, y.wrapping_sub(1), z),
-        ]
-        .into_iter()
+        ];
+
+        nbs.into_iter().chain(
+            extra
+                .into_iter()
+                .filter(|p| matches!(world[*p], Block::Redstone(_))),
+        )
     }
 
     fn in_nbs(

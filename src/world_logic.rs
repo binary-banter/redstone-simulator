@@ -1,12 +1,22 @@
+use crate::blocks::redstone::Redstone;
 use crate::blocks::trigger::Trigger;
 use crate::blocks::{Block, BlockTrait, BlockTraitLate};
 use crate::world::World;
 use itertools::Itertools;
+use std::cmp::Ordering;
 use std::mem;
 
 impl World {
     pub fn step(&mut self) {
         let mut tick_updatable = mem::take(&mut self.updatable);
+        tick_updatable.sort_by(|&x, &y| match (&self.data[x], &self.data[y]) {
+            (
+                Block::Redstone(Redstone { signal: s1, .. }),
+                Block::Redstone(Redstone { signal: s2, .. }),
+            ) => s1.cmp(s2),
+            (Block::Redstone(_), _) => Ordering::Less,
+            (_, _) => Ordering::Greater,
+        });
 
         while let Some(p) = tick_updatable.pop() {
             let mut block = self.data[p].clone();
