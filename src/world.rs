@@ -202,7 +202,7 @@ impl From<SchemFormat> for World {
                 }
             }
         }
-        
+
         let mut world = World {
             blocks,
             triggers,

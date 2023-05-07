@@ -66,8 +66,16 @@ impl World {
                     rear,
                     side,
                 } => {
-                    let rear = self.blocks.node_weight(*rear).map(|b| b.output_power()).unwrap_or(0);
-                    let side = self.blocks.node_weight(*side).map(|b| b.output_power()).unwrap_or(0);
+                    let rear = self
+                        .blocks
+                        .node_weight(*rear)
+                        .map(|b| b.output_power())
+                        .unwrap_or(0);
+                    let side = self
+                        .blocks
+                        .node_weight(*side)
+                        .map(|b| b.output_power())
+                        .unwrap_or(0);
 
                     *next_signal = match *mode {
                         ComparatorMode::Compare if side <= rear => rear,
