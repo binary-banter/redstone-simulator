@@ -12,6 +12,7 @@ pub enum Block {
         /// Number of ticks passed since a new input signal was detected.
         count: u8,
     },
+    RedstoneBlock,
 }
 
 impl Block {
@@ -19,7 +20,7 @@ impl Block {
         match *self {
             Block::Solid(v) => v,
             Block::Redstone(v) => v,
-            // Block::RedstoneBlock => 15,
+            Block::RedstoneBlock => 15,
             // Block::Trigger(v) => v.output_signal(),
             Block::Repeater { powered: true, .. } => 15,
             Block::Repeater { powered: false, .. } => 0,

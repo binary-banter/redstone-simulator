@@ -64,6 +64,7 @@ impl World {
 
                     *powered != *next_powered
                 }
+                Block::RedstoneBlock => false,
             } {
                 self.updatable.push(idx);
             }

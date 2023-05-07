@@ -58,6 +58,9 @@ pub enum CBlock {
         node: Option<NodeIndex>,
         facing: Facing,
     },
+    RedstoneBlock{
+        node: Option<NodeIndex>
+    },
     Air,
 }
 
@@ -66,7 +69,7 @@ impl CBlock {
         match self {
             CBlock::Solid {..} => false,
             CBlock::Redstone{..} => true,
-            // CBlock::RedstoneBlock => false,
+            CBlock::RedstoneBlock{..} => false,
             CBlock::Trigger{..} => false,
             CBlock::Repeater{..} => true,
             // CBlock::Comparator{..} => true,
@@ -101,6 +104,11 @@ impl CBlock {
             },
             "minecraft:gold_block" | "minecraft:lightning_rod" => CBlock::Trigger { node: None },
             "minecraft:diamond_block" => CBlock::Probe { node: None },
+            "minecraft:redstone_block" => CBlock::RedstoneBlock { node: None},
+            "minecraft:redstone_torch" | "minecraft:redstone_wall_torch" => {
+                //TODO
+                CBlock::Air
+            }
             "minecraft:repeater" => CBlock::Repeater {
                 powered: false,
                 facing: Facing::from(meta["facing"]),

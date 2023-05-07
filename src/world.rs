@@ -5,7 +5,6 @@ use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
 use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 use std::fs::File;
 use crate::facing::Facing;
@@ -168,6 +167,9 @@ impl From<SchemFormat> for World {
                                 count: 0,
                             }));
                         }
+                        CBlock::RedstoneBlock { node } => {
+                            *node = Some(blocks.add_node(Block::RedstoneBlock));
+                        }
                     };
                 }
             }
@@ -183,18 +185,24 @@ impl From<SchemFormat> for World {
         }
 
         //TODO find fixpoint
-        for _ in 0..20 {
-            blocks.retain_nodes(|x, y| {
-                (x.neighbors_directed(y, Outgoing).count() > 0 && x.neighbors_directed(y, Incoming).count() > 0) || probes.contains_left(&y) || triggers.contains(&y)
-            });
-        }
+        // for _ in 0..20 {
+        //     blocks.retain_nodes(|x, y| {
+        //         (x.neighbors_directed(y, Outgoing).count() > 0 && x.neighbors_directed(y, Incoming).count() > 0) || probes.contains_left(&y) || triggers.contains(&y)
+        //     });
+        // }
 
-        World {
+        let updatable = blocks.node_indices().collect();
+
+        let mut world = World {
             blocks,
             triggers,
             probes,
-            updatable: vec![],
-        }
+            updatable,
+        };
+
+        world.step();
+
+        world
     }
 }
 
@@ -222,12 +230,14 @@ fn add_connecting_edges(
             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+
             (CBlock::Trigger { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
             }
             (CBlock::Trigger { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+
             (CBlock::Solid { strong: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
             }
@@ -235,6 +245,7 @@ fn add_connecting_edges(
                 blocks.add_edge(w_idx, n_idx, 0);
                 blocks.add_edge(s_idx, n_idx, 0);
             }
+
             (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Redstone { node: Some(n_idx), .. }) if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
@@ -245,6 +256,13 @@ fn add_connecting_edges(
                 blocks.add_edge(idx, n_idx, 0);
             }
             (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Repeater { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+
+            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Redstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Repeater { node: Some(n_idx), facing, .. })  if facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
             _ => {}
