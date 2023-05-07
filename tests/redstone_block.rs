@@ -4,7 +4,7 @@ use std::fs::File;
 #[test]
 fn side() {
     let file = File::open("./schematics/redstone_block.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(world.get_probe("side"));
     world.step();
@@ -14,7 +14,7 @@ fn side() {
 #[test]
 fn top() {
     let file = File::open("./schematics/redstone_block.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(world.get_probe("top"));
     world.step();
@@ -24,7 +24,7 @@ fn top() {
 #[test]
 fn hug() {
     let file = File::open("./schematics/redstone_block.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("hug"));
     world.step();
@@ -34,7 +34,7 @@ fn hug() {
 #[test]
 fn torch() {
     let file = File::open("./schematics/redstone_block.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("torch"));
     world.step();

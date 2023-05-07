@@ -1,14 +1,13 @@
-mod blocks;
+mod block;
+mod construction_block;
+mod facing;
 mod schematic;
 pub mod world;
 mod world_data;
-pub mod world_logic;
-
-use crate::world::World;
-use std::fs::File;
+mod world_logic;
 
 fn main() {
-    let world = World::from(File::open("./schematics/8bit_cpu_1.1.schem").unwrap());
-
-    println!("{:?}", world);
+    // let world = World::from(File::open("./schematics/8bit_cpu_1.1.schem").unwrap());
+    //
+    // println!("{:?}", world);
 }

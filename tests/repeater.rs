@@ -4,7 +4,7 @@ use std::fs::File;
 #[test]
 fn repeater_1t() {
     let file = File::open("./schematics/repeater_1t.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
@@ -18,7 +18,7 @@ fn repeater_1t() {
 #[test]
 fn repeater_2t() {
     let file = File::open("./schematics/repeater_2t.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
@@ -36,7 +36,7 @@ fn repeater_2t() {
 #[test]
 fn repeater_3t() {
     let file = File::open("./schematics/repeater_3t.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
@@ -58,7 +58,7 @@ fn repeater_3t() {
 #[test]
 fn repeater_4t() {
     let file = File::open("./schematics/repeater_4t.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
@@ -84,7 +84,7 @@ fn repeater_4t() {
 #[test]
 fn extender() {
     let file = File::open("./schematics/repeater_extender.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();

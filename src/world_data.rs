@@ -1,9 +1,8 @@
-use crate::blocks::facing::Facing;
-use crate::blocks::Block;
-use std::fmt::{Display, Formatter};
+use crate::construction_block::CBlock;
+use crate::facing::Facing;
 use std::ops::{Index, IndexMut};
 
-pub struct WorldData(pub Vec<Vec<Vec<Block>>>);
+pub struct WorldData(pub Vec<Vec<Vec<CBlock>>>);
 
 impl WorldData {
     /// Returns the coordinates of neighbouring blocks relative to the given position.
@@ -40,33 +39,18 @@ impl WorldData {
 }
 
 impl Index<(usize, usize, usize)> for WorldData {
-    type Output = Block;
+    type Output = CBlock;
 
     fn index(&self, (x, y, z): (usize, usize, usize)) -> &Self::Output {
         self.0
             .get(x)
             .and_then(|l| l.get(y).and_then(|l| l.get(z)))
-            .unwrap_or(&Block::Air)
+            .unwrap_or(&CBlock::Air)
     }
 }
 
 impl IndexMut<(usize, usize, usize)> for WorldData {
     fn index_mut(&mut self, (x, y, z): (usize, usize, usize)) -> &mut Self::Output {
         &mut self.0[x][y][z]
-    }
-}
-
-impl Display for WorldData {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        for y in (0..self.0[0].len()).rev() {
-            for z in 0..self.0[0][0].len() {
-                for x in 0..self.0.len() {
-                    write!(f, "{}", self.0[x][y][z])?;
-                }
-                writeln!(f)?;
-            }
-            writeln!(f, "-----------------------")?;
-        }
-        Ok(())
     }
 }

@@ -4,7 +4,7 @@ use std::fs::File;
 #[test]
 fn torch() {
     let file = File::open("./schematics/torch.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(world.get_probe("probe_1"));
     world.step_with_trigger();
@@ -18,7 +18,7 @@ fn torch() {
 #[test]
 fn wall_torch() {
     let file = File::open("./schematics/wall_torch.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(world.get_probe("probe_1"));
     world.step_with_trigger();
@@ -32,7 +32,7 @@ fn wall_torch() {
 #[test]
 fn torch_strong() {
     let file = File::open("./schematics/torch_strong.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(world.get_probe("probe_1"));
     world.step_with_trigger();

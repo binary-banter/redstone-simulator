@@ -1,5 +1,7 @@
-mod blocks;
+mod block;
+mod construction_block;
+mod facing;
 mod schematic;
 pub mod world;
 mod world_data;
-pub mod world_logic;
+mod world_logic;

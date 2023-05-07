@@ -1,44 +1,37 @@
-use crate::blocks::Block;
+use crate::block::Block;
+use crate::construction_block::CBlock;
 use crate::schematic::SchemFormat;
+use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
-use petgraph::adj::NodeIndex;
-use petgraph::Graph;
+use petgraph::prelude::StableGraph;
+use petgraph::stable_graph::NodeIndex;
+use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
 use std::fs::File;
 
-#[derive(Debug, Default)]
+use crate::world_data::WorldData;
+
+#[derive(Debug)]
 pub struct World {
-    blocks: Graph<Block, (), petgraph::Directed, u32>,
+    pub blocks: StableGraph<Block, u8, petgraph::Directed, u32>,
+    pub triggers: Vec<NodeIndex>,
+    probes: BiMap<NodeIndex, String>,
+    pub updatable: Vec<NodeIndex>,
 }
 
-impl From<File> for World {
-    fn from(file: File) -> Self {
-        World::from(from_gzip_reader::<File, SchemFormat>(file).unwrap())
-    }
-}
+impl World {
+    fn create_world(format: &SchemFormat) -> WorldData {
+        // Create palette
+        let mut palette = vec![CBlock::Air; format.palette_max as usize];
+        for (id, i) in &format.palette {
+            palette[*i as usize] = CBlock::from_id(id);
+        }
 
-impl From<SchemFormat> for World {
-    fn from(format: SchemFormat) -> Self {
-        let mut palette = vec![(Block::Air, false, false); format.palette_max as usize];
-
-        let mut temp_world =
+        let mut world =
             vec![
-                vec![vec![Block::Air; format.length as usize]; format.height as usize];
+                vec![vec![CBlock::Air; format.length as usize]; format.height as usize];
                 format.width as usize
             ];
-
-        let mut temp_idx = vec![
-            vec![vec![None; format.length as usize]; format.height as usize];
-            format.width as usize
-        ];
-
-        let mut blocks = Graph::<Block, (), petgraph::Directed, u32>::new();
-
-        // construct palette
-        for (id, i) in &format.palette {
-            palette[*i as usize] = Block::from_id(id);
-        }
 
         // construct blocks from palette
         let mut i = 0;
@@ -56,221 +49,177 @@ impl From<SchemFormat> for World {
                         }
                     }
 
-                    let (block, _is_trigger, _is_probe) = &palette[ix];
-                    temp_world[x][y][z] = block.clone();
+                    world[x][y][z] = palette[ix];
                 }
             }
         }
+
+        WorldData(world)
+    }
+
+    pub fn get_probe(&self, name: &str) -> bool {
+        match self.blocks[*self
+            .probes
+            .get_by_right(name)
+            .expect("Probe does not exist.")]
+        {
+            Block::Solid(s) => s > 0,
+            _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
+        }
+    }
+
+    pub fn get_probes(&self) -> HashMap<&str, bool> {
+        self.probes
+            .iter()
+            .map(|(i, s)| {
+                (
+                    &s[..],
+                    match self.blocks[*i] {
+                        Block::Solid(s) => s > 0,
+                        _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
+                    },
+                )
+            })
+            .collect()
+    }
+}
+
+impl From<File> for World {
+    fn from(file: File) -> Self {
+        World::from(from_gzip_reader::<File, SchemFormat>(file).unwrap())
+    }
+}
+
+impl From<SchemFormat> for World {
+    fn from(format: SchemFormat) -> Self {
+        let mut world = Self::create_world(&format);
+        let mut blocks = StableGraph::<Block, u8, petgraph::Directed, u32>::new();
+
+        let mut triggers = Vec::new();
+        let mut probes = BiMap::new();
+
+        let signs: HashMap<_, _> = format
+            .block_entities
+            .iter()
+            .filter_map(|b| {
+                if b.id == "minecraft:sign" {
+                    if let Some(Value::String(s)) = b.props.get("Text1") {
+                        let j: serde_json::Value = serde_json::from_str(s).unwrap();
+                        let t = j
+                            .as_object()
+                            .unwrap()
+                            .get("text")
+                            .unwrap()
+                            .as_str()
+                            .unwrap()
+                            .to_string();
+
+                        return Some((
+                            (b.pos[0] as usize, b.pos[1] as usize, b.pos[2] as usize),
+                            t,
+                        ));
+                    }
+                }
+                None
+            })
+            .collect();
 
         // construct nodes
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    let block = temp_world[x][y][z].clone();
+                    let block = &mut world[(x, y, z)];
 
                     match block {
-                        Block::Air => continue,
-                        _ => {
-                            temp_idx[x][y][z] = Some(blocks.add_node(block));
+                        CBlock::Air => continue,
+                        CBlock::Redstone { signal, node, .. } => {
+                            *node = Some(blocks.add_node(Block::Redstone(*signal)));
                         }
+                        CBlock::Trigger { node } => {
+                            let idx = blocks.add_node(Block::Solid(0));
+                            *node = Some(idx);
+                            triggers.push(idx);
+                        }
+                        CBlock::Probe { node } => {
+                            let idx = blocks.add_node(Block::Solid(0));
+                            *node = Some(idx);
+
+                            let name: String = world
+                                .neighbours((x, y, z))
+                                .into_iter()
+                                .find_map(|nb| signs.get(&nb).cloned())
+                                .unwrap_or(format!("{x},{y},{z}"));
+                            probes.insert(idx, name);
+                        }
+                        CBlock::Solid { weak, strong } => {
+                            *weak = Some(blocks.add_node(Block::Solid(0)));
+                            *strong = Some(blocks.add_node(Block::Solid(0)));
+
+                        },
                     };
                 }
             }
         }
 
-        let neighbours = |x: usize, y: usize, z: usize| {
-            let mut vec = Vec::new();
-
-            if x != 0 {
-                vec.push((x.wrapping_sub(1), y, z));
-            }
-            if x != format.width as usize - 1 {
-                (x.wrapping_add(1), y, z);
-            }
-            if y != 0 {
-                vec.push((x, y.wrapping_sub(1), z));
-            }
-            if y != format.height as usize - 1 {
-                vec.push((x, y.wrapping_add(1), z));
-            }
-            if z != 0 {
-                vec.push((x, y, z.wrapping_sub(1)));
-            }
-            if z != format.length as usize - 1 {
-                vec.push((x, y, z.wrapping_add(1)));
-            }
-
-            vec.into_iter()
-        };
-
         // construct edges
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    if let Some(idx) = temp_idx[x][y][z] {
-                        for n_idx in neighbours(x, y, z).filter_map(|(x, y, z)| temp_idx[x][y][z]) {
-                            match (&blocks[idx], &blocks[n_idx]) {
-                                (Block::Redstone(_), Block::Redstone(_))
-                                | (Block::Redstone(_), Block::Solid(_))
-                                | (Block::Redstone(_), Block::Repeater(_))
-                                | (Block::Redstone(_), Block::Comparator(_))
-                                | (Block::Solid(_), Block::Redstone(_))
-                                | (Block::Solid(_), Block::Repeater(_))
-                                | (Block::Solid(_), Block::Comparator(_))
-                                | (Block::Solid(_), Block::Torch(_))
-                                | (Block::Repeater(_), Block::Redstone(_))
-                                | (Block::Repeater(_), Block::Solid(_))
-                                | (Block::Repeater(_), Block::Repeater(_))
-                                | (Block::Repeater(_), Block::Comparator(_))
-                                | (Block::Comparator(_), Block::Redstone(_))
-                                | (Block::Comparator(_), Block::Solid(_))
-                                | (Block::Comparator(_), Block::Repeater(_))
-                                | (Block::Comparator(_), Block::Comparator(_))
-                                | (Block::Torch(_), Block::Redstone(_))
-                                | (Block::Torch(_), Block::Solid(_))
-                                | (Block::Torch(_), Block::Repeater(_))
-                                | (Block::Torch(_), Block::Comparator(_))
-                                | (Block::Trigger(_), Block::Redstone(_))
-                                | (Block::Trigger(_), Block::Repeater(_))
-                                | (Block::Trigger(_), Block::Comparator(_))
-                                | (Block::Trigger(_), Block::Torch(_)) => {
-                                    blocks.add_edge(idx, n_idx, ());
-                                }
-                                (_, _) => {}
-                            }
-                        }
-                    }
+                    add_connecting_edges((x, y, z), &world, &mut blocks);
                 }
             }
         }
 
-        World { blocks }
+        //TODO find fixpoint
+        for _ in 0..20 {
+            blocks.retain_nodes(|x, y| {
+                // not a probe and no outgoing
+                let c1 =
+                    !probes.contains_left(&y) && x.neighbors_directed(y, Outgoing).count() == 0;
+                // not a trigger and no incoming
+                let c2 = !triggers.contains(&y) && x.neighbors_directed(y, Incoming).count() == 0;
+                !(c1 || c2)
+            });
+        }
+
+        World {
+            blocks,
+            triggers,
+            probes,
+            updatable: vec![],
+        }
     }
 }
 
-impl World {
-    // fn from_format(format: &SchemFormat) -> Self {
-    //     let mut palette = vec![(Block::Air, false, false); format.palette_max as usize];
-    //
-    //     for (id, i) in &format.palette {
-    //         palette[*i as usize] = Block::from_id(id);
-    //     }
-    //
-    //     let mut world = World::new_empty(
-    //         format.width as usize,
-    //         format.height as usize,
-    //         format.length as usize,
-    //     );
-    //
-    //     let signs: HashMap<_, _> = format
-    //         .block_entities
-    //         .iter()
-    //         .filter_map(|b| {
-    //             if b.id == "minecraft:sign" {
-    //                 if let Some(Value::String(s)) = b.props.get("Text1") {
-    //                     let j: serde_json::Value = serde_json::from_str(s).unwrap();
-    //                     let t = j
-    //                         .as_object()
-    //                         .unwrap()
-    //                         .get("text")
-    //                         .unwrap()
-    //                         .as_str()
-    //                         .unwrap()
-    //                         .to_string();
-    //
-    //                     return Some((
-    //                         (b.pos[0] as usize, b.pos[1] as usize, b.pos[2] as usize),
-    //                         t,
-    //                     ));
-    //                 }
-    //             }
-    //             None
-    //         })
-    //         .collect();
-    //
-    //     let mut i = 0;
-    //     for y in 0..format.height as usize {
-    //         for z in 0..format.length as usize {
-    //             for x in 0..format.width as usize {
-    //                 let mut ix: usize = 0;
-    //                 for j in 0.. {
-    //                     let next = format.block_data[i];
-    //                     ix |= (next as usize & 0b0111_1111) << (j * 7);
-    //                     i += 1;
-    //
-    //                     if next >= 0 {
-    //                         break;
-    //                     }
-    //                 }
-    //
-    //                 let (block, is_trigger, is_probe) = &palette[ix];
-    //                 world.data[(x, y, z)] = block.clone();
-    //                 if *is_trigger {
-    //                     world.triggers.push((x, y, z));
-    //                 }
-    //                 if *is_probe {
-    //                     let name: String = world
-    //                         .data
-    //                         .neighbours((x, y, z))
-    //                         .into_iter()
-    //                         .find_map(|nb| signs.get(&nb).cloned())
-    //                         .unwrap_or(format!("{x},{y},{z}"));
-    //                     world.probes.insert((x, y, z), name);
-    //                 }
-    //
-    //                 world.updatable.push((x, y, z));
-    //             }
-    //         }
-    //     }
-    //
-    //     world.step();
-    //
-    //     world
-    // }
-    //
-    // pub fn get_probe(&self, name: &str) -> bool {
-    //     match self.data[*self
-    //         .probes
-    //         .get_by_right(name)
-    //         .expect("Probe does not exist.")]
-    //     {
-    //         Block::Solid(Solid { signal: s }) => <SolidPower as Into<u8>>::into(s) > 0,
-    //         _ => unreachable!(),
-    //     }
-    // }
-    //
-    // pub fn get_probes(&self) -> HashMap<&str, bool> {
-    //     self.probes
-    //         .iter()
-    //         .map(|(&(x, y, z), s)| {
-    //             (
-    //                 &s[..],
-    //                 match self.data[(x, y, z)] {
-    //                     Block::Solid(Solid {
-    //                         signal: SolidPower::Weak(0) | SolidPower::Strong(0),
-    //                     }) => false,
-    //                     Block::Solid(_) => true,
-    //                     _ => unreachable!(),
-    //                 },
-    //             )
-    //         })
-    //         .collect()
-    // }
-    //
-    // pub fn display_probes(&self) {
-    //     for (&(x, y, z), name) in &self.probes {
-    //         match self.data[(x, y, z)] {
-    //             Block::Solid(Solid { signal: s }) => {
-    //                 println!("Probe '{name}': {}", <SolidPower as Into<u8>>::into(s))
-    //             }
-    //             _ => unreachable!(),
-    //         }
-    //     }
-    // }
-}
+fn add_connecting_edges(
+    p: (usize, usize, usize),
+    world: &WorldData,
+    blocks: &mut StableGraph<Block, u8, petgraph::Directed, u32>,
+) {
+    let cblock = world[p];
+    for (np, _) in world.neighbours_and_facings(p) {
+        let n_cblock = world[np];
 
-// impl Display for World {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "{}", self.data)
-//     }
-// }
+        // regular connections
+        match (cblock, n_cblock) {
+            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 1);
+            }
+            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Solid { weak: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Probe { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Trigger { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Solid { strong: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            _ => {}
+        };
+
+        // redstone up/down connections
+    }
+}

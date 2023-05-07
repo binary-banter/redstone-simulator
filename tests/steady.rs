@@ -4,10 +4,11 @@ use std::fs::File;
 #[test]
 fn steady() {
     let file = File::open("./schematics/steady_state.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     assert!(!world.get_probe("probe_1"));
     world.step_with_trigger();
+    println!("{:?}", world.blocks);
     assert!(world.get_probe("probe_1"));
     world.step();
     assert!(!world.get_probe("probe_1"));
@@ -16,7 +17,7 @@ fn steady() {
 #[test]
 fn connectivity() {
     let file = File::open("./schematics/redstone_connectivity.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     world.step_with_trigger();
 
@@ -38,7 +39,7 @@ fn connectivity() {
 #[test]
 fn indirect() {
     let file = File::open("./schematics/indirect.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     world.step_with_trigger();
 
@@ -49,7 +50,7 @@ fn indirect() {
 #[test]
 fn power_block_with_1_strength() {
     let file = File::open("./schematics/power_block_with_1_strength.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     world.step_with_trigger();
 
