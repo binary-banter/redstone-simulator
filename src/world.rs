@@ -62,7 +62,7 @@ impl World {
             .get_by_right(name)
             .expect("Probe does not exist.")]
         {
-            Block::Solid(s) => s > 0,
+            Block::Redstone(s) => s > 0,
             _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
         }
     }
@@ -74,7 +74,7 @@ impl World {
                 (
                     &s[..],
                     match self.blocks[*i] {
-                        Block::Solid(s) => s > 0,
+                        Block::Redstone(s) => s > 0,
                         _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
                     },
                 )
@@ -135,12 +135,12 @@ impl From<SchemFormat> for World {
                             *node = Some(blocks.add_node(Block::Redstone(*signal)));
                         }
                         CBlock::Trigger { node } => {
-                            let idx = blocks.add_node(Block::Solid(0));
+                            let idx = blocks.add_node(Block::Redstone(0));
                             *node = Some(idx);
                             triggers.push(idx);
                         }
                         CBlock::Probe { node } => {
-                            let idx = blocks.add_node(Block::Solid(0));
+                            let idx = blocks.add_node(Block::Redstone(0));
                             *node = Some(idx);
 
                             let name: String = world
@@ -151,8 +151,8 @@ impl From<SchemFormat> for World {
                             probes.insert(idx, name);
                         }
                         CBlock::Solid { weak, strong } => {
-                            *weak = Some(blocks.add_node(Block::Solid(0)));
-                            *strong = Some(blocks.add_node(Block::Solid(0)));
+                            *weak = Some(blocks.add_node(Block::Redstone(0)));
+                            *strong = Some(blocks.add_node(Block::Redstone(0)));
                         }
                         CBlock::Repeater {
                             powered,

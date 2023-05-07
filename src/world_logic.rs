@@ -33,13 +33,6 @@ impl World {
                     }
                     false
                 }
-                Block::Solid(s) => {
-                    if *s != s_new {
-                        *s = s_new;
-                        tick_updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
-                    }
-                    false
-                }
                 Block::Repeater {
                     powered,
                     next_powered,
@@ -114,7 +107,7 @@ impl World {
     pub fn step_with_trigger(&mut self) {
         // put redstone power on triggers
         for &t in &self.triggers {
-            self.blocks[t] = Block::Solid(15);
+            self.blocks[t] = Block::Redstone(15);
             for n in self.blocks.neighbors_directed(t, Outgoing) {
                 self.updatable.push(n);
             }
@@ -124,7 +117,7 @@ impl World {
 
         // take redstone power off triggers
         for &t in &self.triggers {
-            self.blocks[t] = Block::Solid(0);
+            self.blocks[t] = Block::Redstone(0);
             for n in self.blocks.neighbors_directed(t, Outgoing) {
                 self.updatable.push(n);
             }

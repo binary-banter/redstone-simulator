@@ -18,9 +18,7 @@ impl From<&str> for ComparatorMode {
 
 #[derive(Clone, Debug)]
 pub enum Block {
-    //TODO unify redstone and solid
     Redstone(u8),
-    Solid(u8),
     Repeater {
         /// Whether the repeater is currently powered
         powered: bool,
@@ -48,7 +46,6 @@ pub enum Block {
 impl Block {
     pub fn output_power(&self) -> u8 {
         match *self {
-            Block::Solid(v) => v,
             Block::Redstone(v) => v,
             Block::RedstoneBlock => 15,
             Block::Repeater { powered: true, .. } => 15,

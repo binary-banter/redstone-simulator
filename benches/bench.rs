@@ -4,7 +4,7 @@ use std::fs::File;
 
 fn redstone_stress(c: &mut Criterion) {
     let file = File::open("./schematics/stress.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     c.bench_function("redstone_stress", |b| {
         b.iter(|| {
@@ -16,7 +16,7 @@ fn redstone_stress(c: &mut Criterion) {
 
 fn cpu(c: &mut Criterion) {
     let file = File::open("./schematics/8bit_cpu_1.1.schem").unwrap();
-    let mut world = World::from_file(&file);
+    let mut world = World::from(file);
 
     c.bench_function("cpu", |b| {
         b.iter(|| {
