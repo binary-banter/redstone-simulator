@@ -253,18 +253,21 @@ fn add_connecting_edges(
         // redstone up/down connections
         if let CBlock::Redstone { node: Some(idx), .. } = cblock {
             let top = (p.0, p.1.wrapping_add(1), p.2);
+            let bottom = (p.0, p.1.wrapping_sub(1), p.2);
             for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
                 let side = f.front(p);
                 let side_down = (side.0, side.1.wrapping_sub(1), side.2);
                 let side_up = (side.0, side.1.wrapping_add(1), side.2);
 
-                match [side_down, side, side_up, top].map(|n| &world[n]) {
-                    [CBlock::Redstone{ node: Some(n_idx) , ..}, b, _, _] if b.is_transparent() => {
+                match [side_down, side, side_up, bottom, top].map(|n| &world[n]) {
+                    //Down
+                    [CBlock::Redstone{ node: Some(n_idx) , ..}, b1, _, b2, _] if b1.is_transparent() && !b2.is_transparent() => {
                         blocks.add_edge(idx, *n_idx, 1);
-                    }
-                    [_, b1, CBlock::Redstone { node: Some(n_idx), .. }, b2] if !b1.is_transparent() && b2.is_transparent() => {
+                    },
+                    //Up
+                    [_, _, CBlock::Redstone { node: Some(n_idx), .. }, _, b2] if b2.is_transparent() => {
                         blocks.add_edge(idx, *n_idx, 1);
-                    }
+                    },
                     _ => {}
                 }
             }
