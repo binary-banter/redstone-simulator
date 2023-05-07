@@ -8,6 +8,7 @@ use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 use std::fs::File;
+use crate::facing::Facing;
 
 use crate::world_data::WorldData;
 
@@ -184,12 +185,7 @@ impl From<SchemFormat> for World {
         //TODO find fixpoint
         for _ in 0..20 {
             blocks.retain_nodes(|x, y| {
-                // not a probe and no outgoing
-                let c1 =
-                    !probes.contains_left(&y) && x.neighbors_directed(y, Outgoing).count() == 0;
-                // not a trigger and no incoming
-                let c2 = !triggers.contains(&y) && x.neighbors_directed(y, Incoming).count() == 0;
-                !(c1 || c2)
+                (x.neighbors_directed(y, Outgoing).count() > 0 && x.neighbors_directed(y, Incoming).count() > 0) || probes.contains_left(&y) || triggers.contains(&y)
             });
         }
 
@@ -217,10 +213,10 @@ fn add_connecting_edges(
             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 1);
             }
-            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Solid { weak: Some(n_idx), .. }) => {
+            (CBlock::Redstone { node: Some(idx), connections, .. }, CBlock::Solid { weak: Some(n_idx), .. }) if connections[f] => {
                 blocks.add_edge(idx, n_idx, 0);
             }
-            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Probe { node: Some(n_idx), .. }) => {
+            (CBlock::Redstone { node: Some(idx), connections, .. }, CBlock::Probe { node: Some(n_idx), .. }) if connections[f] => {
                 blocks.add_edge(idx, n_idx, 0);
             }
             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
@@ -255,5 +251,24 @@ fn add_connecting_edges(
         };
 
         // redstone up/down connections
+        if let CBlock::Redstone { node: Some(idx), .. } = cblock {
+            let top = (p.0, p.1.wrapping_add(1), p.2);
+            for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
+                let side = f.front(p);
+                let side_down = (side.0, side.1.wrapping_sub(1), side.2);
+                let side_up = (side.0, side.1.wrapping_add(1), side.2);
+
+                match [side_down, side, side_up, top].map(|n| &world[n]) {
+                    [CBlock::Redstone{ node: Some(n_idx) , ..}, b, _, _] if b.is_transparent() => {
+                        blocks.add_edge(idx, *n_idx, 1);
+                    }
+                    [_, b1, CBlock::Redstone { node: Some(n_idx), .. }, b2] if !b1.is_transparent() && b2.is_transparent() => {
+                        blocks.add_edge(idx, *n_idx, 1);
+                    }
+                    _ => {}
+                }
+            }
+        }
+
     }
 }

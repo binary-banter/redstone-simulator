@@ -2,6 +2,7 @@ use crate::facing::Facing;
 use once_cell::sync::Lazy;
 use petgraph::prelude::NodeIndex;
 use std::collections::{HashMap, HashSet};
+use std::ops::Index;
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
     Lazy::new(|| include_str!("../resources/solid.txt").lines().collect());
@@ -12,10 +13,33 @@ static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 });
 
 #[derive(Debug, Copy, Clone, PartialEq)]
+pub struct Connections {
+    pub north: bool,
+    pub east: bool,
+    pub south: bool,
+    pub west: bool,
+}
+
+impl Index<Facing> for Connections {
+    type Output = bool;
+
+    fn index(&self, index: Facing) -> &Self::Output {
+        match index {
+            Facing::North => &self.north,
+            Facing::East => &self.east,
+            Facing::South => &self.south,
+            Facing::West => &self.west,
+            Facing::Up => &false,
+            Facing::Down => &true,
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum CBlock {
     Redstone {
         signal: u8,
-        connections: [bool; 4],
+        connections: Connections,
         node: Option<NodeIndex>,
     },
     Solid {
@@ -38,6 +62,20 @@ pub enum CBlock {
 }
 
 impl CBlock {
+    pub fn is_transparent(&self) -> bool {
+        match self {
+            CBlock::Solid {..} => false,
+            CBlock::Redstone{..} => true,
+            // CBlock::RedstoneBlock => false,
+            CBlock::Trigger{..} => false,
+            CBlock::Repeater{..} => true,
+            // CBlock::Comparator{..} => true,
+            // CBlock::Torch{..} => true,
+            CBlock::Air => true,
+            CBlock::Probe { .. } => false,
+        }
+    }
+
     /// Returns (`Block`, `is_trigger`, `is_probe`)
     pub fn from_id(id: &str) -> Self {
         let (id, meta) = id
@@ -53,12 +91,12 @@ impl CBlock {
         match id {
             "minecraft:redstone_wire" => CBlock::Redstone {
                 signal: meta["power"].parse().unwrap(),
-                connections: [
-                    meta["north"] != "none",
-                    meta["east"] != "none",
-                    meta["south"] != "none",
-                    meta["west"] != "none",
-                ],
+                connections: Connections {
+                    north: meta["north"] != "none",
+                    east: meta["east"] != "none",
+                    south: meta["south"] != "none",
+                    west: meta["west"] != "none",
+                },
                 node: None,
             },
             "minecraft:gold_block" | "minecraft:lightning_rod" => CBlock::Trigger { node: None },
