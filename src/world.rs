@@ -27,11 +27,10 @@ impl World {
             palette[*i as usize] = CBlock::from_id(id);
         }
 
-        let mut world =
-            vec![
-                vec![vec![CBlock::Air; format.length as usize]; format.height as usize];
-                format.width as usize
-            ];
+        let mut world = vec![
+            vec![vec![CBlock::Air; format.length as usize]; format.height as usize];
+            format.width as usize
+        ];
 
         // construct blocks from palette
         let mut i = 0;
@@ -154,8 +153,20 @@ impl From<SchemFormat> for World {
                         CBlock::Solid { weak, strong } => {
                             *weak = Some(blocks.add_node(Block::Solid(0)));
                             *strong = Some(blocks.add_node(Block::Solid(0)));
-
-                        },
+                        }
+                        CBlock::Repeater {
+                            powered,
+                            delay,
+                            node,
+                            ..
+                        } => {
+                            *node = Some(blocks.add_node(Block::Repeater {
+                                powered: *powered,
+                                next_powered: *powered,
+                                delay: *delay,
+                                count: 0,
+                            }));
+                        }
                     };
                 }
             }
@@ -197,10 +208,11 @@ fn add_connecting_edges(
     blocks: &mut StableGraph<Block, u8, petgraph::Directed, u32>,
 ) {
     let cblock = world[p];
-    for (np, _) in world.neighbours_and_facings(p) {
+    for (np, f) in world.neighbours_and_facings(p) {
         let n_cblock = world[np];
 
         // regular connections
+        #[rustfmt::skip]
         match (cblock, n_cblock) {
             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 1);
@@ -211,10 +223,32 @@ fn add_connecting_edges(
             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Probe { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
             (CBlock::Trigger { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
                 blocks.add_edge(idx, n_idx, 0);
             }
+            (CBlock::Trigger { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
             (CBlock::Solid { strong: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Solid { weak: Some(w_idx), strong: Some(s_idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
+                blocks.add_edge(w_idx, n_idx, 0);
+                blocks.add_edge(s_idx, n_idx, 0);
+            }
+            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Redstone { node: Some(n_idx), .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Solid { strong: Some(n_idx), .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Probe { node: Some(n_idx), .. }) if facing == f.reverse() => {
+                blocks.add_edge(idx, n_idx, 0);
+            }
+            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Repeater { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
                 blocks.add_edge(idx, n_idx, 0);
             }
             _ => {}

@@ -1,6 +1,7 @@
+use crate::facing::Facing;
 use once_cell::sync::Lazy;
-use std::collections::{HashMap, HashSet};
 use petgraph::prelude::NodeIndex;
+use std::collections::{HashMap, HashSet};
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
     Lazy::new(|| include_str!("../resources/solid.txt").lines().collect());
@@ -12,10 +13,27 @@ static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum CBlock {
-    Redstone { signal: u8, connections: [bool; 4], node: Option<NodeIndex> },
-    Solid { weak: Option<NodeIndex>, strong: Option<NodeIndex> },
-    Trigger { node: Option<NodeIndex> },
-    Probe { node: Option<NodeIndex> },
+    Redstone {
+        signal: u8,
+        connections: [bool; 4],
+        node: Option<NodeIndex>,
+    },
+    Solid {
+        weak: Option<NodeIndex>,
+        strong: Option<NodeIndex>,
+    },
+    Trigger {
+        node: Option<NodeIndex>,
+    },
+    Probe {
+        node: Option<NodeIndex>,
+    },
+    Repeater {
+        powered: bool,
+        delay: u8,
+        node: Option<NodeIndex>,
+        facing: Facing,
+    },
     Air,
 }
 
@@ -43,13 +61,14 @@ impl CBlock {
                 ],
                 node: None,
             },
-            "minecraft:gold_block" | "minecraft:lightning_rod" => CBlock::Trigger {
+            "minecraft:gold_block" | "minecraft:lightning_rod" => CBlock::Trigger { node: None },
+            "minecraft:diamond_block" => CBlock::Probe { node: None },
+            "minecraft:repeater" => CBlock::Repeater {
+                powered: false,
+                facing: Facing::from(meta["facing"]),
+                delay: meta["delay"].parse().unwrap(),
                 node: None,
             },
-            "minecraft:diamond_block" => CBlock::Probe {
-                node: None,
-            },
-
             id if SOLID_BLOCKS.contains(id) => CBlock::Solid {
                 weak: None,
                 strong: None,
