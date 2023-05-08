@@ -3,11 +3,12 @@ use crate::blocks::facing::Facing;
 use crate::blocks::probe::CProbe;
 use crate::blocks::redstone::CRedstone;
 use crate::blocks::solid::CSolid;
-use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
+use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
 use crate::world::RedGraph;
+use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
+use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
-use bimap::BiMap;
 
 #[derive(Clone, Debug)]
 pub struct Repeater {
@@ -105,8 +106,66 @@ impl BlockConnections for CRepeater {
         };
     }
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
-        todo!()
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex),
+    {
+        self.node = Some(blocks.add_node(Block::Repeater(Repeater {
+            powered: self.powered,
+            next_powered: self.powered,
+            delay: self.delay,
+            count: 0,
+        })))
+    }
+}
+
+impl Updatable for Repeater {
+    fn update(
+        &mut self,
+        idx: NodeIndex,
+        _tick_updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) -> bool {
+        let s_new = blocks
+            .edges_directed(idx, Incoming)
+            .map(|edge| {
+                blocks[edge.source()]
+                    .output_power()
+                    .saturating_sub(*edge.weight())
+            })
+            .any(|s| s > 0);
+
+        // if signal strength has changed, update neighbours
+        match (s_new, self.next_powered == s_new, self.count == 0) {
+            // Signal changed upwards: update next signal and reset count.
+            (true, false, _) => {
+                self.next_powered = s_new;
+                self.count = 0;
+            }
+            // Signal changed downward, and is not propagating already: update next signal.
+            (false, false, true) => {
+                self.next_powered = s_new;
+            }
+            // Other cases.
+            (_, _, _) => {}
+        };
+
+        self.powered != self.next_powered
+    }
+
+    fn late_updatable(
+        &mut self,
+        idx: NodeIndex,
+        updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) {
+        self.count += 1;
+        if self.count == self.delay {
+            self.powered = self.next_powered;
+            self.count = 0;
+            updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+        }
     }
 }
 

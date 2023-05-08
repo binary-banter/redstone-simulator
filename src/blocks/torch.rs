@@ -4,11 +4,12 @@ use crate::blocks::probe::CProbe;
 use crate::blocks::redstone::CRedstone;
 use crate::blocks::repeater::CRepeater;
 use crate::blocks::solid::CSolid;
-use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
+use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
 use crate::world::RedGraph;
+use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
+use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
-use bimap::BiMap;
 
 #[derive(Clone, Debug)]
 pub struct Torch {
@@ -82,8 +83,43 @@ impl BlockConnections for CTorch {
         };
     }
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
-        todo!()
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex),
+    {
+        self.node = Some(blocks.add_node(Block::Torch(Torch { lit: self.lit })));
+    }
+}
+
+impl Updatable for Torch {
+    fn update(
+        &mut self,
+        idx: NodeIndex,
+        _tick_updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) -> bool {
+        let s_new = blocks
+            .edges_directed(idx, Incoming)
+            .map(|edge| {
+                blocks[edge.source()]
+                    .output_power()
+                    .saturating_sub(*edge.weight())
+            })
+            .any(|s| s > 0);
+
+        s_new == self.lit
+    }
+
+    fn late_updatable(
+        &mut self,
+        idx: NodeIndex,
+        updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) {
+        self.lit = !self.lit;
+
+        updatable.extend(blocks.neighbors_directed(idx, Outgoing));
     }
 }
 

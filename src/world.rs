@@ -1,7 +1,7 @@
 use crate::blocks::{Block, BlockConnections};
 use crate::blocks::{CBlock, OutputPower};
 use crate::schematic::SchemFormat;
-use crate::world_data::WorldData;
+use crate::world_data::{neighbours, neighbours_and_facings, WorldData};
 use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
 use petgraph::prelude::StableGraph;
@@ -127,7 +127,20 @@ impl From<SchemFormat> for World {
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    world[(x, y, z)].add_node(&mut blocks, &mut probes, &mut triggers, &signs);
+                    let mut add_probe = |idx: NodeIndex| {
+                        let name = neighbours((x, y, z))
+                            .into_iter()
+                            .find_map(|nb| signs.get(&nb).cloned())
+                            .unwrap_or(format!("{x},{y},{z}"));
+
+                        probes.insert(idx, name);
+                    };
+
+                    let mut add_trigger = |idx: NodeIndex| {
+                        triggers.push(idx);
+                    };
+
+                    world[(x, y, z)].add_node(&mut blocks, &mut add_probe, &mut add_trigger);
                 }
             }
         }
@@ -137,7 +150,7 @@ impl From<SchemFormat> for World {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
                     let cblock = world[(x, y, z)];
-                    for (np, f) in world.neighbours_and_facings((x, y, z)) {
+                    for (np, f) in neighbours_and_facings((x, y, z)) {
                         cblock.add_edge(&world[np], f, &mut blocks);
                     }
 

@@ -9,11 +9,8 @@ use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
 use crate::world::RedGraph;
 use once_cell::sync::Lazy;
-use petgraph::stable_graph::StableGraph;
-use petgraph::Directed;
-use std::collections::{HashMap, HashSet};
-use bimap::BiMap;
 use petgraph::stable_graph::NodeIndex;
+use std::collections::{HashMap, HashSet};
 
 mod comparator;
 pub mod facing;
@@ -76,7 +73,10 @@ impl OutputPower for Block {
 pub trait BlockConnections {
     fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph);
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>);
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex);
 }
 
 impl BlockConnections for CBlock {
@@ -85,7 +85,7 @@ impl BlockConnections for CBlock {
             CBlock::Redstone(v) => v.add_edge(target, facing, blocks),
             CBlock::Solid(v) => v.add_edge(target, facing, blocks),
             CBlock::Trigger(v) => v.add_edge(target, facing, blocks),
-            CBlock::Probe(_) => {},
+            CBlock::Probe(_) => {}
             CBlock::Repeater(v) => v.add_edge(target, facing, blocks),
             CBlock::RedstoneBlock(v) => v.add_edge(target, facing, blocks),
             CBlock::Torch(v) => v.add_edge(target, facing, blocks),
@@ -94,16 +94,20 @@ impl BlockConnections for CBlock {
         }
     }
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex),
+    {
         match self {
-            CBlock::Redstone(v) => v.add_node(blocks, probes, triggers, signs),
-            CBlock::Solid(v) => v.add_node(blocks, probes, triggers, signs),
-            CBlock::Trigger(v) => v.add_node(blocks, probes, triggers, signs),
-            CBlock::Probe(v) => v.add_node(blocks, probes, triggers, signs),
-            CBlock::Repeater(v) => v.add_node(blocks, probes, triggers, signs),
-            CBlock::RedstoneBlock(v) => v.add_node(blocks, probes, triggers, signs),
-            CBlock::Torch(v) => v.add_node(blocks, probes, triggers, signs),
-            CBlock::Comparator(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::Redstone(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::Solid(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::Trigger(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::Probe(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::Repeater(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::RedstoneBlock(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::Torch(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::Comparator(v) => v.add_node(blocks, add_probe, add_trigger),
             CBlock::Air => {}
         }
     }
@@ -138,18 +142,74 @@ impl From<&str> for CBlock {
     }
 }
 
-impl CBlock {
-    pub fn is_transparent(&self) -> bool {
+// impl CBlock {
+//     pub fn is_transparent(&self) -> bool {
+//         match self {
+//             CBlock::Solid { .. } => false,
+//             CBlock::Redstone { .. } => true,
+//             CBlock::RedstoneBlock { .. } => false,
+//             CBlock::Trigger { .. } => false,
+//             CBlock::Repeater { .. } => true,
+//             CBlock::Comparator { .. } => true,
+//             CBlock::Torch { .. } => true,
+//             CBlock::Air => true,
+//             CBlock::Probe { .. } => false,
+//         }
+//     }
+// }
+
+pub trait Updatable {
+    fn update(
+        &mut self,
+        idx: NodeIndex,
+        tick_updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) -> bool;
+
+    fn late_updatable(
+        &mut self,
+        idx: NodeIndex,
+        updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    );
+}
+
+impl Updatable for Block {
+    fn update(
+        &mut self,
+        idx: NodeIndex,
+        tick_updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) -> bool {
         match self {
-            CBlock::Solid { .. } => false,
-            CBlock::Redstone { .. } => true,
-            CBlock::RedstoneBlock { .. } => false,
-            CBlock::Trigger { .. } => false,
-            CBlock::Repeater { .. } => true,
-            CBlock::Comparator { .. } => true,
-            CBlock::Torch { .. } => true,
-            CBlock::Air => true,
-            CBlock::Probe { .. } => false,
+            Block::Redstone(v) => v.update(idx, tick_updatable, blocks),
+            Block::Repeater(v) => v.update(idx, tick_updatable, blocks),
+            Block::RedstoneBlock => false,
+            Block::Torch(v) => v.update(idx, tick_updatable, blocks),
+            Block::Comparator(v) => v.update(idx, tick_updatable, blocks),
         }
     }
+
+    fn late_updatable(
+        &mut self,
+        idx: NodeIndex,
+        updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) {
+        match self {
+            Block::Redstone(_) => {}
+            Block::Repeater(v) => v.late_updatable(idx, updatable, blocks),
+            Block::RedstoneBlock => {}
+            Block::Torch(v) => v.late_updatable(idx, updatable, blocks),
+            Block::Comparator(v) => v.late_updatable(idx, updatable, blocks),
+        }
+    }
+}
+
+pub fn redstone_min() -> Block {
+    Block::Redstone(Redstone::default())
+}
+
+pub fn redstone_max() -> Block {
+    Block::Redstone(Redstone::max())
 }

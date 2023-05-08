@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use bimap::BiMap;
 use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::CRedstone;
@@ -62,7 +60,11 @@ impl BlockConnections for CRedstoneBlock {
         };
     }
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
-        todo!()
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex),
+    {
+        self.node = Some(blocks.add_node(Block::RedstoneBlock));
     }
 }

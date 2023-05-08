@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-use bimap::BiMap;
 use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
-use crate::blocks::redstone::CRedstone;
+use crate::blocks::redstone::{CRedstone, Redstone};
 use crate::blocks::repeater::CRepeater;
 use crate::blocks::torch::CTorch;
 use crate::blocks::{Block, BlockConnections, CBlock};
@@ -53,7 +51,13 @@ impl BlockConnections for CTrigger {
         };
     }
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
-        todo!()
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex),
+    {
+        let idx = blocks.add_node(Block::Redstone(Redstone::default()));
+        add_trigger(idx);
+        self.node = Some(idx);
     }
 }

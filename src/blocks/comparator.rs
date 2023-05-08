@@ -3,11 +3,11 @@ use crate::blocks::probe::CProbe;
 use crate::blocks::redstone::{CRedstone, Redstone};
 use crate::blocks::repeater::CRepeater;
 use crate::blocks::solid::CSolid;
-use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
+use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
+use petgraph::Outgoing;
 use std::collections::HashMap;
-use bimap::BiMap;
 
 #[derive(Clone, Debug)]
 pub struct Comparator {
@@ -121,10 +121,14 @@ impl BlockConnections for CComparator {
         };
     }
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex),
+    {
         let rear = blocks.add_node(Block::Redstone(Redstone::default()));
         let side = blocks.add_node(Block::Redstone(Redstone::default()));
-        let comp = blocks.add_node(Block::Comparator (Comparator {
+        let comp = blocks.add_node(Block::Comparator(Comparator {
             signal: self.signal,
             next_signal: self.signal,
             mode: self.mode,
@@ -134,6 +138,42 @@ impl BlockConnections for CComparator {
         blocks.add_edge(rear, comp, 0);
         blocks.add_edge(side, comp, 0);
         self.node = Some(comp)
+    }
+}
+
+impl Updatable for Comparator {
+    fn update(
+        &mut self,
+        _idx: NodeIndex,
+        _tick_updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) -> bool {
+        let rear = blocks
+            .node_weight(self.rear)
+            .map(|b| b.output_power())
+            .unwrap_or(0);
+        let side = blocks
+            .node_weight(self.side)
+            .map(|b| b.output_power())
+            .unwrap_or(0);
+
+        self.next_signal = match self.mode {
+            ComparatorMode::Compare if side <= rear => rear,
+            ComparatorMode::Compare => 0,
+            ComparatorMode::Subtract => rear.saturating_sub(side),
+        };
+
+        self.signal != self.next_signal
+    }
+
+    fn late_updatable(
+        &mut self,
+        idx: NodeIndex,
+        updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) {
+        self.signal = self.next_signal;
+        updatable.extend(blocks.neighbors_directed(idx, Outgoing));
     }
 }
 

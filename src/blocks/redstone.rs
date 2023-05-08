@@ -3,14 +3,13 @@ use crate::blocks::facing::Facing;
 use crate::blocks::probe::CProbe;
 use crate::blocks::repeater::CRepeater;
 use crate::blocks::solid::CSolid;
-use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
+use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
 use crate::world::RedGraph;
-use petgraph::prelude::StableGraph;
+use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::Directed;
+use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 use std::ops::Index;
-use bimap::BiMap;
 
 #[derive(Clone, Debug, Default)]
 pub struct Redstone {
@@ -112,10 +111,48 @@ impl BlockConnections for CRedstone {
         };
     }
 
-    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
+    where
+        F: FnMut(NodeIndex),
+        G: FnMut(NodeIndex),
+    {
         self.node = Some(blocks.add_node(Block::Redstone(Redstone {
             signal: self.signal,
         })));
+    }
+}
+
+impl Updatable for Redstone {
+    fn update(
+        &mut self,
+        idx: NodeIndex,
+        tick_updatable: &mut Vec<NodeIndex>,
+        blocks: &mut RedGraph,
+    ) -> bool {
+        let s_new = blocks
+            .edges_directed(idx, Incoming)
+            .map(|edge| {
+                blocks[edge.source()]
+                    .output_power()
+                    .saturating_sub(*edge.weight())
+            })
+            .max()
+            .unwrap_or(0);
+
+        if self.signal != s_new {
+            self.signal = s_new;
+            tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+        }
+
+        false
+    }
+
+    fn late_updatable(
+        &mut self,
+        _idx: NodeIndex,
+        _updatable: &mut Vec<NodeIndex>,
+        _blocks: &mut RedGraph,
+    ) {
     }
 }
 
@@ -131,5 +168,11 @@ impl From<HashMap<&str, &str>> for CRedstone {
             },
             node: None,
         }
+    }
+}
+
+impl Redstone {
+    pub fn max() -> Self {
+        Redstone { signal: 15 }
     }
 }
