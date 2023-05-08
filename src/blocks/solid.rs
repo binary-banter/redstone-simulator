@@ -29,21 +29,21 @@ impl BlockConnections for CSolid {
                 blocks.add_edge(s_idx, *n_idx, 0);
             }
 
-            // Strong and weak solids connect to any repeaters facing it.
+            // Strong and weak solids connect to any repeaters facing them.
             CBlock::Repeater(CRepeater { node: Some(n_idx), facing: n_facing, .. })
             if facing == n_facing.reverse() => {
                 blocks.add_edge(w_idx, *n_idx, 0);
                 blocks.add_edge(s_idx, *n_idx, 0);
             }
 
-            // Strong and weak solids connect to any torches facing away from it.
+            // Strong and weak solids connect to any torches facing away from them.
             CBlock::Torch(CTorch { node: Some(n_idx), facing: n_facing, .. })
             if facing == *n_facing => {
                 blocks.add_edge(w_idx, *n_idx, 0);
                 blocks.add_edge(s_idx, *n_idx, 0);
             }
 
-            // Strong and weak solids connect to the rear of any comparator whose rear faces it.
+            // Strong and weak solids connect to the rear of any comparator that face them.
             CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
             if facing == *n_facing => {
                 let Block::Comparator(Comparator{ rear, ..}) = blocks[*n_idx] else {

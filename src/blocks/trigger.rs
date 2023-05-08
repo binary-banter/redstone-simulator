@@ -38,7 +38,7 @@ impl BlockConnections for CTrigger {
                 blocks.add_edge(idx, *n_idx, 0);
             }
 
-            // Triggers connect to the rear of any comparator whose rear faces it.
+            // Triggers connect to the rear of any comparator that faces it.
             CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
             if facing == n_facing.reverse() => {
                 let Block::Comparator(Comparator{ rear, ..}) = blocks[*n_idx] else {

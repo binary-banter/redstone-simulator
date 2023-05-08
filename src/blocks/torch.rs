@@ -1,5 +1,10 @@
+use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockConnections, CBlock, OutputPower};
+use crate::blocks::probe::CProbe;
+use crate::blocks::redstone::CRedstone;
+use crate::blocks::repeater::CRepeater;
+use crate::blocks::solid::CSolid;
+use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
@@ -33,6 +38,45 @@ impl OutputPower for Torch {
 
 impl BlockConnections for CTorch {
     fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        todo!()
+        let Some(idx) = self.node else{
+            unreachable!("All nodes should have an index.");
+        };
+
+        #[rustfmt::skip]
+        match target {
+            // Torches always connect to neighbouring redstone.
+            CBlock::Redstone(CRedstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Torches connect to strong solid blocks above it.
+            CBlock::Solid(CSolid { strong: Some(s_idx), .. })
+            if facing == Facing::Up => {
+                blocks.add_edge(idx, *s_idx, 0);
+            }
+
+            // Torches connect to probes above it.
+            CBlock::Probe(CProbe { node: Some(n_idx), .. })
+            if facing == Facing::Up => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Torches connect to any repeaters facing it.
+            CBlock::Repeater(CRepeater { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.reverse() => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Torches connect to the rear of any comparator that faces it.
+            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.reverse() => {
+                let Block::Comparator(Comparator{ rear, ..}) = blocks[*n_idx] else {
+                    unreachable!("All nodes should have an index.");
+                };
+                blocks.add_edge(idx, rear, 0);
+            }
+
+            _ => {}
+        };
     }
 }

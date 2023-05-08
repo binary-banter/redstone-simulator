@@ -21,8 +21,8 @@ mod solid;
 mod torch;
 mod trigger;
 
-#[derive(Clone, Debug)]
 /// Blocks that end up in the graph structure of the world.
+#[derive(Clone, Debug)]
 pub enum Block {
     Redstone(Redstone),
     Repeater(Repeater),

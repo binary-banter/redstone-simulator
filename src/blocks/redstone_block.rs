@@ -38,7 +38,7 @@ impl BlockConnections for CRedstoneBlock {
                 blocks.add_edge(idx, *n_idx, 0);
             }
 
-            // Redstone blocks connect to the rear of any comparator whose rear faces it.
+            // Redstone blocks connect to the rear of any comparator that faces it.
             CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
             if facing == *n_facing => {
                 let Block::Comparator(Comparator{ rear, ..}) = blocks[*n_idx] else {
@@ -47,7 +47,7 @@ impl BlockConnections for CRedstoneBlock {
                 blocks.add_edge(idx, rear, 0);
             }
 
-            // Redstone connects to the side of any comparator whose sides face it.
+            // Redstone connects to the side of any comparator that faces it.
             CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
             if facing == n_facing.rotate_left() || facing == n_facing.rotate_right() => {
                 let Block::Comparator(Comparator { side, .. }) = blocks[*n_idx] else {
@@ -58,7 +58,5 @@ impl BlockConnections for CRedstoneBlock {
 
             _ => {}
         };
-
-        todo!()
     }
 }
