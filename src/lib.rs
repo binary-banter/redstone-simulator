@@ -1,4 +1,5 @@
 mod block;
+mod blocks;
 mod construction_block;
 mod facing;
 mod schematic;

@@ -13,11 +13,13 @@ use crate::world_data::WorldData;
 
 #[derive(Debug)]
 pub struct World {
-    pub blocks: StableGraph<Block, u8, petgraph::Directed, u32>,
+    pub blocks: RedGraph,
     pub triggers: Vec<NodeIndex>,
     pub probes: BiMap<NodeIndex, String>,
     pub updatable: Vec<NodeIndex>,
 }
+
+pub type RedGraph = StableGraph<Block, u8, petgraph::Directed, u32>;
 
 impl World {
     fn create_world(format: &SchemFormat) -> WorldData {
