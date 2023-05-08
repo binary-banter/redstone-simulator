@@ -167,7 +167,7 @@ impl From<SchemFormat> for World {
             updatable: vec![],
         };
 
-        // world.prune_graph(); todo
+        world.prune_graph();
 
         world.updatable = world.blocks.node_indices().collect();
         world.step();
