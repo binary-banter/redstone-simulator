@@ -7,6 +7,7 @@ use crate::blocks::solid::CSolid;
 use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct Torch {
@@ -78,5 +79,22 @@ impl BlockConnections for CTorch {
 
             _ => {}
         };
+    }
+}
+
+impl From<HashMap<&str, &str>> for CTorch {
+    fn from(meta: HashMap<&str, &str>) -> Self {
+        let lit = meta.get("lit").map(|&x| x == "true").unwrap();
+
+        let facing = meta
+            .get("facing")
+            .map(|&f| Facing::from(f))
+            .unwrap_or(Facing::Up);
+
+        CTorch {
+            lit,
+            facing,
+            node: None,
+        }
     }
 }

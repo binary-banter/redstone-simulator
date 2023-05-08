@@ -7,7 +7,7 @@ use crate::blocks::{Block, BlockConnections, CBlock};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct CSolid {
     /// `NodeIndex` of the block that simulates the weak logic of the block. Initially set to `None`.
     pub weak: Option<NodeIndex>,

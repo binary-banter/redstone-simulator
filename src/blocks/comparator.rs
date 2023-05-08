@@ -6,6 +6,7 @@ use crate::blocks::solid::CSolid;
 use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct Comparator {
@@ -117,5 +118,16 @@ impl BlockConnections for CComparator {
 
             _ => {}
         };
+    }
+}
+
+impl From<HashMap<&str, &str>> for CComparator {
+    fn from(meta: HashMap<&str, &str>) -> Self {
+        CComparator {
+            signal: 0,
+            facing: Facing::from(meta["facing"]),
+            mode: ComparatorMode::from(meta["mode"]),
+            node: None,
+        }
     }
 }

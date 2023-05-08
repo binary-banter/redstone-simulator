@@ -7,7 +7,7 @@ use crate::blocks::{Block, BlockConnections, CBlock};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct CRedstoneBlock {
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
     node: Option<NodeIndex>,

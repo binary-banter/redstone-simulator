@@ -8,6 +8,7 @@ use crate::world::RedGraph;
 use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Directed;
+use std::collections::HashMap;
 use std::ops::Index;
 
 #[derive(Clone, Debug)]
@@ -108,5 +109,20 @@ impl BlockConnections for CRedstone {
 
             _ => {}
         };
+    }
+}
+
+impl From<HashMap<&str, &str>> for CRedstone {
+    fn from(meta: HashMap<&str, &str>) -> Self {
+        CRedstone {
+            signal: meta["power"].parse().unwrap(),
+            connections: Connections {
+                north: meta["north"] != "none",
+                east: meta["east"] != "none",
+                south: meta["south"] != "none",
+                west: meta["west"] != "none",
+            },
+            node: None,
+        }
     }
 }

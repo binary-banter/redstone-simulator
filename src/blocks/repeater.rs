@@ -6,6 +6,7 @@ use crate::blocks::solid::CSolid;
 use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct Repeater {
@@ -101,5 +102,16 @@ impl BlockConnections for CRepeater {
 
             _ => {}
         };
+    }
+}
+
+impl From<HashMap<&str, &str>> for CRepeater {
+    fn from(meta: HashMap<&str, &str>) -> Self {
+        CRepeater {
+            powered: false,
+            facing: Facing::from(meta["facing"]),
+            delay: meta["delay"].parse().unwrap(),
+            node: None,
+        }
     }
 }

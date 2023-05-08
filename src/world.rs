@@ -24,7 +24,7 @@ impl World {
         // Create palette
         let mut palette = vec![CBlock::Air; format.palette_max as usize];
         for (id, i) in &format.palette {
-            // palette[*i as usize] = CBlock::from_id(id); todo
+            palette[*i as usize] = CBlock::from(id.as_str());
         }
 
         let mut world = vec![
