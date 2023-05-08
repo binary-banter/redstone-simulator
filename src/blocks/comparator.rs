@@ -1,12 +1,13 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::probe::CProbe;
-use crate::blocks::redstone::CRedstone;
+use crate::blocks::redstone::{CRedstone, Redstone};
 use crate::blocks::repeater::CRepeater;
 use crate::blocks::solid::CSolid;
 use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
+use bimap::BiMap;
 
 #[derive(Clone, Debug)]
 pub struct Comparator {
@@ -65,7 +66,7 @@ impl OutputPower for Comparator {
 }
 
 impl BlockConnections for CComparator {
-    fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
         // Return early if the target block is not behind the comparator.
         if self.facing != facing.reverse() {
             return;
@@ -118,6 +119,21 @@ impl BlockConnections for CComparator {
 
             _ => {}
         };
+    }
+
+    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+        let rear = blocks.add_node(Block::Redstone(Redstone::default()));
+        let side = blocks.add_node(Block::Redstone(Redstone::default()));
+        let comp = blocks.add_node(Block::Comparator (Comparator {
+            signal: self.signal,
+            next_signal: self.signal,
+            mode: self.mode,
+            rear,
+            side,
+        }));
+        blocks.add_edge(rear, comp, 0);
+        blocks.add_edge(side, comp, 0);
+        self.node = Some(comp)
     }
 }
 

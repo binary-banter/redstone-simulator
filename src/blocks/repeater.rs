@@ -7,6 +7,7 @@ use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
+use bimap::BiMap;
 
 #[derive(Clone, Debug)]
 pub struct Repeater {
@@ -49,7 +50,7 @@ impl OutputPower for Repeater {
 }
 
 impl BlockConnections for CRepeater {
-    fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
         // Return early if the target block is not behind the repeater.
         if self.facing != facing.reverse() {
             return;
@@ -102,6 +103,10 @@ impl BlockConnections for CRepeater {
 
             _ => {}
         };
+    }
+
+    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+        todo!()
     }
 }
 

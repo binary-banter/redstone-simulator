@@ -1,5 +1,5 @@
-use crate::blocks::CBlock;
 use crate::blocks::{Block, BlockConnections};
+use crate::blocks::{CBlock, OutputPower};
 use crate::schematic::SchemFormat;
 use crate::world_data::WorldData;
 use bimap::BiMap;
@@ -56,31 +56,31 @@ impl World {
         WorldData(world)
     }
 
-    // pub fn get_probe(&self, name: &str) -> bool {
-    //     match self.blocks[*self
-    //         .probes
-    //         .get_by_right(name)
-    //         .expect("Probe does not exist.")]
-    //     {
-    //         Block::Redstone(s) => s > 0,
-    //         _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
-    //     }
-    // }
+    pub fn get_probe(&self, name: &str) -> bool {
+        match &self.blocks[*self
+            .probes
+            .get_by_right(name)
+            .expect("Probe does not exist.")]
+        {
+            Block::Redstone(v) => v.output_power() > 0,
+            _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
+        }
+    }
 
-    // pub fn get_probes(&self) -> HashMap<&str, bool> {
-    //     self.probes
-    //         .iter()
-    //         .map(|(i, s)| {
-    //             (
-    //                 &s[..],
-    //                 match self.blocks[*i] {
-    //                     Block::Redstone(s) => s > 0,
-    //                     _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
-    //                 },
-    //             )
-    //         })
-    //         .collect()
-    // }
+    pub fn get_probes(&self) -> HashMap<&str, bool> {
+        self.probes
+            .iter()
+            .map(|(i, s)| {
+                (
+                    &s[..],
+                    match &self.blocks[*i] {
+                        Block::Redstone(s) => s.output_power() > 0,
+                        _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
+                    },
+                )
+            })
+            .collect()
+    }
 }
 
 impl From<File> for World {
@@ -123,76 +123,14 @@ impl From<SchemFormat> for World {
             })
             .collect();
 
-        // construct nodes todo
-        // for y in 0..format.height as usize {
-        //     for z in 0..format.length as usize {
-        //         for x in 0..format.width as usize {
-        //             let block = &mut world[(x, y, z)];
-        //
-        //             match block {
-        //                 CBlock::Air => continue,
-        //                 CBlock::Redstone { signal, node, .. } => {
-        //                     *node = Some(blocks.add_node(Block::Redstone(*signal)));
-        //                 }
-        //                 CBlock::Trigger { node } => {
-        //                     let idx = blocks.add_node(Block::Redstone(0));
-        //                     *node = Some(idx);
-        //                     triggers.push(idx);
-        //                 }
-        //                 CBlock::Probe { node } => {
-        //                     let idx = blocks.add_node(Block::Redstone(0));
-        //                     *node = Some(idx);
-        //
-        //                     let name: String = world
-        //                         .neighbours((x, y, z))
-        //                         .into_iter()
-        //                         .find_map(|nb| signs.get(&nb).cloned())
-        //                         .unwrap_or(format!("{x},{y},{z}"));
-        //                     probes.insert(idx, name);
-        //                 }
-        //                 CBlock::Solid { weak, strong } => {
-        //                     *weak = Some(blocks.add_node(Block::Redstone(0)));
-        //                     *strong = Some(blocks.add_node(Block::Redstone(0)));
-        //                 }
-        //                 CBlock::Repeater {
-        //                     powered,
-        //                     delay,
-        //                     node,
-        //                     ..
-        //                 } => {
-        //                     *node = Some(blocks.add_node(Block::Repeater {
-        //                         powered: *powered,
-        //                         next_powered: *powered,
-        //                         delay: *delay,
-        //                         count: 0,
-        //                     }));
-        //                 }
-        //                 CBlock::RedstoneBlock { node } => {
-        //                     *node = Some(blocks.add_node(Block::RedstoneBlock));
-        //                 }
-        //                 CBlock::Torch { lit, node, .. } => {
-        //                     *node = Some(blocks.add_node(Block::Torch { lit: *lit }))
-        //                 }
-        //                 CBlock::Comparator {
-        //                     signal, mode, node, ..
-        //                 } => {
-        //                     let rear = blocks.add_node(Block::Redstone(0));
-        //                     let side = blocks.add_node(Block::Redstone(0));
-        //                     let comp = blocks.add_node(Block::Comparator {
-        //                         signal: *signal,
-        //                         next_signal: *signal,
-        //                         mode: *mode,
-        //                         rear,
-        //                         side,
-        //                     });
-        //                     blocks.add_edge(rear, comp, 0);
-        //                     blocks.add_edge(side, comp, 0);
-        //                     *node = Some(comp)
-        //                 }
-        //             };
-        //         }
-        //     }
-        // }
+        // construct nodes
+        for y in 0..format.height as usize {
+            for z in 0..format.length as usize {
+                for x in 0..format.width as usize {
+                    world[(x, y, z)].add_node(&mut blocks, &mut probes, &mut triggers, &signs);
+                }
+            }
+        }
 
         // construct edges
         for y in 0..format.height as usize {
@@ -200,7 +138,7 @@ impl From<SchemFormat> for World {
                 for x in 0..format.width as usize {
                     let cblock = world[(x, y, z)];
                     for (np, f) in world.neighbours_and_facings((x, y, z)) {
-                        cblock.connect(&world[np], f, &mut blocks);
+                        cblock.add_edge(&world[np], f, &mut blocks);
                     }
 
                     // construct vertical edges for redstone

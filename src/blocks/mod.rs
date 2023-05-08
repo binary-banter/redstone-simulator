@@ -12,6 +12,8 @@ use once_cell::sync::Lazy;
 use petgraph::stable_graph::StableGraph;
 use petgraph::Directed;
 use std::collections::{HashMap, HashSet};
+use bimap::BiMap;
+use petgraph::stable_graph::NodeIndex;
 
 mod comparator;
 pub mod facing;
@@ -72,20 +74,36 @@ impl OutputPower for Block {
 }
 
 pub trait BlockConnections {
-    fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph);
+    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph);
+
+    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>);
 }
 
 impl BlockConnections for CBlock {
-    fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
         match self {
-            CBlock::Redstone(v) => v.connect(target, facing, blocks),
-            CBlock::Solid(v) => v.connect(target, facing, blocks),
-            CBlock::Trigger(v) => v.connect(target, facing, blocks),
-            CBlock::Probe(v) => v.connect(target, facing, blocks),
-            CBlock::Repeater(v) => v.connect(target, facing, blocks),
-            CBlock::RedstoneBlock(v) => v.connect(target, facing, blocks),
-            CBlock::Torch(v) => v.connect(target, facing, blocks),
-            CBlock::Comparator(v) => v.connect(target, facing, blocks),
+            CBlock::Redstone(v) => v.add_edge(target, facing, blocks),
+            CBlock::Solid(v) => v.add_edge(target, facing, blocks),
+            CBlock::Trigger(v) => v.add_edge(target, facing, blocks),
+            CBlock::Probe(_) => {},
+            CBlock::Repeater(v) => v.add_edge(target, facing, blocks),
+            CBlock::RedstoneBlock(v) => v.add_edge(target, facing, blocks),
+            CBlock::Torch(v) => v.add_edge(target, facing, blocks),
+            CBlock::Comparator(v) => v.add_edge(target, facing, blocks),
+            CBlock::Air => {}
+        }
+    }
+
+    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+        match self {
+            CBlock::Redstone(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::Solid(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::Trigger(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::Probe(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::Repeater(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::RedstoneBlock(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::Torch(v) => v.add_node(blocks, probes, triggers, signs),
+            CBlock::Comparator(v) => v.add_node(blocks, probes, triggers, signs),
             CBlock::Air => {}
         }
     }

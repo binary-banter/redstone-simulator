@@ -7,7 +7,6 @@ pub struct WorldData(pub Vec<Vec<Vec<CBlock>>>);
 impl WorldData {
     /// Returns the coordinates of neighbouring blocks relative to the given position.
     pub fn neighbours(
-        &self,
         (x, y, z): (usize, usize, usize),
     ) -> impl Iterator<Item = (usize, usize, usize)> {
         [
@@ -23,7 +22,6 @@ impl WorldData {
 
     /// Returns the coordinates and facing of neighbouring blocks relative to the given position.
     pub fn neighbours_and_facings(
-        &self,
         (x, y, z): (usize, usize, usize),
     ) -> impl Iterator<Item = ((usize, usize, usize), Facing)> {
         [

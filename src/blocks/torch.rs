@@ -8,6 +8,7 @@ use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
+use bimap::BiMap;
 
 #[derive(Clone, Debug)]
 pub struct Torch {
@@ -38,7 +39,7 @@ impl OutputPower for Torch {
 }
 
 impl BlockConnections for CTorch {
-    fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
         let Some(idx) = self.node else{
             unreachable!("All nodes should have an index.");
         };
@@ -79,6 +80,10 @@ impl BlockConnections for CTorch {
 
             _ => {}
         };
+    }
+
+    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+        todo!()
     }
 }
 

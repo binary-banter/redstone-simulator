@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use bimap::BiMap;
 use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::CRedstone;
@@ -14,7 +16,7 @@ pub struct CTrigger {
 }
 
 impl BlockConnections for CTrigger {
-    fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
         let Some(idx) = self.node else{
             unreachable!("All nodes should have an index.");
         };
@@ -49,5 +51,9 @@ impl BlockConnections for CTrigger {
 
             _ => {}
         };
+    }
+
+    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+        todo!()
     }
 }

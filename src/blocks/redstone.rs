@@ -10,8 +10,9 @@ use petgraph::stable_graph::NodeIndex;
 use petgraph::Directed;
 use std::collections::HashMap;
 use std::ops::Index;
+use bimap::BiMap;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Redstone {
     /// Signal ranges from 0 to 15 inclusive.
     signal: u8,
@@ -59,7 +60,7 @@ impl OutputPower for Redstone {
 }
 
 impl BlockConnections for CRedstone {
-    fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
         let Some(idx) = self.node else{
             unreachable!("All nodes should have an index.");
         };
@@ -109,6 +110,12 @@ impl BlockConnections for CRedstone {
 
             _ => {}
         };
+    }
+
+    fn add_node(&mut self, blocks: &mut RedGraph, probes: &mut BiMap<NodeIndex, String>, triggers: &mut Vec<NodeIndex>, signs: &HashMap<(usize, usize, usize), String>) {
+        self.node = Some(blocks.add_node(Block::Redstone(Redstone {
+            signal: self.signal,
+        })));
     }
 }
 
