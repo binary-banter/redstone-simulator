@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockConnections, CBlock};
+use crate::blocks::{BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
@@ -18,7 +18,7 @@ pub struct Repeater {
     count: u8,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct CRepeater {
     /// Whether the repeater is currently powered.
     powered: bool,
@@ -27,10 +27,20 @@ pub struct CRepeater {
     delay: u8,
 
     /// Direction of the input side of the repeater.
-    facing: Facing,
+    pub facing: Facing,
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
+    pub node: Option<NodeIndex>,
+}
+
+impl OutputPower for Repeater {
+    fn output_power(&self) -> u8 {
+        if self.powered {
+            15
+        } else {
+            0
+        }
+    }
 }
 
 impl BlockConnections for CRepeater {

@@ -3,10 +3,10 @@ use crate::blocks::{BlockConnections, CBlock};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct CProbe {
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
+    pub node: Option<NodeIndex>,
 }
 
 impl BlockConnections for CProbe {

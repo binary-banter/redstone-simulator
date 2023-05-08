@@ -1,9 +1,8 @@
 use crate::world::World;
 use std::fs::File;
 
-mod block;
+mod blocks;
 mod construction_block;
-mod facing;
 mod schematic;
 pub mod world;
 mod world_data;

@@ -1,19 +1,59 @@
+use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockConnections, CBlock};
+use crate::blocks::redstone::CRedstone;
+use crate::blocks::repeater::CRepeater;
+use crate::blocks::torch::CTorch;
+use crate::blocks::{Block, BlockConnections, CBlock};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct CSolid {
     /// `NodeIndex` of the block that simulates the weak logic of the block. Initially set to `None`.
-    weak: Option<NodeIndex>,
+    pub weak: Option<NodeIndex>,
 
     /// `NodeIndex` of the block that simulates the strong logic of the block. Initially set to `None`.
-    strong: Option<NodeIndex>,
+    pub strong: Option<NodeIndex>,
 }
 
 impl BlockConnections for CSolid {
     fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        todo!()
+        let (Some(w_idx), Some(s_idx)) = (self.weak, self.strong) else {
+            unreachable!("All nodes should have an index.");
+        };
+
+        #[rustfmt::skip]
+        match target {
+            // Strong solids always connect to neighbouring redstone.
+            CBlock::Redstone(CRedstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(s_idx, *n_idx, 0);
+            }
+
+            // Strong and weak solids connect to any repeaters facing it.
+            CBlock::Repeater(CRepeater { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.reverse() => {
+                blocks.add_edge(w_idx, *n_idx, 0);
+                blocks.add_edge(s_idx, *n_idx, 0);
+            }
+
+            // Strong and weak solids connect to any torches facing away from it.
+            CBlock::Torch(CTorch { node: Some(n_idx), facing: n_facing, .. })
+            if facing == *n_facing => {
+                blocks.add_edge(w_idx, *n_idx, 0);
+                blocks.add_edge(s_idx, *n_idx, 0);
+            }
+
+            // Strong and weak solids connect to the rear of any comparator whose rear faces it.
+            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
+            if facing == *n_facing => {
+                let Block::Comparator(Comparator{ rear, ..}) = blocks[*n_idx] else {
+                    unreachable!("All nodes should have an index.");
+                };
+                blocks.add_edge(w_idx, rear, 0);
+                blocks.add_edge(s_idx, rear, 0);
+            }
+
+            _ => {}
+        };
     }
 }

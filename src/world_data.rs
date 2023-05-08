@@ -1,5 +1,5 @@
-use crate::construction_block::CBlock;
-use crate::facing::Facing;
+use crate::blocks::facing::Facing;
+use crate::blocks::CBlock;
 use std::ops::{Index, IndexMut};
 
 pub struct WorldData(pub Vec<Vec<Vec<CBlock>>>);

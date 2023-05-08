@@ -1,5 +1,9 @@
+use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, CBlock};
+use crate::blocks::probe::CProbe;
+use crate::blocks::repeater::CRepeater;
+use crate::blocks::solid::CSolid;
+use crate::blocks::{Block, BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
@@ -12,7 +16,7 @@ pub struct Redstone {
     signal: u8,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct CRedstone {
     /// Signal ranges from 0 to 15 inclusive.
     signal: u8,
@@ -21,10 +25,10 @@ pub struct CRedstone {
     connections: Connections,
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
+    pub node: Option<NodeIndex>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Connections {
     north: bool,
     east: bool,
@@ -47,25 +51,62 @@ impl Index<Facing> for Connections {
     }
 }
 
+impl OutputPower for Redstone {
+    fn output_power(&self) -> u8 {
+        self.signal
+    }
+}
+
 impl BlockConnections for CRedstone {
     fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        // connects to:
-        // Redstone
-        // weak solids if connections[facing]
-        // probes if connections[facing]
-        // repeater if facing == r.facing.reverse()
-        //
-        //             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
-        //                 let Block::Comparator { rear, ..} = blocks[n_idx] else {
-        //                     unreachable!();
-        //                 };
-        //                 blocks.add_edge(idx, rear, 0);
-        //             }
-        //             (CBlock::Redstone { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.rotate_right() || n_facing == f.rotate_left() => {
-        //                 let Block::Comparator { side, ..} = blocks[n_idx] else {
-        //                     unreachable!();
-        //                 };
-        //                 blocks.add_edge(idx, side, 0);
-        //             }
+        let Some(idx) = self.node else{
+            unreachable!("All nodes should have an index.");
+        };
+
+        #[rustfmt::skip]
+        match target {
+            // Redstone always connects to neighbouring redstone.
+            CBlock::Redstone(CRedstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, *n_idx, 1);
+            }
+
+            // Redstone connects to solid blocks that it faces into.
+            CBlock::Solid(CSolid { weak: Some(n_idx), .. })
+            if self.connections[facing] => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Redstone connects to probe blocks that it faces into.
+            CBlock::Probe(CProbe { node: Some(n_idx) })
+            if self.connections[facing] => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Redstone connects to any repeaters facing it.
+            CBlock::Repeater(CRepeater { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.reverse() => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Redstone connects to the rear of any comparator whose rear faces it.
+            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.reverse() => {
+                let Block::Comparator(Comparator { rear, .. }) = blocks[*n_idx] else {
+                    unreachable!("All nodes should have an index.");
+                };
+                blocks.add_edge(idx, rear, 0);
+            }
+
+            // Redstone connects to the side of any comparator whose sides face it.
+            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.rotate_left() || facing == n_facing.rotate_right() => {
+                let Block::Comparator(Comparator { side, .. }) = blocks[*n_idx] else {
+                    unreachable!("All nodes should have an index.");
+                };
+                blocks.add_edge(idx, side, 0);
+            }
+
+            _ => {}
+        };
     }
 }

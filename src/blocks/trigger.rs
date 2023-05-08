@@ -1,9 +1,13 @@
+use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockConnections, CBlock};
+use crate::blocks::redstone::CRedstone;
+use crate::blocks::repeater::CRepeater;
+use crate::blocks::torch::CTorch;
+use crate::blocks::{Block, BlockConnections, CBlock};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct CTrigger {
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
     node: Option<NodeIndex>,
@@ -11,6 +15,39 @@ pub struct CTrigger {
 
 impl BlockConnections for CTrigger {
     fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        todo!()
+        let Some(idx) = self.node else{
+            unreachable!("All nodes should have an index.");
+        };
+
+        #[rustfmt::skip]
+        match target {
+            // Triggers always connect to neighbouring redstone.
+            CBlock::Redstone(CRedstone { node: Some(n_idx), .. }) => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Triggers connect to any repeaters facing it.
+            CBlock::Repeater(CRepeater { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.reverse() => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Triggers connect to any torches facing away from it.
+            CBlock::Torch(CTorch { node: Some(n_idx), facing: n_facing, .. })
+            if facing == *n_facing => {
+                blocks.add_edge(idx, *n_idx, 0);
+            }
+
+            // Triggers connect to the rear of any comparator whose rear faces it.
+            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
+            if facing == n_facing.reverse() => {
+                let Block::Comparator(Comparator{ rear, ..}) = blocks[*n_idx] else {
+                        unreachable!("All nodes should have an index.");
+                    };
+                blocks.add_edge(idx, rear, 0);
+            }
+
+            _ => {}
+        };
     }
 }

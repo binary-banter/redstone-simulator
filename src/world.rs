@@ -1,15 +1,13 @@
-use crate::block::Block;
-use crate::construction_block::CBlock;
-use crate::facing::Facing;
+use crate::blocks::CBlock;
+use crate::blocks::{Block, BlockConnections};
 use crate::schematic::SchemFormat;
+use crate::world_data::WorldData;
 use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
 use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
 use std::fs::File;
-
-use crate::world_data::WorldData;
 
 #[derive(Debug)]
 pub struct World {
@@ -26,7 +24,7 @@ impl World {
         // Create palette
         let mut palette = vec![CBlock::Air; format.palette_max as usize];
         for (id, i) in &format.palette {
-            palette[*i as usize] = CBlock::from_id(id);
+            // palette[*i as usize] = CBlock::from_id(id); todo
         }
 
         let mut world = vec![
@@ -58,31 +56,31 @@ impl World {
         WorldData(world)
     }
 
-    pub fn get_probe(&self, name: &str) -> bool {
-        match self.blocks[*self
-            .probes
-            .get_by_right(name)
-            .expect("Probe does not exist.")]
-        {
-            Block::Redstone(s) => s > 0,
-            _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
-        }
-    }
+    // pub fn get_probe(&self, name: &str) -> bool {
+    //     match self.blocks[*self
+    //         .probes
+    //         .get_by_right(name)
+    //         .expect("Probe does not exist.")]
+    //     {
+    //         Block::Redstone(s) => s > 0,
+    //         _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
+    //     }
+    // }
 
-    pub fn get_probes(&self) -> HashMap<&str, bool> {
-        self.probes
-            .iter()
-            .map(|(i, s)| {
-                (
-                    &s[..],
-                    match self.blocks[*i] {
-                        Block::Redstone(s) => s > 0,
-                        _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
-                    },
-                )
-            })
-            .collect()
-    }
+    // pub fn get_probes(&self) -> HashMap<&str, bool> {
+    //     self.probes
+    //         .iter()
+    //         .map(|(i, s)| {
+    //             (
+    //                 &s[..],
+    //                 match self.blocks[*i] {
+    //                     Block::Redstone(s) => s > 0,
+    //                     _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
+    //                 },
+    //             )
+    //         })
+    //         .collect()
+    // }
 }
 
 impl From<File> for World {
@@ -125,82 +123,88 @@ impl From<SchemFormat> for World {
             })
             .collect();
 
-        // construct nodes
-        for y in 0..format.height as usize {
-            for z in 0..format.length as usize {
-                for x in 0..format.width as usize {
-                    let block = &mut world[(x, y, z)];
-
-                    match block {
-                        CBlock::Air => continue,
-                        CBlock::Redstone { signal, node, .. } => {
-                            *node = Some(blocks.add_node(Block::Redstone(*signal)));
-                        }
-                        CBlock::Trigger { node } => {
-                            let idx = blocks.add_node(Block::Redstone(0));
-                            *node = Some(idx);
-                            triggers.push(idx);
-                        }
-                        CBlock::Probe { node } => {
-                            let idx = blocks.add_node(Block::Redstone(0));
-                            *node = Some(idx);
-
-                            let name: String = world
-                                .neighbours((x, y, z))
-                                .into_iter()
-                                .find_map(|nb| signs.get(&nb).cloned())
-                                .unwrap_or(format!("{x},{y},{z}"));
-                            probes.insert(idx, name);
-                        }
-                        CBlock::Solid { weak, strong } => {
-                            *weak = Some(blocks.add_node(Block::Redstone(0)));
-                            *strong = Some(blocks.add_node(Block::Redstone(0)));
-                        }
-                        CBlock::Repeater {
-                            powered,
-                            delay,
-                            node,
-                            ..
-                        } => {
-                            *node = Some(blocks.add_node(Block::Repeater {
-                                powered: *powered,
-                                next_powered: *powered,
-                                delay: *delay,
-                                count: 0,
-                            }));
-                        }
-                        CBlock::RedstoneBlock { node } => {
-                            *node = Some(blocks.add_node(Block::RedstoneBlock));
-                        }
-                        CBlock::Torch { lit, node, .. } => {
-                            *node = Some(blocks.add_node(Block::Torch { lit: *lit }))
-                        }
-                        CBlock::Comparator {
-                            signal, mode, node, ..
-                        } => {
-                            let rear = blocks.add_node(Block::Redstone(0));
-                            let side = blocks.add_node(Block::Redstone(0));
-                            let comp = blocks.add_node(Block::Comparator {
-                                signal: *signal,
-                                next_signal: *signal,
-                                mode: *mode,
-                                rear,
-                                side,
-                            });
-                            blocks.add_edge(rear, comp, 0);
-                            blocks.add_edge(side, comp, 0);
-                            *node = Some(comp)
-                        }
-                    };
-                }
-            }
-        }
+        // construct nodes todo
+        // for y in 0..format.height as usize {
+        //     for z in 0..format.length as usize {
+        //         for x in 0..format.width as usize {
+        //             let block = &mut world[(x, y, z)];
+        //
+        //             match block {
+        //                 CBlock::Air => continue,
+        //                 CBlock::Redstone { signal, node, .. } => {
+        //                     *node = Some(blocks.add_node(Block::Redstone(*signal)));
+        //                 }
+        //                 CBlock::Trigger { node } => {
+        //                     let idx = blocks.add_node(Block::Redstone(0));
+        //                     *node = Some(idx);
+        //                     triggers.push(idx);
+        //                 }
+        //                 CBlock::Probe { node } => {
+        //                     let idx = blocks.add_node(Block::Redstone(0));
+        //                     *node = Some(idx);
+        //
+        //                     let name: String = world
+        //                         .neighbours((x, y, z))
+        //                         .into_iter()
+        //                         .find_map(|nb| signs.get(&nb).cloned())
+        //                         .unwrap_or(format!("{x},{y},{z}"));
+        //                     probes.insert(idx, name);
+        //                 }
+        //                 CBlock::Solid { weak, strong } => {
+        //                     *weak = Some(blocks.add_node(Block::Redstone(0)));
+        //                     *strong = Some(blocks.add_node(Block::Redstone(0)));
+        //                 }
+        //                 CBlock::Repeater {
+        //                     powered,
+        //                     delay,
+        //                     node,
+        //                     ..
+        //                 } => {
+        //                     *node = Some(blocks.add_node(Block::Repeater {
+        //                         powered: *powered,
+        //                         next_powered: *powered,
+        //                         delay: *delay,
+        //                         count: 0,
+        //                     }));
+        //                 }
+        //                 CBlock::RedstoneBlock { node } => {
+        //                     *node = Some(blocks.add_node(Block::RedstoneBlock));
+        //                 }
+        //                 CBlock::Torch { lit, node, .. } => {
+        //                     *node = Some(blocks.add_node(Block::Torch { lit: *lit }))
+        //                 }
+        //                 CBlock::Comparator {
+        //                     signal, mode, node, ..
+        //                 } => {
+        //                     let rear = blocks.add_node(Block::Redstone(0));
+        //                     let side = blocks.add_node(Block::Redstone(0));
+        //                     let comp = blocks.add_node(Block::Comparator {
+        //                         signal: *signal,
+        //                         next_signal: *signal,
+        //                         mode: *mode,
+        //                         rear,
+        //                         side,
+        //                     });
+        //                     blocks.add_edge(rear, comp, 0);
+        //                     blocks.add_edge(side, comp, 0);
+        //                     *node = Some(comp)
+        //                 }
+        //             };
+        //         }
+        //     }
+        // }
 
         // construct edges
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    add_connecting_edges((x, y, z), &world, &mut blocks);
+                    let cblock = world[(x, y, z)];
+                    for (np, f) in world.neighbours_and_facings((x, y, z)) {
+                        cblock.connect(&world[np], f, &mut blocks);
+                    }
+
+                    // construct vertical edges for redstone
+                    // todo
                 }
             }
         }
@@ -212,207 +216,11 @@ impl From<SchemFormat> for World {
             updatable: vec![],
         };
 
-        world.prune_graph();
+        // world.prune_graph(); todo
 
         world.updatable = world.blocks.node_indices().collect();
         world.step();
 
         world
-    }
-}
-
-fn add_connecting_edges(
-    p: (usize, usize, usize),
-    world: &WorldData,
-    blocks: &mut StableGraph<Block, u8, petgraph::Directed, u32>,
-) {
-    let cblock = world[p];
-    for (np, f) in world.neighbours_and_facings(p) {
-        let n_cblock = world[np];
-
-        // regular connections
-        #[rustfmt::skip]
-        match (cblock, n_cblock) {
-            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, n_idx, 1);
-            }
-            (CBlock::Redstone { node: Some(idx), connections, .. }, CBlock::Solid { weak: Some(n_idx), .. }) if connections[f] => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Redstone { node: Some(idx), connections, .. }, CBlock::Probe { node: Some(n_idx), .. }) if connections[f] => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
-                let Block::Comparator { rear, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-            (CBlock::Redstone { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.rotate_right() || n_facing == f.rotate_left() => {
-                let Block::Comparator { side, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, side, 0);
-            }
-
-            (CBlock::Trigger { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Trigger { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Trigger { node: Some(idx), ..}, CBlock::Torch { node: Some(n_idx), facing, .. }) if facing == f => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Trigger { node: Some(idx), ..}, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
-                let Block::Comparator { rear, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-
-            (CBlock::Solid { strong: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Solid { weak: Some(w_idx), strong: Some(s_idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
-                blocks.add_edge(w_idx, n_idx, 0);
-                blocks.add_edge(s_idx, n_idx, 0);
-            }
-            (CBlock::Solid {weak: Some(w_idx), strong: Some(s_idx), ..}, CBlock::Torch { node: Some(n_idx), facing, .. }) if facing == f => {
-                blocks.add_edge(w_idx, n_idx, 0);
-                blocks.add_edge(s_idx, n_idx, 0);
-            }
-            (CBlock::Solid {weak: Some(w_idx), strong: Some(s_idx), ..}, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
-                let Block::Comparator { rear, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(w_idx, rear, 0);
-                blocks.add_edge(s_idx, rear, 0);
-            }
-
-            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Redstone { node: Some(n_idx), .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Solid { strong: Some(n_idx), .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Probe { node: Some(n_idx), .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Repeater { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
-                let Block::Comparator { rear, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-            (CBlock::Repeater { node: Some(idx), facing, .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && (n_facing == f.rotate_right() || n_facing == f.rotate_left()) => {
-                let Block::Comparator { side, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, side, 0);
-            }
-
-            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Redstone { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Repeater { node: Some(n_idx), facing, .. })  if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Torch { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
-                let Block::Comparator { rear, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-            (CBlock::RedstoneBlock { node: Some(idx) }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.rotate_right() || n_facing == f.rotate_left() => {
-                let Block::Comparator { side, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, side, 0);
-            }
-
-            (CBlock::Torch { node: Some(idx), .. }, CBlock::Redstone { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Torch { node: Some(idx), .. }, CBlock::Solid { strong: Some(s_idx), .. }) if f == Facing::Up => {
-                blocks.add_edge(idx, s_idx, 0);
-            }
-            (CBlock::Torch { node: Some(idx), .. }, CBlock::Probe { node: Some(n_idx), .. }) if f == Facing::Up => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Torch { node: Some(idx), .. }, CBlock::Repeater { node: Some(n_idx), facing, .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Torch { node: Some(idx), .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if n_facing == f.reverse() => {
-                let Block::Comparator { rear, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-
-            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Redstone { node: Some(n_idx), .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Solid { strong: Some(n_idx), .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Probe { node: Some(n_idx), .. }) if facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Repeater { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
-                blocks.add_edge(idx, n_idx, 0);
-            }
-            (CBlock::Comparator { node: Some(idx), facing, .. }, CBlock::Comparator { node: Some(n_idx), facing: n_facing, .. }) if facing == f.reverse() && n_facing == f.reverse() => {
-                let Block::Comparator { rear, ..} = blocks[n_idx] else {
-                    unreachable!();
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-
-            _ => {}
-        };
-
-        // redstone up/down connections
-        if let CBlock::Redstone {
-            node: Some(idx), ..
-        } = cblock
-        {
-            let top = (p.0, p.1.wrapping_add(1), p.2);
-            let bottom = (p.0, p.1.wrapping_sub(1), p.2);
-            for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
-                let side = f.front(p);
-                let side_down = (side.0, side.1.wrapping_sub(1), side.2);
-                let side_up = (side.0, side.1.wrapping_add(1), side.2);
-
-                match [side_down, side, side_up, bottom, top].map(|n| &world[n]) {
-                    //Down
-                    [CBlock::Redstone {
-                        node: Some(n_idx), ..
-                    }, b1, _, b2, _]
-                        if b1.is_transparent() && !b2.is_transparent() =>
-                    {
-                        blocks.add_edge(idx, *n_idx, 1);
-                    }
-                    //Up
-                    [_, _, CBlock::Redstone {
-                        node: Some(n_idx), ..
-                    }, _, b2]
-                        if b2.is_transparent() =>
-                    {
-                        blocks.add_edge(idx, *n_idx, 1);
-                    }
-                    _ => {}
-                }
-            }
-        }
     }
 }

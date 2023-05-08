@@ -12,7 +12,7 @@ use petgraph::stable_graph::StableGraph;
 use petgraph::Directed;
 
 mod comparator;
-mod facing;
+pub mod facing;
 mod probe;
 mod redstone;
 mod redstone_block;
@@ -32,7 +32,7 @@ pub enum Block {
 }
 
 /// Blocks used during the creation of the graph structure of the world.
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum CBlock {
     Redstone(CRedstone),
     Solid(CSolid),
@@ -45,7 +45,23 @@ pub enum CBlock {
     Air,
 }
 
-trait BlockConnections {
+pub trait OutputPower {
+    fn output_power(&self) -> u8;
+}
+
+impl OutputPower for Block {
+    fn output_power(&self) -> u8 {
+        match self {
+            Block::Redstone(v) => v.output_power(),
+            Block::Repeater(v) => v.output_power(),
+            Block::RedstoneBlock => 15,
+            Block::Torch(v) => v.output_power(),
+            Block::Comparator(v) => v.output_power(),
+        }
+    }
+}
+
+pub trait BlockConnections {
     fn connect(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph);
 }
 

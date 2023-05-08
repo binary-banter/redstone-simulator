@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockConnections, CBlock};
+use crate::blocks::{BlockConnections, CBlock, OutputPower};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
@@ -9,16 +9,26 @@ pub struct Torch {
     lit: bool,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct CTorch {
     /// Whether the torch is currently lit.
     lit: bool,
 
     /// Direction the torch points in.
-    facing: Facing,
+    pub facing: Facing,
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
+    pub node: Option<NodeIndex>,
+}
+
+impl OutputPower for Torch {
+    fn output_power(&self) -> u8 {
+        if self.lit {
+            15
+        } else {
+            0
+        }
+    }
 }
 
 impl BlockConnections for CTorch {
