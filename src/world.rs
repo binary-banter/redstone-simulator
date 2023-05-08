@@ -155,7 +155,9 @@ impl From<SchemFormat> for World {
                     }
 
                     // construct vertical edges for redstone
-                    // todo
+                    if let CBlock::Redstone(v) = cblock {
+                        v.add_vertical_edges((x, y, z), &mut blocks, &world)
+                    }
                 }
             }
         }

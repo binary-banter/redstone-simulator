@@ -142,21 +142,21 @@ impl From<&str> for CBlock {
     }
 }
 
-// impl CBlock {
-//     pub fn is_transparent(&self) -> bool {
-//         match self {
-//             CBlock::Solid { .. } => false,
-//             CBlock::Redstone { .. } => true,
-//             CBlock::RedstoneBlock { .. } => false,
-//             CBlock::Trigger { .. } => false,
-//             CBlock::Repeater { .. } => true,
-//             CBlock::Comparator { .. } => true,
-//             CBlock::Torch { .. } => true,
-//             CBlock::Air => true,
-//             CBlock::Probe { .. } => false,
-//         }
-//     }
-// }
+impl CBlock {
+    pub fn is_transparent(&self) -> bool {
+        match self {
+            CBlock::Solid { .. } => false,
+            CBlock::Redstone { .. } => true,
+            CBlock::RedstoneBlock { .. } => false,
+            CBlock::Trigger { .. } => false,
+            CBlock::Repeater { .. } => true,
+            CBlock::Comparator { .. } => true,
+            CBlock::Torch { .. } => true,
+            CBlock::Air => true,
+            CBlock::Probe { .. } => false,
+        }
+    }
+}
 
 pub trait Updatable {
     fn update(

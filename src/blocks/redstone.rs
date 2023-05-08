@@ -5,6 +5,7 @@ use crate::blocks::repeater::CRepeater;
 use crate::blocks::solid::CSolid;
 use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
 use crate::world::RedGraph;
+use crate::world_data::WorldData;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
@@ -60,7 +61,7 @@ impl OutputPower for Redstone {
 
 impl BlockConnections for CRedstone {
     fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        let Some(idx) = self.node else{
+        let Some(idx) = self.node else {
             unreachable!("All nodes should have an index.");
         };
 
@@ -174,5 +175,46 @@ impl From<HashMap<&str, &str>> for CRedstone {
 impl Redstone {
     pub fn max() -> Self {
         Redstone { signal: 15 }
+    }
+}
+
+impl CRedstone {
+    pub fn add_vertical_edges(
+        &self,
+        (x, y, z): (usize, usize, usize),
+        blocks: &mut RedGraph,
+        world: &WorldData,
+    ) {
+        let Some(idx) = self.node else {
+            unreachable!("All nodes should have an index.");
+        };
+
+        let top = (x, y.wrapping_add(1), z);
+        let bottom = (x, y.wrapping_sub(1), z);
+        for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
+            let side = f.front((x, y, z));
+            let side_down = (side.0, side.1.wrapping_sub(1), side.2);
+            let side_up = (side.0, side.1.wrapping_add(1), side.2);
+
+            match [side_down, side, side_up, bottom, top].map(|n| &world[n]) {
+                //Down
+                [CBlock::Redstone(CRedstone {
+                    node: Some(n_idx), ..
+                }), b1, _, b2, _]
+                    if b1.is_transparent() && !b2.is_transparent() =>
+                {
+                    blocks.add_edge(idx, *n_idx, 1);
+                }
+                //Up
+                [_, _, CBlock::Redstone(CRedstone {
+                    node: Some(n_idx), ..
+                }), _, b2]
+                    if b2.is_transparent() =>
+                {
+                    blocks.add_edge(idx, *n_idx, 1);
+                }
+                _ => {}
+            }
+        }
     }
 }

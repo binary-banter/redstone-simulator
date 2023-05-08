@@ -21,6 +21,17 @@ impl From<&str> for Facing {
 }
 
 impl Facing {
+    pub fn front(self, (x, y, z): (usize, usize, usize)) -> (usize, usize, usize) {
+        match self {
+            Facing::North => (x, y, z.wrapping_sub(1)),
+            Facing::East => (x.wrapping_add(1), y, z),
+            Facing::South => (x, y, z.wrapping_add(1)),
+            Facing::West => (x.wrapping_sub(1), y, z),
+            Facing::Up => (x, y.wrapping_add(1), z),
+            Facing::Down => (x, y.wrapping_sub(1), z),
+        }
+    }
+
     pub fn rotate_left(self) -> Self {
         match self {
             Facing::North => Facing::West,
