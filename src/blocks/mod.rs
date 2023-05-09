@@ -82,22 +82,22 @@ pub trait BlockConnections {
 }
 
 fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
-    match (source, target) {
+    #[rustfmt::skip]
+    return match (source, target) {
         (CBlock::Redstone(_), CBlock::Redstone(_)) => true,
         (CBlock::Redstone(_), CBlock::SolidWeak(_)) => true,
         (CBlock::Redstone(_), CBlock::Probe(_)) => true,
-        (CBlock::Redstone(_), CBlock::Repeater(_)) => true,
+        (CBlock::Redstone(_), CBlock::Repeater(v)) if facing == v.facing().rev() => true,
         (CBlock::Redstone(_), CBlock::Comparator(_)) => true,
 
         (CBlock::Trigger(_), CBlock::Redstone(_)) => true,
-        (CBlock::Trigger(_), CBlock::Repeater(_)) => true,
+        (CBlock::Trigger(_), CBlock::Repeater(v)) if facing == v.facing().rev() => true,
         (CBlock::Trigger(_), CBlock::Torch(_)) => true,
         (CBlock::Trigger(_), CBlock::Comparator(v)) if facing == v.facing().rev() => true,
 
         (CBlock::SolidStrong(_), CBlock::Redstone(_)) => true,
-        (CBlock::SolidWeak(_) | CBlock::SolidStrong(_), CBlock::Repeater(_)) => true,
+        (CBlock::SolidWeak(_) | CBlock::SolidStrong(_), CBlock::Repeater(v)) if facing == v.facing().rev() => true,
         (CBlock::SolidWeak(_) | CBlock::SolidStrong(_), CBlock::Torch(_)) => true,
-        #[rustfmt::skip]
         (CBlock::SolidWeak(_) | CBlock::SolidStrong(_), CBlock::Comparator(v)) if facing == v.facing().rev() => true,
 
         (CBlock::Repeater(_), CBlock::Redstone(_)) => true,
@@ -107,14 +107,14 @@ fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
         (CBlock::Repeater(_), CBlock::Comparator(_)) => true,
 
         (CBlock::RedstoneBlock(_), CBlock::Redstone(_)) => true,
-        (CBlock::RedstoneBlock(_), CBlock::Repeater(_)) => true,
+        (CBlock::RedstoneBlock(_), CBlock::Repeater(v)) if facing == v.facing().rev() => true,
         (CBlock::RedstoneBlock(_), CBlock::Torch(_)) => true,
         (CBlock::RedstoneBlock(_), CBlock::Comparator(_)) => true,
 
         (CBlock::Torch(_), CBlock::Redstone(_)) => true,
         (CBlock::Torch(_), CBlock::SolidStrong(_)) if facing == Facing::Up => true,
         (CBlock::Torch(_), CBlock::Probe(_)) if facing == Facing::Up => true,
-        (CBlock::Torch(_), CBlock::Repeater(_)) => true,
+        (CBlock::Torch(_), CBlock::Repeater(v)) if facing == v.facing().rev() => true,
         (CBlock::Torch(_), CBlock::Comparator(v)) if facing == v.facing().rev() => true,
 
         (CBlock::Comparator(_), CBlock::Redstone(_)) => true,
@@ -124,7 +124,7 @@ fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
         (CBlock::Comparator(_), CBlock::Comparator(_)) => true,
 
         _ => false,
-    }
+    };
 }
 
 impl BlockConnections for CBlock {
@@ -176,9 +176,7 @@ impl BlockConnections for CBlock {
 }
 
 impl CBlock {
-    pub(crate) fn from_id(
-        id: &str,
-    ) -> Vec<Self> {
+    pub(crate) fn from_id(id: &str) -> Vec<Self> {
         let (id, meta) = id
             .split_once('[')
             .map_or((id, ""), |(x, y)| (x, y.trim_end_matches(']')));

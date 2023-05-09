@@ -51,10 +51,12 @@ impl World {
                             ends.push((nb, c + nb_edge.weight()));
                         }
                         if !matches!(self.blocks[nb], Block::Redstone(_))
-                            || self
-                                .blocks
-                                .neighbors_directed(nb, Outgoing)
-                                .any(|nb2| matches!(self.blocks[nb2], Block::Comparator { .. }))
+                            || self.blocks.neighbors_directed(nb, Outgoing).any(|nb2| {
+                                matches!(
+                                    self.blocks[nb2],
+                                    Block::Comparator(_) | Block::Repeater(_)
+                                )
+                            })
                         {
                             ends.push((nb, c + nb_edge.weight()));
                             continue;
@@ -78,7 +80,7 @@ impl World {
                 || self.triggers.contains(&n)
                 || blocks
                     .neighbors_directed(n, Outgoing)
-                    .any(|nb2| matches!(blocks[nb2], Block::Comparator { .. }))
+                    .any(|nb2| matches!(blocks[nb2], Block::Comparator(_) | Block::Repeater(_)))
         });
     }
 }

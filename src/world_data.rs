@@ -34,7 +34,7 @@ pub fn neighbours_and_facings(
 }
 // }
 
-const EMPTY_VEC: &'static Vec<CBlock> = &Vec::new();
+const EMPTY_VEC: &Vec<CBlock> = &Vec::new();
 
 impl Index<(usize, usize, usize)> for WorldData {
     type Output = Vec<CBlock>;

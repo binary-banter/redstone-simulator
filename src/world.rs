@@ -118,7 +118,7 @@ impl From<SchemFormat> for World {
         let get_sign = |p| {
             tile_entities
                 .get(&p)
-                .map(|b| {
+                .and_then(|b| {
                     if b.id == "minecraft:sign" {
                         if let Some(Value::String(s)) = b.props.get("Text1") {
                             let j: serde_json::Value = serde_json::from_str(s).unwrap();
@@ -138,7 +138,6 @@ impl From<SchemFormat> for World {
                         None
                     }
                 })
-                .flatten()
         };
 
         // construct nodes
@@ -147,8 +146,7 @@ impl From<SchemFormat> for World {
                 for x in 0..format.width as usize {
                     let mut add_probe = |idx: NodeIndex| {
                         let name = neighbours((x, y, z))
-                            .into_iter()
-                            .find_map(|nb| get_sign(nb))
+                            .find_map(get_sign)
                             .unwrap_or(format!("{x},{y},{z}"));
 
                         assert!(!probes.contains_right(&name));
