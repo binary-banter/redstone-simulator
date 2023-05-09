@@ -66,3 +66,16 @@ fn glass_through() {
     world.step_with_trigger();
     assert!(world.get_probe("glass_through"));
 }
+
+#[test]
+fn redstone_split() {
+    let file = File::open("./schematics/redstone_split.schem").unwrap();
+    let mut world = World::from(file);
+
+    assert!(!world.get_probe("down"));
+    assert!(!world.get_probe("up"));
+    world.step_with_trigger();
+    assert!(world.get_probe("down"));
+    assert!(world.get_probe("up"));
+}
+
