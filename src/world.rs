@@ -116,28 +116,26 @@ impl From<SchemFormat> for World {
         let mut probes = BiMap::new();
 
         let get_sign = |p| {
-            tile_entities
-                .get(&p)
-                .and_then(|b| {
-                    if b.id == "minecraft:sign" {
-                        if let Some(Value::String(s)) = b.props.get("Text1") {
-                            let j: serde_json::Value = serde_json::from_str(s).unwrap();
-                            Some(
-                                j.as_object()
-                                    .unwrap()
-                                    .get("text")
-                                    .unwrap()
-                                    .as_str()
-                                    .unwrap()
-                                    .to_string(),
-                            )
-                        } else {
-                            None
-                        }
+            tile_entities.get(&p).and_then(|b| {
+                if b.id == "minecraft:sign" {
+                    if let Some(Value::String(s)) = b.props.get("Text1") {
+                        let j: serde_json::Value = serde_json::from_str(s).unwrap();
+                        Some(
+                            j.as_object()
+                                .unwrap()
+                                .get("text")
+                                .unwrap()
+                                .as_str()
+                                .unwrap()
+                                .to_string(),
+                        )
                     } else {
                         None
                     }
-                })
+                } else {
+                    None
+                }
+            })
         };
 
         // construct nodes

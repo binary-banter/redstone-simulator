@@ -91,3 +91,28 @@ test!(
 test!(lock_rep_on, true, true, true, true, true, true, true);
 test!(lock_rep_1t, false, false, false, false, false, false, false);
 test!(lock_rep_2t, false, false, true, true, true, true, false);
+
+#[test]
+fn register() {
+    let file = File::open("./schematics/register.schem").unwrap();
+    let mut world = World::from(file);
+
+    assert!(!world.get_probe("out"));
+    world.step_with_trigger();
+    assert!(!world.get_probe("out"));
+    world.step();
+    assert!(!world.get_probe("out"));
+    world.step();
+    assert!(!world.get_probe("out"));
+    world.step();
+    assert!(world.get_probe("out"));
+    world.step();
+    assert!(world.get_probe("out"));
+    world.step();
+    assert!(world.get_probe("out"));
+    world.step();
+    assert!(world.get_probe("out"));
+    world.step();
+    assert!(world.get_probe("out"));
+    world.step();
+}
