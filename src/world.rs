@@ -1,6 +1,6 @@
 use crate::blocks::{Block, BlockConnections};
 use crate::blocks::{CBlock, OutputPower};
-use crate::schematic::SchemFormat;
+use crate::schematic::{SchemBlockEntity, SchemFormat};
 use crate::world_data::{neighbours, neighbours_and_facings, WorldData};
 use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
@@ -20,7 +20,10 @@ pub struct World {
 pub type RedGraph = StableGraph<Block, u8, petgraph::Directed, u32>;
 
 impl World {
-    fn create_world(format: &SchemFormat) -> WorldData {
+    fn create_world(
+        format: &SchemFormat,
+        tiles: &HashMap<(usize, usize, usize), &SchemBlockEntity>,
+    ) -> WorldData {
         // Create palette
         let mut palette: Vec<Vec<CBlock>> = vec![vec![]; format.palette_max as usize];
         for (id, i) in &format.palette {
@@ -48,7 +51,17 @@ impl World {
                         }
                     }
 
-                    world[x][y][z] = palette[ix].clone();
+                    world[x][y][z] = palette[ix]
+                        .iter()
+                        .cloned()
+                        .map(|b| match b {
+                            CBlock::Comparator(mut c) => {
+                                c.signal_from_entity(tiles.get(&(x, y, z)).unwrap());
+                                CBlock::Comparator(c)
+                            }
+                            b => b,
+                        })
+                        .collect();
                 }
             }
         }
@@ -91,37 +104,42 @@ impl From<File> for World {
 
 impl From<SchemFormat> for World {
     fn from(format: SchemFormat) -> Self {
-        let mut world = Self::create_world(&format);
+        let tile_entities: HashMap<(usize, usize, usize), &SchemBlockEntity> = format
+            .block_entities
+            .iter()
+            .map(|b| ((b.pos[0] as usize, b.pos[1] as usize, b.pos[2] as usize), b))
+            .collect();
+        let mut world = Self::create_world(&format, &tile_entities);
         let mut blocks = StableGraph::<Block, u8, petgraph::Directed, u32>::new();
 
         let mut triggers = Vec::new();
         let mut probes = BiMap::new();
 
-        let signs: HashMap<_, _> = format
-            .block_entities
-            .iter()
-            .filter_map(|b| {
-                if b.id == "minecraft:sign" {
-                    if let Some(Value::String(s)) = b.props.get("Text1") {
-                        let j: serde_json::Value = serde_json::from_str(s).unwrap();
-                        let t = j
-                            .as_object()
-                            .unwrap()
-                            .get("text")
-                            .unwrap()
-                            .as_str()
-                            .unwrap()
-                            .to_string();
-
-                        return Some((
-                            (b.pos[0] as usize, b.pos[1] as usize, b.pos[2] as usize),
-                            t,
-                        ));
+        let get_sign = |p| {
+            tile_entities
+                .get(&p)
+                .map(|b| {
+                    if b.id == "minecraft:sign" {
+                        if let Some(Value::String(s)) = b.props.get("Text1") {
+                            let j: serde_json::Value = serde_json::from_str(s).unwrap();
+                            Some(
+                                j.as_object()
+                                    .unwrap()
+                                    .get("text")
+                                    .unwrap()
+                                    .as_str()
+                                    .unwrap()
+                                    .to_string(),
+                            )
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
                     }
-                }
-                None
-            })
-            .collect();
+                })
+                .flatten()
+        };
 
         // construct nodes
         for y in 0..format.height as usize {
@@ -130,7 +148,7 @@ impl From<SchemFormat> for World {
                     let mut add_probe = |idx: NodeIndex| {
                         let name = neighbours((x, y, z))
                             .into_iter()
-                            .find_map(|nb| signs.get(&nb).cloned())
+                            .find_map(|nb| get_sign(nb))
                             .unwrap_or(format!("{x},{y},{z}"));
 
                         assert!(!probes.contains_right(&name));

@@ -235,3 +235,15 @@ fn inp_torch() {
     world.step();
     assert!(!world.get_probe("sub_torch"));
 }
+
+#[test]
+fn cmp_cycle() {
+    let file = File::open("./schematics/cmp_cycle.schem").unwrap();
+    let mut world = World::from(file);
+
+    assert!(!world.get_probe("cmp_cycle_off"));
+    assert!(world.get_probe("cmp_cycle_on"));
+    world.step();
+    assert!(!world.get_probe("cmp_cycle_off"));
+    assert!(world.get_probe("cmp_cycle_on"));
+}

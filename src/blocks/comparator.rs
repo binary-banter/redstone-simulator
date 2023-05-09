@@ -1,7 +1,9 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
 use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
+use crate::schematic::SchemBlockEntity;
 use crate::world::RedGraph;
+use nbt::Value;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Outgoing;
 use std::collections::HashMap;
@@ -147,14 +149,8 @@ impl Updatable for Comparator {
 
 impl From<HashMap<&str, &str>> for CComparator {
     fn from(meta: HashMap<&str, &str>) -> Self {
-        let signal = if meta["powered"] == "true" {
-            1
-        } else{
-            0
-        };
-
         CComparator {
-            signal,
+            signal: 0,
             facing: Facing::from(meta["facing"]),
             mode: ComparatorMode::from(meta["mode"]),
             node: None,
@@ -165,6 +161,14 @@ impl From<HashMap<&str, &str>> for CComparator {
 }
 
 impl CComparator {
+    pub fn signal_from_entity(&mut self, entity: &SchemBlockEntity) {
+        let Some(Value::Byte(s)) = entity.props.get("OutputSignal") else{
+            unreachable!("Every comparator should have an OutputSignal.");
+        };
+
+        self.signal = *s as u8;
+    }
+
     pub fn facing(&self) -> Facing {
         self.facing
     }

@@ -152,34 +152,27 @@ impl CRedstone {
             let side_down = (side.0, side.1.wrapping_sub(1), side.2);
             let side_up = (side.0, side.1.wrapping_add(1), side.2);
 
-            #[rustfmt::skip]
-            match [side_down, side, side_up, bottom, top].map(|n| &world[n][..]) {
-                //Down
-                [
-                    &[CBlock::Redstone(CRedstone { node: Some(n_idx), ..})],
-                    b1,
-                    _,
-                    b2,
-                    _
-                ]
-                    if b1.iter().all(|b| b.is_transparent()) && !b2.iter().all(|b| b.is_transparent()) =>
+            // Side-down out
+            if let [CBlock::Redstone(CRedstone {
+                node: Some(n_idx), ..
+            })] = world[side_down][..]
+            {
+                if world[side].iter().all(|b| b.is_transparent())
+                    && !world[bottom].iter().all(|b| b.is_transparent())
                 {
                     blocks.add_edge(idx, n_idx, 1);
                 }
-                //Up
-                [
-                    _,
-                    _,
-                    &[CBlock::Redstone(CRedstone { node: Some(n_idx), .. })],
-                    _,
-                    b2
-                ]
-                    if b2.iter().all(|b| b.is_transparent()) =>
-                {
+            }
+
+            // Side-up out
+            if let [CBlock::Redstone(CRedstone {
+                node: Some(n_idx), ..
+            })] = world[side_up][..]
+            {
+                if world[top].iter().all(|b| b.is_transparent()) {
                     blocks.add_edge(idx, n_idx, 1);
                 }
-                _ => {}
-            };
+            }
         }
     }
 }

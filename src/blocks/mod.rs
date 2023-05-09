@@ -176,7 +176,9 @@ impl BlockConnections for CBlock {
 }
 
 impl CBlock {
-    pub(crate) fn from_id(id: &str) -> Vec<Self> {
+    pub(crate) fn from_id(
+        id: &str,
+    ) -> Vec<Self> {
         let (id, meta) = id
             .split_once('[')
             .map_or((id, ""), |(x, y)| (x, y.trim_end_matches(']')));
