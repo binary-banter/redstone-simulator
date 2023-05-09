@@ -147,8 +147,14 @@ impl Updatable for Comparator {
 
 impl From<HashMap<&str, &str>> for CComparator {
     fn from(meta: HashMap<&str, &str>) -> Self {
+        let signal = if meta["powered"] == "true" {
+            1
+        } else{
+            0
+        };
+
         CComparator {
-            signal: 0,
+            signal,
             facing: Facing::from(meta["facing"]),
             mode: ComparatorMode::from(meta["mode"]),
             node: None,

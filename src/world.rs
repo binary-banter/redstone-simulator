@@ -133,6 +133,7 @@ impl From<SchemFormat> for World {
                             .find_map(|nb| signs.get(&nb).cloned())
                             .unwrap_or(format!("{x},{y},{z}"));
 
+                        assert!(!probes.contains_right(&name));
                         probes.insert(idx, name);
                     };
 

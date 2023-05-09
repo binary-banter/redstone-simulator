@@ -128,8 +128,10 @@ impl Updatable for Repeater {
 
 impl From<HashMap<&str, &str>> for CRepeater {
     fn from(meta: HashMap<&str, &str>) -> Self {
+        let powered = meta.get("powered").map(|&x| x == "true").unwrap();
+
         CRepeater {
-            powered: false,
+            powered,
             facing: Facing::from(meta["facing"]),
             delay: meta["delay"].parse().unwrap(),
             node: None,

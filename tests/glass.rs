@@ -78,4 +78,3 @@ fn redstone_split() {
     assert!(world.get_probe("down"));
     assert!(world.get_probe("up"));
 }
-
