@@ -22,13 +22,13 @@ pub type RedGraph = StableGraph<Block, u8, petgraph::Directed, u32>;
 impl World {
     fn create_world(format: &SchemFormat) -> WorldData {
         // Create palette
-        let mut palette = vec![CBlock::Air; format.palette_max as usize];
+        let mut palette: Vec<Vec<CBlock>> = vec![vec![]; format.palette_max as usize];
         for (id, i) in &format.palette {
-            palette[*i as usize] = CBlock::from(id.as_str());
+            palette[*i as usize] = CBlock::from_id(id.as_str());
         }
 
         let mut world = vec![
-            vec![vec![CBlock::Air; format.length as usize]; format.height as usize];
+            vec![vec![vec![]; format.length as usize]; format.height as usize];
             format.width as usize
         ];
 
@@ -48,7 +48,7 @@ impl World {
                         }
                     }
 
-                    world[x][y][z] = palette[ix];
+                    world[x][y][z] = palette[ix].clone();
                 }
             }
         }
@@ -140,7 +140,9 @@ impl From<SchemFormat> for World {
                         triggers.push(idx);
                     };
 
-                    world[(x, y, z)].add_node(&mut blocks, &mut add_probe, &mut add_trigger);
+                    for block in &mut world[(x, y, z)] {
+                        block.add_node(&mut blocks, &mut add_probe, &mut add_trigger);
+                    }
                 }
             }
         }
@@ -149,14 +151,17 @@ impl From<SchemFormat> for World {
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    let cblock = world[(x, y, z)];
-                    for (np, f) in neighbours_and_facings((x, y, z)) {
-                        cblock.add_edge(&world[np], f, &mut blocks);
-                    }
+                    for block in &world[(x, y, z)] {
+                        for (np, f) in neighbours_and_facings((x, y, z)) {
+                            for n_block in &world[np] {
+                                block.add_edge(n_block, f, &mut blocks);
+                            }
+                        }
 
-                    // construct vertical edges for redstone
-                    if let CBlock::Redstone(v) = cblock {
-                        v.add_vertical_edges((x, y, z), &mut blocks, &world)
+                        // construct vertical edges for redstone
+                        if let CBlock::Redstone(v) = block {
+                            v.add_vertical_edges((x, y, z), &mut blocks, &world)
+                        }
                     }
                 }
             }

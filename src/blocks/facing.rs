@@ -54,7 +54,7 @@ impl Facing {
         }
     }
 
-    pub fn reverse(self) -> Self {
+    pub fn rev(self) -> Self {
         match self {
             Facing::North => Facing::South,
             Facing::East => Facing::West,

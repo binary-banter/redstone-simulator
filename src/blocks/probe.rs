@@ -1,17 +1,23 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections, CBlock};
+use crate::blocks::{Block, BlockConnections};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CProbe {
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    pub node: Option<NodeIndex>,
+    node: Option<NodeIndex>,
 }
 
 impl BlockConnections for CProbe {
-    fn add_edge(&self, _target: &CBlock, _facing: Facing, _blocks: &mut RedGraph) {}
+    fn can_output(&self, _facing: Facing) -> Option<NodeIndex> {
+        None
+    }
+
+    fn can_input(&self, _facing: Facing) -> Option<NodeIndex> {
+        self.node
+    }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, _add_trigger: &mut G)
     where

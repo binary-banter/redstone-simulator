@@ -1,9 +1,6 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::probe::CProbe;
-use crate::blocks::redstone::{CRedstone, Redstone};
-use crate::blocks::repeater::CRepeater;
-use crate::blocks::solid::CSolid;
-use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
+use crate::blocks::redstone::Redstone;
+use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Outgoing;
@@ -22,10 +19,10 @@ pub struct Comparator {
     mode: ComparatorMode,
 
     /// `NodeIndex` of the block that simulates the rear of the comparator.
-    pub rear: NodeIndex,
+    rear: NodeIndex,
 
     /// `NodeIndex` of the block that simulates the sides of the comparator.
-    pub side: NodeIndex,
+    side: NodeIndex,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -34,13 +31,19 @@ pub struct CComparator {
     signal: u8,
 
     /// Direction of the input side of the repeater.
-    pub facing: Facing,
+    facing: Facing,
 
     /// Mode of the comparator, can be in `Compare` or `Subtract` mode.
     mode: ComparatorMode,
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    pub node: Option<NodeIndex>,
+    node: Option<NodeIndex>,
+
+    /// `NodeIndex` of the block that simulates the rear of the comparator.
+    rear: Option<NodeIndex>,
+
+    /// `NodeIndex` of the block that simulates the sides of the comparator.
+    side: Option<NodeIndex>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -66,59 +69,22 @@ impl OutputPower for Comparator {
 }
 
 impl BlockConnections for CComparator {
-    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        // Return early if the target block is not behind the comparator.
-        if self.facing != facing.reverse() {
-            return;
+    fn can_output(&self, facing: Facing) -> Option<NodeIndex> {
+        if self.facing == facing.rev() {
+            self.node
+        } else {
+            None
         }
+    }
 
-        let Some(idx) = self.node else{
-            unreachable!("All nodes should have an index.");
-        };
-
-        #[rustfmt::skip]
-        match target {
-            // Repeaters always connect to redstone.
-            CBlock::Redstone(CRedstone { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, *n_idx, 0);
-            }
-
-            // Repeaters always connect to strong solid blocks.
-            CBlock::Solid(CSolid { strong: Some(s_idx), .. }) => {
-                blocks.add_edge(idx, *s_idx, 0);
-            }
-
-            // Repeaters always connect to probes.
-            CBlock::Probe(CProbe { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, *n_idx, 0);
-            }
-
-            // Repeaters connect to any repeaters with the same facing.
-            CBlock::Repeater(CRepeater { node: Some(n_idx), facing: n_facing, .. })
-            if self.facing == *n_facing => {
-                blocks.add_edge(idx, *n_idx, 0);
-            }
-
-            // Repeaters connect to the rear of any comparator that faces it.
-            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
-            if self.facing == *n_facing => {
-                let Block::Comparator(Comparator { rear, .. }) = blocks[*n_idx] else {
-                    unreachable!("All nodes should have an index.");
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-
-            // Repeaters connect to the side of any comparator that faces it.
-            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
-            if self.facing == n_facing.rotate_left() || self.facing == n_facing.rotate_right() => {
-                let Block::Comparator(Comparator { side, .. }) = blocks[*n_idx] else {
-                    unreachable!("All nodes should have an index.");
-                };
-                blocks.add_edge(idx, side, 0);
-            }
-
-            _ => {}
-        };
+    fn can_input(&self, facing: Facing) -> Option<NodeIndex> {
+        if self.facing == facing.rotate_left() || self.facing == facing.rotate_right() {
+            self.side
+        } else if self.facing == facing.rev() {
+            self.rear
+        } else {
+            None
+        }
     }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
@@ -137,7 +103,9 @@ impl BlockConnections for CComparator {
         }));
         blocks.add_edge(rear, comp, 0);
         blocks.add_edge(side, comp, 0);
-        self.node = Some(comp)
+        self.node = Some(comp);
+        self.rear = Some(rear);
+        self.side = Some(side);
     }
 }
 
@@ -184,6 +152,14 @@ impl From<HashMap<&str, &str>> for CComparator {
             facing: Facing::from(meta["facing"]),
             mode: ComparatorMode::from(meta["mode"]),
             node: None,
+            rear: None,
+            side: None,
         }
+    }
+}
+
+impl CComparator {
+    pub fn facing(&self) -> Facing {
+        self.facing
     }
 }

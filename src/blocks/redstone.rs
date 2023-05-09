@@ -1,8 +1,4 @@
-use crate::blocks::comparator::{CComparator, Comparator};
 use crate::blocks::facing::Facing;
-use crate::blocks::probe::CProbe;
-use crate::blocks::repeater::CRepeater;
-use crate::blocks::solid::CSolid;
 use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
 use crate::world::RedGraph;
 use crate::world_data::WorldData;
@@ -27,7 +23,7 @@ pub struct CRedstone {
     connections: Connections,
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    pub node: Option<NodeIndex>,
+    node: Option<NodeIndex>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -60,56 +56,16 @@ impl OutputPower for Redstone {
 }
 
 impl BlockConnections for CRedstone {
-    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        let Some(idx) = self.node else {
-            unreachable!("All nodes should have an index.");
-        };
+    fn can_output(&self, facing: Facing) -> Option<NodeIndex> {
+        if self.connections[facing] {
+            self.node
+        } else {
+            None
+        }
+    }
 
-        #[rustfmt::skip]
-        match target {
-            // Redstone always connects to neighbouring redstone.
-            CBlock::Redstone(CRedstone { node: Some(n_idx), .. }) => {
-                blocks.add_edge(idx, *n_idx, 1);
-            }
-
-            // Redstone connects to solid blocks that it faces into.
-            CBlock::Solid(CSolid { weak: Some(w_idx), .. })
-            if self.connections[facing] => {
-                blocks.add_edge(idx, *w_idx, 0);
-            }
-
-            // Redstone connects to probe blocks that it faces into.
-            CBlock::Probe(CProbe { node: Some(n_idx) })
-            if self.connections[facing] => {
-                blocks.add_edge(idx, *n_idx, 0);
-            }
-
-            // Redstone connects to any repeaters facing it.
-            CBlock::Repeater(CRepeater { node: Some(n_idx), facing: n_facing, .. })
-            if facing == n_facing.reverse() => {
-                blocks.add_edge(idx, *n_idx, 0);
-            }
-
-            // Redstone connects to the rear of any comparator that faces it.
-            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
-            if facing == n_facing.reverse() => {
-                let Block::Comparator(Comparator { rear, .. }) = blocks[*n_idx] else {
-                    unreachable!("All nodes should have an index.");
-                };
-                blocks.add_edge(idx, rear, 0);
-            }
-
-            // Redstone connects to the side of any comparator that faces it.
-            CBlock::Comparator(CComparator { node: Some(n_idx), facing: n_facing, .. })
-            if facing == n_facing.rotate_left() || facing == n_facing.rotate_right() => {
-                let Block::Comparator(Comparator { side, .. }) = blocks[*n_idx] else {
-                    unreachable!("All nodes should have an index.");
-                };
-                blocks.add_edge(idx, side, 0);
-            }
-
-            _ => {}
-        };
+    fn can_input(&self, _facing: Facing) -> Option<NodeIndex> {
+        self.node
     }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
@@ -196,25 +152,34 @@ impl CRedstone {
             let side_down = (side.0, side.1.wrapping_sub(1), side.2);
             let side_up = (side.0, side.1.wrapping_add(1), side.2);
 
-            match [side_down, side, side_up, bottom, top].map(|n| &world[n]) {
+            #[rustfmt::skip]
+            match [side_down, side, side_up, bottom, top].map(|n| &world[n][..]) {
                 //Down
-                [CBlock::Redstone(CRedstone {
-                    node: Some(n_idx), ..
-                }), b1, _, b2, _]
-                    if b1.is_transparent() && !b2.is_transparent() =>
+                [
+                    &[CBlock::Redstone(CRedstone { node: Some(n_idx), ..})],
+                    b1,
+                    _,
+                    b2,
+                    _
+                ]
+                    if b1.iter().all(|b| b.is_transparent()) && !b2.iter().all(|b| b.is_transparent()) =>
                 {
-                    blocks.add_edge(idx, *n_idx, 1);
+                    blocks.add_edge(idx, n_idx, 1);
                 }
                 //Up
-                [_, _, CBlock::Redstone(CRedstone {
-                    node: Some(n_idx), ..
-                }), _, b2]
-                    if b2.is_transparent() =>
+                [
+                    _,
+                    _,
+                    &[CBlock::Redstone(CRedstone { node: Some(n_idx), .. })],
+                    _,
+                    b2
+                ]
+                    if b2.iter().all(|b| b.is_transparent()) =>
                 {
-                    blocks.add_edge(idx, *n_idx, 1);
+                    blocks.add_edge(idx, n_idx, 1);
                 }
                 _ => {}
-            }
+            };
         }
     }
 }

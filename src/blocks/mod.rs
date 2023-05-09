@@ -4,7 +4,7 @@ use crate::blocks::probe::CProbe;
 use crate::blocks::redstone::{CRedstone, Redstone};
 use crate::blocks::redstone_block::CRedstoneBlock;
 use crate::blocks::repeater::{CRepeater, Repeater};
-use crate::blocks::solid::CSolid;
+use crate::blocks::solid::{CSolidStrong, CSolidWeak};
 use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
 use crate::world::RedGraph;
@@ -44,14 +44,14 @@ pub enum Block {
 #[derive(Copy, Clone, Debug)]
 pub enum CBlock {
     Redstone(CRedstone),
-    Solid(CSolid),
+    SolidWeak(CSolidWeak),
+    SolidStrong(CSolidStrong),
     Trigger(CTrigger),
     Probe(CProbe),
     Repeater(CRepeater),
     RedstoneBlock(CRedstoneBlock),
     Torch(CTorch),
     Comparator(CComparator),
-    Air,
 }
 
 pub trait OutputPower {
@@ -71,7 +71,9 @@ impl OutputPower for Block {
 }
 
 pub trait BlockConnections {
-    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph);
+    fn can_output(&self, facing: Facing) -> Option<NodeIndex>;
+
+    fn can_input(&self, facing: Facing) -> Option<NodeIndex>;
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, add_trigger: &mut G)
     where
@@ -79,18 +81,78 @@ pub trait BlockConnections {
         G: FnMut(NodeIndex);
 }
 
+fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
+    match (source, target) {
+        (CBlock::Redstone(_), CBlock::Redstone(_)) => true,
+        (CBlock::Redstone(_), CBlock::SolidWeak(_)) => true,
+        (CBlock::Redstone(_), CBlock::Probe(_)) => true,
+        (CBlock::Redstone(_), CBlock::Repeater(_)) => true,
+        (CBlock::Redstone(_), CBlock::Comparator(_)) => true,
+
+        (CBlock::Trigger(_), CBlock::Redstone(_)) => true,
+        (CBlock::Trigger(_), CBlock::Repeater(_)) => true,
+        (CBlock::Trigger(_), CBlock::Torch(_)) => true,
+        (CBlock::Trigger(_), CBlock::Comparator(v)) if facing == v.facing().rev() => true,
+
+        (CBlock::SolidStrong(_), CBlock::Redstone(_)) => true,
+        (CBlock::SolidWeak(_) | CBlock::SolidStrong(_), CBlock::Repeater(_)) => true,
+        (CBlock::SolidWeak(_) | CBlock::SolidStrong(_), CBlock::Torch(_)) => true,
+        #[rustfmt::skip]
+        (CBlock::SolidWeak(_) | CBlock::SolidStrong(_), CBlock::Comparator(v)) if facing == v.facing().rev() => true,
+
+        (CBlock::Repeater(_), CBlock::Redstone(_)) => true,
+        (CBlock::Repeater(_), CBlock::SolidStrong(_)) => true,
+        (CBlock::Repeater(_), CBlock::Probe(_)) => true,
+        (CBlock::Repeater(_), CBlock::Repeater(_)) => true,
+        (CBlock::Repeater(_), CBlock::Comparator(_)) => true,
+
+        (CBlock::RedstoneBlock(_), CBlock::Redstone(_)) => true,
+        (CBlock::RedstoneBlock(_), CBlock::Repeater(_)) => true,
+        (CBlock::RedstoneBlock(_), CBlock::Torch(_)) => true,
+        (CBlock::RedstoneBlock(_), CBlock::Comparator(_)) => true,
+
+        (CBlock::Torch(_), CBlock::Redstone(_)) => true,
+        (CBlock::Torch(_), CBlock::SolidStrong(_)) if facing == Facing::Up => true,
+        (CBlock::Torch(_), CBlock::Probe(_)) if facing == Facing::Up => true,
+        (CBlock::Torch(_), CBlock::Repeater(_)) => true,
+        (CBlock::Torch(_), CBlock::Comparator(v)) if facing == v.facing().rev() => true,
+
+        (CBlock::Comparator(_), CBlock::Redstone(_)) => true,
+        (CBlock::Comparator(_), CBlock::SolidStrong(_)) => true,
+        (CBlock::Comparator(_), CBlock::Probe(_)) => true,
+        (CBlock::Comparator(_), CBlock::Repeater(_)) => true,
+        (CBlock::Comparator(_), CBlock::Comparator(_)) => true,
+
+        _ => false,
+    }
+}
+
 impl BlockConnections for CBlock {
-    fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    fn can_output(&self, facing: Facing) -> Option<NodeIndex> {
         match self {
-            CBlock::Redstone(v) => v.add_edge(target, facing, blocks),
-            CBlock::Solid(v) => v.add_edge(target, facing, blocks),
-            CBlock::Trigger(v) => v.add_edge(target, facing, blocks),
-            CBlock::Probe(_) => {}
-            CBlock::Repeater(v) => v.add_edge(target, facing, blocks),
-            CBlock::RedstoneBlock(v) => v.add_edge(target, facing, blocks),
-            CBlock::Torch(v) => v.add_edge(target, facing, blocks),
-            CBlock::Comparator(v) => v.add_edge(target, facing, blocks),
-            CBlock::Air => {}
+            CBlock::Redstone(v) => v.can_output(facing),
+            CBlock::SolidWeak(v) => v.can_output(facing),
+            CBlock::SolidStrong(v) => v.can_output(facing),
+            CBlock::Trigger(v) => v.can_output(facing),
+            CBlock::Probe(_) => None,
+            CBlock::Repeater(v) => v.can_output(facing),
+            CBlock::RedstoneBlock(v) => v.can_output(facing),
+            CBlock::Torch(v) => v.can_output(facing),
+            CBlock::Comparator(v) => v.can_output(facing),
+        }
+    }
+
+    fn can_input(&self, facing: Facing) -> Option<NodeIndex> {
+        match self {
+            CBlock::Redstone(v) => v.can_input(facing),
+            CBlock::SolidWeak(v) => v.can_input(facing),
+            CBlock::SolidStrong(v) => v.can_input(facing),
+            CBlock::Trigger(_) => None,
+            CBlock::Probe(v) => v.can_input(facing),
+            CBlock::Repeater(v) => v.can_input(facing),
+            CBlock::RedstoneBlock(_) => None,
+            CBlock::Torch(v) => v.can_input(facing),
+            CBlock::Comparator(v) => v.can_input(facing),
         }
     }
 
@@ -101,20 +163,20 @@ impl BlockConnections for CBlock {
     {
         match self {
             CBlock::Redstone(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::Solid(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::SolidWeak(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::SolidStrong(v) => v.add_node(blocks, add_probe, add_trigger),
             CBlock::Trigger(v) => v.add_node(blocks, add_probe, add_trigger),
             CBlock::Probe(v) => v.add_node(blocks, add_probe, add_trigger),
             CBlock::Repeater(v) => v.add_node(blocks, add_probe, add_trigger),
             CBlock::RedstoneBlock(v) => v.add_node(blocks, add_probe, add_trigger),
             CBlock::Torch(v) => v.add_node(blocks, add_probe, add_trigger),
             CBlock::Comparator(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::Air => {}
         }
     }
 }
 
-impl From<&str> for CBlock {
-    fn from(id: &str) -> Self {
+impl CBlock {
+    pub(crate) fn from_id(id: &str) -> Vec<Self> {
         let (id, meta) = id
             .split_once('[')
             .map_or((id, ""), |(x, y)| (x, y.trim_end_matches(']')));
@@ -126,17 +188,20 @@ impl From<&str> for CBlock {
             .collect::<HashMap<&str, &str>>();
 
         match id {
-            "minecraft:redstone_wire" => CBlock::Redstone(CRedstone::from(meta)),
-            "minecraft:gold_block" => CBlock::Trigger(CTrigger::default()),
-            "minecraft:lightning_rod" => CBlock::Trigger(CTrigger::default()),
-            "minecraft:diamond_block" => CBlock::Probe(CProbe::default()),
-            "minecraft:redstone_block" => CBlock::RedstoneBlock(CRedstoneBlock::default()),
-            "minecraft:redstone_torch" => CBlock::Torch(CTorch::from(meta)),
-            "minecraft:redstone_wall_torch" => CBlock::Torch(CTorch::from(meta)),
-            "minecraft:comparator" => CBlock::Comparator(CComparator::from(meta)),
-            "minecraft:repeater" => CBlock::Repeater(CRepeater::from(meta)),
-            id if SOLID_BLOCKS.contains(id) => CBlock::Solid(CSolid::default()),
-            id if TRANSPARENT_BLOCKS.contains(id) => CBlock::Air,
+            "minecraft:redstone_wire" => vec![CBlock::Redstone(CRedstone::from(meta))],
+            "minecraft:gold_block" => vec![CBlock::Trigger(CTrigger::default())],
+            "minecraft:lightning_rod" => vec![CBlock::Trigger(CTrigger::default())],
+            "minecraft:diamond_block" => vec![CBlock::Probe(CProbe::default())],
+            "minecraft:redstone_block" => vec![CBlock::RedstoneBlock(CRedstoneBlock::default())],
+            "minecraft:redstone_torch" => vec![CBlock::Torch(CTorch::from(meta))],
+            "minecraft:redstone_wall_torch" => vec![CBlock::Torch(CTorch::from(meta))],
+            "minecraft:comparator" => vec![CBlock::Comparator(CComparator::from(meta))],
+            "minecraft:repeater" => vec![CBlock::Repeater(CRepeater::from(meta))],
+            id if SOLID_BLOCKS.contains(id) => vec![
+                CBlock::SolidWeak(CSolidWeak::default()),
+                CBlock::SolidStrong(CSolidStrong::default()),
+            ],
+            id if TRANSPARENT_BLOCKS.contains(id) => vec![],
             _ => panic!("Undefined block with id {id}."),
         }
     }
@@ -145,16 +210,39 @@ impl From<&str> for CBlock {
 impl CBlock {
     pub fn is_transparent(&self) -> bool {
         match self {
-            CBlock::Solid { .. } => false,
+            CBlock::SolidWeak { .. } => false,
+            CBlock::SolidStrong { .. } => false,
             CBlock::Redstone { .. } => true,
             CBlock::RedstoneBlock { .. } => false,
             CBlock::Trigger { .. } => false,
             CBlock::Repeater { .. } => true,
             CBlock::Comparator { .. } => true,
             CBlock::Torch { .. } => true,
-            CBlock::Air => true,
             CBlock::Probe { .. } => false,
         }
+    }
+
+    pub fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+        let Some(idx) = self.can_output(facing) else{
+            return
+        };
+
+        let Some(n_idx) = target.can_input(facing) else{
+            return
+        };
+
+        if !can_connect(self, target, facing) {
+            return;
+        }
+
+        let weight = if matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_))
+        {
+            1
+        } else {
+            0
+        };
+
+        blocks.add_edge(idx, n_idx, weight);
     }
 }
 

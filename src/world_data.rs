@@ -2,7 +2,7 @@ use crate::blocks::facing::Facing;
 use crate::blocks::CBlock;
 use std::ops::{Index, IndexMut};
 
-pub struct WorldData(pub Vec<Vec<Vec<CBlock>>>);
+pub struct WorldData(pub Vec<Vec<Vec<Vec<CBlock>>>>);
 
 // impl WorldData {
 /// Returns the coordinates of neighbouring blocks relative to the given position.
@@ -34,14 +34,16 @@ pub fn neighbours_and_facings(
 }
 // }
 
+const EMPTY_VEC: &'static Vec<CBlock> = &Vec::new();
+
 impl Index<(usize, usize, usize)> for WorldData {
-    type Output = CBlock;
+    type Output = Vec<CBlock>;
 
     fn index(&self, (x, y, z): (usize, usize, usize)) -> &Self::Output {
         self.0
             .get(x)
             .and_then(|l| l.get(y).and_then(|l| l.get(z)))
-            .unwrap_or(&CBlock::Air)
+            .unwrap_or(EMPTY_VEC)
     }
 }
 
