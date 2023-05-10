@@ -1,7 +1,4 @@
-use petgraph::visit::IntoNeighborsDirected;
-use petgraph::Incoming;
 use redstone_simulator::world::World;
-use std::collections::HashSet;
 use std::fs::File;
 
 macro_rules! test {
