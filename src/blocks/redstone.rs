@@ -129,8 +129,8 @@ impl From<HashMap<&str, &str>> for CRedstone {
 }
 
 impl Redstone {
-    pub fn max() -> Self {
-        Redstone { signal: 15 }
+    pub fn with_signal(signal: u8) -> Self {
+        Redstone { signal }
     }
 }
 

@@ -299,5 +299,5 @@ pub fn redstone_min() -> Block {
 }
 
 pub fn redstone_max() -> Block {
-    Block::Redstone(Redstone::max())
+    Block::Redstone(Redstone::with_signal(15))
 }

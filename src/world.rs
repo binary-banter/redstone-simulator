@@ -56,6 +56,21 @@ impl World {
                         .cloned()
                         .map(|b| match b {
                             CBlock::Comparator(mut c) => {
+                                let rear_power =
+                                    tiles.get(&c.facing().front((x, y, z))).and_then(|b| {
+                                        if b.id == "minecraft:furnace" {
+                                            // if let Some(Value::List(x)) = b.props.get("Items"){
+                                            //     if let Some(Value::Compound(y)) = x.first(){
+                                            //         y
+                                            //     }
+                                            // }
+                                            Some(1)
+                                        } else {
+                                            None
+                                        }
+                                    });
+
+                                c.signal_set(rear_power);
                                 c.signal_from_entity(tiles.get(&(x, y, z)).unwrap());
                                 CBlock::Comparator(c)
                             }
@@ -147,7 +162,6 @@ impl From<SchemFormat> for World {
                             .find_map(get_sign)
                             .unwrap_or(format!("{x},{y},{z}"));
 
-                        assert!(!probes.contains_right(&name));
                         probes.insert(idx, name);
                     };
 

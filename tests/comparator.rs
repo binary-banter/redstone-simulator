@@ -247,3 +247,16 @@ fn cmp_cycle() {
     assert!(!world.get_probe("cmp_cycle_off"));
     assert!(world.get_probe("cmp_cycle_on"));
 }
+
+#[test]
+fn cmp_entity() {
+    let file = File::open("./schematics/cmp_entity.schem").unwrap();
+    let mut world = World::from(file);
+
+    world.step_with_trigger();
+    assert!(world.get_probe("cmp_entity"));
+    world.step();
+    assert!(!world.get_probe("cmp_entity"));
+    world.step();
+    assert!(world.get_probe("cmp_entity"));
+}

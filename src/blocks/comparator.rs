@@ -38,6 +38,8 @@ pub struct CComparator {
     /// Mode of the comparator, can be in `Compare` or `Subtract` mode.
     mode: ComparatorMode,
 
+    rear_power: Option<u8>,
+
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
     node: Option<NodeIndex>,
 
@@ -94,7 +96,13 @@ impl BlockConnections for CComparator {
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
     {
-        let rear = blocks.add_node(Block::Redstone(Redstone::default()));
+        let rear = blocks.add_node(Block::Redstone(Redstone::with_signal(
+            self.rear_power.unwrap_or(0),
+        )));
+        if self.rear_power.is_some() {
+            blocks.add_edge(rear, rear, 0);
+        }
+
         let side = blocks.add_node(Block::Redstone(Redstone::default()));
         let comp = blocks.add_node(Block::Comparator(Comparator {
             signal: self.signal,
@@ -153,6 +161,7 @@ impl From<HashMap<&str, &str>> for CComparator {
             signal: 0,
             facing: Facing::from(meta["facing"]),
             mode: ComparatorMode::from(meta["mode"]),
+            rear_power: None,
             node: None,
             rear: None,
             side: None,
@@ -167,6 +176,10 @@ impl CComparator {
         };
 
         self.signal = *s as u8;
+    }
+
+    pub fn signal_set(&mut self, rear_power: Option<u8>) {
+        self.rear_power = rear_power;
     }
 
     pub fn facing(&self) -> Facing {
