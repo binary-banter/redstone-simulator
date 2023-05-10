@@ -103,7 +103,7 @@ fn register() {
     assert!(!world.get_probe("out"));
     world.step_with_trigger();
     assert!(!world.get_probe("out"));
-    world.step();
+    world.step_with_trigger();
     assert!(!world.get_probe("out"));
     world.step();
     assert!(!world.get_probe("out"));

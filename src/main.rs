@@ -22,6 +22,7 @@ fn main() {
 
     for _ in 0..40 {
         world.step_with_trigger();
+        world.step_with_trigger();
         for _ in 0..50 {
             world.step();
         }
