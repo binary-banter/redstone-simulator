@@ -191,7 +191,11 @@ impl From<SchemFormat> for World {
 
         world.prune_graph();
 
-        world.updatable = world.blocks.node_indices().collect();
+        world.updatable = world
+            .blocks
+            .node_indices()
+            .filter(|x| matches!(world.blocks[*x], Block::Redstone(_)))
+            .collect();
         world.step();
 
         world

@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
+use crate::blocks::{redstone, Block, BlockConnections, OutputPower, Updatable};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Outgoing;
@@ -118,15 +118,15 @@ impl Updatable for Repeater {
             .unwrap_or(0)
             > 0;
 
-        if locked {
-            self.count = 0;
-            return false;
-        }
-
         if self.count == self.delay {
             self.count = 0;
             self.powered = self.next_powered;
             tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+        }
+
+        if locked {
+            self.count = 0;
+            return false;
         }
 
         // if signal strength has changed, update neighbours
