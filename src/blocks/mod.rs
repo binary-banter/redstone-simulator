@@ -11,6 +11,7 @@ use crate::world::RedGraph;
 use once_cell::sync::Lazy;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
+use std::ops::Add;
 
 mod comparator;
 pub mod facing;
@@ -54,10 +55,22 @@ pub enum CBlock {
     Comparator(CComparator),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Edge {
     Rear(u8),
     Side(u8),
+}
+
+impl Add<&Edge> for Edge {
+    type Output = Self;
+
+    fn add(self, rhs: &Edge) -> Self::Output {
+        match (self, rhs) {
+            (Edge::Rear(s1), Edge::Side(s2)) => Edge::Side(s1 + s2),
+            (Edge::Rear(s1), Edge::Rear(s2)) => Edge::Rear(s1 + s2),
+            _ => unreachable!(),
+        }
+    }
 }
 
 pub trait OutputPower {

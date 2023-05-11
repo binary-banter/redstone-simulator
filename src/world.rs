@@ -203,12 +203,16 @@ impl From<SchemFormat> for World {
             updatable: vec![],
         };
 
+        // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
+
         world.prune_graph();
+
+        // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
 
         world.updatable = world
             .blocks
             .node_indices()
-            .filter(|x| matches!(world.blocks[*x], Block::Redstone(_)))
+            .filter(|x| world.probes.contains_left(x))
             .collect();
         world.step();
 
