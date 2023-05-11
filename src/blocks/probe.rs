@@ -15,8 +15,8 @@ impl BlockConnections for CProbe {
         None
     }
 
-    fn can_input(&self, _facing: Facing) -> Option<NodeIndex> {
-        self.node
+    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
+        (self.node, false)
     }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, _add_trigger: &mut G)

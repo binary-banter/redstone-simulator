@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
 use crate::world::RedGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
@@ -39,11 +39,11 @@ impl BlockConnections for CTorch {
         self.node
     }
 
-    fn can_input(&self, facing: Facing) -> Option<NodeIndex> {
+    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool) {
         if self.facing == facing {
-            self.node
+            (self.node, false)
         } else {
-            None
+            (None, false)
         }
     }
 
@@ -65,12 +65,10 @@ impl Updatable for Torch {
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
-            .map(|edge| {
-                blocks[edge.source()]
-                    .output_power()
-                    .saturating_sub(*edge.weight())
-            })
-            .any(|s| s > 0);
+            .any(|edge| match edge.weight() {
+                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
+                Edge::Side(_) => false,
+            });
 
         s_new == self.lit
     }

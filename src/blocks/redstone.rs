@@ -1,9 +1,9 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, CBlock, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, CBlock, Edge, OutputPower, Updatable};
 use crate::world::RedGraph;
 use crate::world_data::WorldData;
 use petgraph::prelude::EdgeRef;
-use petgraph::stable_graph::NodeIndex;
+use petgraph::stable_graph::{NodeIndex};
 use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 use std::ops::Index;
@@ -64,8 +64,8 @@ impl BlockConnections for CRedstone {
         }
     }
 
-    fn can_input(&self, _facing: Facing) -> Option<NodeIndex> {
-        self.node
+    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
+        (self.node, false)
     }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
@@ -88,10 +88,9 @@ impl Updatable for Redstone {
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
-            .map(|edge| {
-                blocks[edge.source()]
-                    .output_power()
-                    .saturating_sub(*edge.weight())
+            .filter_map(|edge| match edge.weight() {
+                Edge::Rear(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
+                Edge::Side(_) => unreachable!(),
             })
             .max()
             .unwrap_or(0);
@@ -160,7 +159,7 @@ impl CRedstone {
                 if world[side].iter().all(|b| b.is_transparent())
                     && !world[bottom].iter().all(|b| b.is_transparent())
                 {
-                    blocks.add_edge(idx, n_idx, 1);
+                    blocks.add_edge(idx, n_idx, Edge::Rear(1));
                 }
             }
 
@@ -170,7 +169,7 @@ impl CRedstone {
             })] = world[side_up][..]
             {
                 if world[top].iter().all(|b| b.is_transparent()) {
-                    blocks.add_edge(idx, n_idx, 1);
+                    blocks.add_edge(idx, n_idx, Edge::Rear(1));
                 }
             }
         }

@@ -21,8 +21,8 @@ impl BlockConnections for CSolidStrong {
         self.node
     }
 
-    fn can_input(&self, _facing: Facing) -> Option<NodeIndex> {
-        self.node
+    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
+        (self.node, false)
     }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
@@ -39,8 +39,8 @@ impl BlockConnections for CSolidWeak {
         self.node
     }
 
-    fn can_input(&self, _facing: Facing) -> Option<NodeIndex> {
-        self.node
+    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
+        (self.node, false)
     }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)

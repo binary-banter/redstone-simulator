@@ -1,11 +1,11 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
 use crate::schematic::SchemBlockEntity;
 use crate::world::RedGraph;
 use nbt::Value;
+use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::Outgoing;
+use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
@@ -19,12 +19,6 @@ pub struct Comparator {
     /// Mode of the comparator, can be in `Compare` or `Subtract` mode.
     // todo: we can most likely get rid off this by having both a `Comparator` and `Subtractor`.
     mode: ComparatorMode,
-
-    /// `NodeIndex` of the block that simulates the rear of the comparator.
-    rear: NodeIndex,
-
-    /// `NodeIndex` of the block that simulates the sides of the comparator.
-    side: NodeIndex,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -42,12 +36,6 @@ pub struct CComparator {
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
     node: Option<NodeIndex>,
-
-    /// `NodeIndex` of the block that simulates the rear of the comparator.
-    rear: Option<NodeIndex>,
-
-    /// `NodeIndex` of the block that simulates the sides of the comparator.
-    side: Option<NodeIndex>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -81,13 +69,13 @@ impl BlockConnections for CComparator {
         }
     }
 
-    fn can_input(&self, facing: Facing) -> Option<NodeIndex> {
+    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool) {
         if self.facing == facing.rotate_left() || self.facing == facing.rotate_right() {
-            self.side
+            (self.node, true)
         } else if self.facing == facing.rev() {
-            self.rear
+            (self.node, false)
         } else {
-            None
+            (None, false)
         }
     }
 
@@ -96,43 +84,36 @@ impl BlockConnections for CComparator {
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
     {
-        let rear = blocks.add_node(Block::Redstone(Redstone::with_signal(
-            self.rear_power.unwrap_or(0),
-        )));
-        if self.rear_power.is_some() {
-            blocks.add_edge(rear, rear, 0);
-        }
-
-        let side = blocks.add_node(Block::Redstone(Redstone::default()));
-        let comp = blocks.add_node(Block::Comparator(Comparator {
+        self.node = Some(blocks.add_node(Block::Comparator(Comparator {
             signal: self.signal,
             next_signal: self.signal,
             mode: self.mode,
-            rear,
-            side,
-        }));
-        blocks.add_edge(rear, comp, 0);
-        blocks.add_edge(side, comp, 0);
-        self.node = Some(comp);
-        self.rear = Some(rear);
-        self.side = Some(side);
+        })));
     }
 }
 
 impl Updatable for Comparator {
     fn update(
         &mut self,
-        _idx: NodeIndex,
+        idx: NodeIndex,
         _tick_updatable: &mut Vec<NodeIndex>,
         blocks: &mut RedGraph,
     ) -> bool {
         let rear = blocks
-            .node_weight(self.rear)
-            .map(|b| b.output_power())
+            .edges_directed(idx, Incoming)
+            .find_map(|edge| match edge.weight() {
+                Edge::Rear(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
+                Edge::Side(_) => None,
+            })
             .unwrap_or(0);
+
         let side = blocks
-            .node_weight(self.side)
-            .map(|b| b.output_power())
+            .edges_directed(idx, Incoming)
+            .filter_map(|edge| match edge.weight() {
+                Edge::Rear(_) => None,
+                Edge::Side(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
+            })
+            .max()
             .unwrap_or(0);
 
         self.next_signal = match self.mode {
@@ -163,8 +144,6 @@ impl From<HashMap<&str, &str>> for CComparator {
             mode: ComparatorMode::from(meta["mode"]),
             rear_power: None,
             node: None,
-            rear: None,
-            side: None,
         }
     }
 }

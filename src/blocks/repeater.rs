@@ -1,9 +1,9 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
 use crate::world::RedGraph;
+use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::Outgoing;
+use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
@@ -19,12 +19,6 @@ pub struct Repeater {
 
     /// Number of ticks passed since a new input signal was detected.
     count: u8,
-
-    /// `NodeIndex` of the block that simulates the rear of the repeater.
-    rear: NodeIndex,
-
-    /// `NodeIndex` of the block that simulates the sides of the repeater.
-    side: NodeIndex,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -40,12 +34,6 @@ pub struct CRepeater {
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
     node: Option<NodeIndex>,
-
-    /// `NodeIndex` of the block that simulates the rear of the repeater.
-    rear: Option<NodeIndex>,
-
-    /// `NodeIndex` of the block that simulates the sides of the repeater.
-    side: Option<NodeIndex>,
 }
 
 impl OutputPower for Repeater {
@@ -67,13 +55,13 @@ impl BlockConnections for CRepeater {
         }
     }
 
-    fn can_input(&self, facing: Facing) -> Option<NodeIndex> {
+    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool) {
         if self.facing == facing.rotate_left() || self.facing == facing.rotate_right() {
-            self.side
+            (self.node, true)
         } else if self.facing == facing.rev() {
-            self.rear
+            (self.node, false)
         } else {
-            None
+            (None, false)
         }
     }
 
@@ -82,21 +70,12 @@ impl BlockConnections for CRepeater {
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
     {
-        let rear = blocks.add_node(Block::Redstone(Redstone::default()));
-        let side = blocks.add_node(Block::Redstone(Redstone::default()));
-        let comp = blocks.add_node(Block::Repeater(Repeater {
+        self.node = Some(blocks.add_node(Block::Repeater(Repeater {
             powered: self.powered,
             next_powered: self.powered,
             delay: self.delay,
             count: 0,
-            rear,
-            side,
-        }));
-        blocks.add_edge(rear, comp, 0);
-        blocks.add_edge(side, comp, 0);
-        self.node = Some(comp);
-        self.rear = Some(rear);
-        self.side = Some(side);
+        })));
     }
 }
 
@@ -108,15 +87,18 @@ impl Updatable for Repeater {
         blocks: &mut RedGraph,
     ) -> bool {
         let s_new = blocks
-            .node_weight(self.rear)
-            .map(|b| b.output_power())
-            .unwrap_or(0)
-            > 0;
+            .edges_directed(idx, Incoming)
+            .any(|edge| match edge.weight() {
+                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
+                Edge::Side(_) => false,
+            });
+
         let locked = blocks
-            .node_weight(self.side)
-            .map(|b| b.output_power())
-            .unwrap_or(0)
-            > 0;
+            .edges_directed(idx, Incoming)
+            .any(|edge| match edge.weight() {
+                Edge::Rear(_) => false,
+                Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
+            });
 
         if locked {
             self.count = 0;
@@ -176,8 +158,6 @@ impl From<HashMap<&str, &str>> for CRepeater {
             facing: Facing::from(meta["facing"]),
             delay: meta["delay"].parse().unwrap(),
             node: None,
-            rear: None,
-            side: None,
         }
     }
 }

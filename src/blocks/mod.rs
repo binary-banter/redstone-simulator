@@ -54,6 +54,12 @@ pub enum CBlock {
     Comparator(CComparator),
 }
 
+#[derive(Debug)]
+pub enum Edge {
+    Rear(u8),
+    Side(u8),
+}
+
 pub trait OutputPower {
     fn output_power(&self) -> u8;
 }
@@ -73,7 +79,7 @@ impl OutputPower for Block {
 pub trait BlockConnections {
     fn can_output(&self, facing: Facing) -> Option<NodeIndex>;
 
-    fn can_input(&self, facing: Facing) -> Option<NodeIndex>;
+    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool);
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, add_trigger: &mut G)
     where
@@ -142,15 +148,15 @@ impl BlockConnections for CBlock {
         }
     }
 
-    fn can_input(&self, facing: Facing) -> Option<NodeIndex> {
+    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool) {
         match self {
             CBlock::Redstone(v) => v.can_input(facing),
             CBlock::SolidWeak(v) => v.can_input(facing),
             CBlock::SolidStrong(v) => v.can_input(facing),
-            CBlock::Trigger(_) => None,
+            CBlock::Trigger(_) => (None, false),
             CBlock::Probe(v) => v.can_input(facing),
             CBlock::Repeater(v) => v.can_input(facing),
-            CBlock::RedstoneBlock(_) => None,
+            CBlock::RedstoneBlock(_) => (None, false),
             CBlock::Torch(v) => v.can_input(facing),
             CBlock::Comparator(v) => v.can_input(facing),
         }
@@ -223,23 +229,25 @@ impl CBlock {
     }
 
     pub fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
-        let Some(idx) = self.can_output(facing) else{
-            return
+        let Some(idx) = self.can_output(facing) else {
+            return;
         };
 
-        let Some(n_idx) = target.can_input(facing) else{
-            return
+        let (Some(n_idx), alternate) = target.can_input(facing) else {
+            return;
         };
 
         if !can_connect(self, target, facing) {
             return;
         }
 
-        let weight = if matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_))
-        {
-            1
-        } else {
-            0
+        let redstone_connection =
+            matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_));
+
+        let weight = match (alternate, redstone_connection) {
+            (true, _) => Edge::Side(0),
+            (false, false) => Edge::Rear(0),
+            (false, true) => Edge::Rear(1),
         };
 
         blocks.add_edge(idx, n_idx, weight);

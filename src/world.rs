@@ -1,4 +1,4 @@
-use crate::blocks::{Block, BlockConnections};
+use crate::blocks::{Block, BlockConnections, Edge};
 use crate::blocks::{CBlock, OutputPower};
 use crate::schematic::{SchemBlockEntity, SchemFormat};
 use crate::world_data::{neighbours, neighbours_and_facings, WorldData};
@@ -17,7 +17,7 @@ pub struct World {
     pub updatable: Vec<NodeIndex>,
 }
 
-pub type RedGraph = StableGraph<Block, u8, petgraph::Directed, u32>;
+pub type RedGraph = StableGraph<Block, Edge, petgraph::Directed, u32>;
 
 impl World {
     fn create_world(
@@ -125,7 +125,7 @@ impl From<SchemFormat> for World {
             .map(|b| ((b.pos[0] as usize, b.pos[1] as usize, b.pos[2] as usize), b))
             .collect();
         let mut world = Self::create_world(&format, &tile_entities);
-        let mut blocks = StableGraph::<Block, u8, petgraph::Directed, u32>::new();
+        let mut blocks = RedGraph::new();
 
         let mut triggers = Vec::new();
         let mut probes = BiMap::new();

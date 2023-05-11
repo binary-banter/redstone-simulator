@@ -14,8 +14,8 @@ impl BlockConnections for CRedstoneBlock {
         self.node
     }
 
-    fn can_input(&self, _facing: Facing) -> Option<NodeIndex> {
-        None
+    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
+        (None, false)
     }
 
     fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
