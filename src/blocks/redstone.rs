@@ -3,7 +3,7 @@ use crate::blocks::{Block, BlockConnections, CBlock, Edge, OutputPower, Updatabl
 use crate::world::RedGraph;
 use crate::world_data::WorldData;
 use petgraph::prelude::EdgeRef;
-use petgraph::stable_graph::{NodeIndex};
+use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 use std::ops::Index;

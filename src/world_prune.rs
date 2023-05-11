@@ -16,7 +16,8 @@ impl World {
                     && blocks.neighbors_directed(y, Incoming).count() > 0)
                     || self.probes.contains_left(&y)
                     || self.triggers.contains(&y)
-                    || matches!(blocks[y], Block::RedstoneBlock | Block::Torch { .. })
+                    || matches!(blocks[y], Block::RedstoneBlock | Block::Torch(_))
+                // todo: we can also prune comparators with no incoming rear edges
             });
             if nodes == self.blocks.node_count() {
                 break;

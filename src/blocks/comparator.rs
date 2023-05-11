@@ -16,6 +16,8 @@ pub struct Comparator {
     /// Signal of the comparator during the next tick.
     next_signal: u8,
 
+    entity_power: Option<u8>,
+
     /// Mode of the comparator, can be in `Compare` or `Subtract` mode.
     // todo: we can most likely get rid off this by having both a `Comparator` and `Subtractor`.
     mode: ComparatorMode,
@@ -32,7 +34,7 @@ pub struct CComparator {
     /// Mode of the comparator, can be in `Compare` or `Subtract` mode.
     mode: ComparatorMode,
 
-    rear_power: Option<u8>,
+    entity_power: Option<u8>,
 
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
     node: Option<NodeIndex>,
@@ -87,6 +89,7 @@ impl BlockConnections for CComparator {
         self.node = Some(blocks.add_node(Block::Comparator(Comparator {
             signal: self.signal,
             next_signal: self.signal,
+            entity_power: self.entity_power,
             mode: self.mode,
         })));
     }
@@ -101,10 +104,12 @@ impl Updatable for Comparator {
     ) -> bool {
         let rear = blocks
             .edges_directed(idx, Incoming)
-            .find_map(|edge| match edge.weight() {
+            .filter_map(|edge| match edge.weight() {
                 Edge::Rear(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
                 Edge::Side(_) => None,
             })
+            .max()
+            .max(self.entity_power)
             .unwrap_or(0);
 
         let side = blocks
@@ -142,7 +147,7 @@ impl From<HashMap<&str, &str>> for CComparator {
             signal: 0,
             facing: Facing::from(meta["facing"]),
             mode: ComparatorMode::from(meta["mode"]),
-            rear_power: None,
+            entity_power: None,
             node: None,
         }
     }
@@ -158,7 +163,7 @@ impl CComparator {
     }
 
     pub fn signal_set(&mut self, rear_power: Option<u8>) {
-        self.rear_power = rear_power;
+        self.entity_power = rear_power;
     }
 
     pub fn facing(&self) -> Facing {
