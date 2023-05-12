@@ -1,5 +1,6 @@
 use crate::world::World;
 use std::fs::File;
+use crate::blocks::Block;
 
 mod blocks;
 mod schematic;
@@ -21,8 +22,10 @@ fn main() {
     let mut world = World::from(File::open("./schematics/cpu_fib.schem").unwrap());
 
     println!("nodes: {}, edges: {}", world.blocks.node_count(), world.blocks.edge_count());
-
-
+    println!("Repeaters: {}", world.blocks.node_weights().filter(|b| matches!(b, Block::Repeater(_))).count());
+    println!("Torches: {}", world.blocks.node_weights().filter(|b| matches!(b, Block::Torch(_))).count());
+    println!("Comps: {}", world.blocks.node_weights().filter(|b| matches!(b, Block::Comparator(_))).count());
+    println!("Redstone: {}", world.blocks.node_weights().filter(|b| matches!(b, Block::Redstone(_))).count());
 
     for _ in 0..40 {
         world.step_with_trigger();

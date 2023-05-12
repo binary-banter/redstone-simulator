@@ -24,6 +24,14 @@ pub struct CTorch {
     node: Option<NodeIndex>,
 }
 
+impl Default for Torch {
+    fn default() -> Self {
+        Torch {
+            lit: true,
+        }
+    }
+}
+
 impl OutputPower for Torch {
     fn output_power(&self) -> u8 {
         if self.lit {

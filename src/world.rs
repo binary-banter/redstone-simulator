@@ -203,11 +203,7 @@ impl From<SchemFormat> for World {
             updatable: VecDeque::new(),
         };
 
-        // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
-
         world.prune_graph();
-
-        // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
 
         world.updatable = world
             .blocks

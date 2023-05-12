@@ -2,6 +2,7 @@ use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
+use crate::blocks::torch::Torch;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRedstoneBlock {
@@ -23,6 +24,6 @@ impl BlockConnections for CRedstoneBlock {
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
     {
-        self.node = Some(blocks.add_node(Block::RedstoneBlock));
+        self.node = Some(blocks.add_node(Block::Torch(Torch::default())));
     }
 }

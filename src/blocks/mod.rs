@@ -36,7 +36,6 @@ static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 pub enum Block {
     Redstone(Redstone),
     Repeater(Repeater),
-    RedstoneBlock,
     Torch(Torch),
     Comparator(Comparator),
 }
@@ -98,7 +97,6 @@ impl OutputPower for Block {
         match self {
             Block::Redstone(v) => v.output_power(),
             Block::Repeater(v) => v.output_power(),
-            Block::RedstoneBlock => 15,
             Block::Torch(v) => v.output_power(),
             Block::Comparator(v) => v.output_power(),
         }
@@ -318,7 +316,6 @@ impl Updatable for Block {
         match self {
             Block::Redstone(v) => v.update(idx, tick_updatable, blocks),
             Block::Repeater(v) => v.update(idx, tick_updatable, blocks),
-            Block::RedstoneBlock => false,
             Block::Torch(v) => v.update(idx, tick_updatable, blocks),
             Block::Comparator(v) => v.update(idx, tick_updatable, blocks),
         }
@@ -331,9 +328,8 @@ impl Updatable for Block {
         blocks: &mut RedGraph,
     ) {
         match self {
-            Block::Redstone(_) => {}
+            Block::Redstone(_) => unreachable!(),
             Block::Repeater(v) => v.late_updatable(idx, updatable, blocks),
-            Block::RedstoneBlock => {}
             Block::Torch(v) => v.late_updatable(idx, updatable, blocks),
             Block::Comparator(v) => v.late_updatable(idx, updatable, blocks),
         }

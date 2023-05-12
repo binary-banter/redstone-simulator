@@ -28,7 +28,7 @@ impl World {
                     || self.triggers.contains(&y)
                     || matches!(
                         blocks[y],
-                        Block::RedstoneBlock | Block::Torch(_) | Block::Comparator(_)
+                        Block::Torch(_) | Block::Comparator(_)
                     )
             });
             if nodes == self.blocks.node_count() {
