@@ -116,3 +116,26 @@ fn register() {
     assert!(world.get_probe("out"));
     world.step();
 }
+
+
+// #[test]
+// fn lock_rep_2t_test() {
+//     let file = File::open("./schematics/lock_rep_2t.schem").unwrap();
+//     let mut world = World::from(file);
+//
+//     println!("{:?}", world.blocks);
+//
+//     assert!(!world.get_probe("lock_rep_2t"));
+//     world.step_with_trigger();
+//     assert!(!world.get_probe("lock_rep_2t"));
+//     world.step();
+//     assert!(world.get_probe("lock_rep_2t"));
+//     world.step();
+//     assert!(world.get_probe("lock_rep_2t"));
+//     world.step();
+//     assert!(world.get_probe("lock_rep_2t"));
+//     world.step();
+//     assert!(world.get_probe("lock_rep_2t"));
+//     world.step();
+//     assert!(!world.get_probe("lock_rep_2t"));
+// }

@@ -205,7 +205,7 @@ impl From<SchemFormat> for World {
 
         // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
 
-        // world.prune_graph();
+        world.prune_graph();
 
         // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
 

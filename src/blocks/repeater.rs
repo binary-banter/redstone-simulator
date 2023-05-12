@@ -14,6 +14,8 @@ pub struct Repeater {
     /// Next power when count reaches the repeater delay.
     next_powered: bool,
 
+    locking_signal: bool,
+
     /// The repeater delay in ticks, ranges from 1 to 4 inclusive.
     delay: u8,
 
@@ -73,6 +75,7 @@ impl BlockConnections for CRepeater {
         self.node = Some(blocks.add_node(Block::Repeater(Repeater {
             powered: self.powered,
             next_powered: self.powered,
+            locking_signal: false,
             delay: self.delay,
             count: 0,
         })));
@@ -93,21 +96,25 @@ impl Updatable for Repeater {
                 Edge::Side(_) => false,
             });
 
-        let locked = blocks
+        let locked_now = blocks
             .edges_directed(idx, Incoming)
             .any(|edge| match edge.weight() {
                 Edge::Rear(_) => false,
                 Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
             });
+        let locked_next_tick = blocks
+            .edges_directed(idx, Incoming)
+            .any(|edge| match edge.weight() {
+                Edge::Rear(_) => false,
+                Edge::Side(s) => blocks[edge.source()].locking_power().saturating_sub(*s) > 0,
+            });
 
-        if locked {
+        if locked_now {
             self.count = 0;
             return false;
         }
 
-        if self.count == self.delay {
-            self.count = 0;
-            self.powered = self.next_powered;
+        if locked_next_tick == self.locking_signal {
             tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
         }
 
@@ -126,6 +133,16 @@ impl Updatable for Repeater {
             (_, _, _) => {}
         };
 
+        self.locking_signal = if locked_next_tick {
+            self.powered
+        } else {
+            if self.count + 1 == self.delay {
+                self.next_powered
+            } else {
+                self.powered
+            }
+        };
+
         self.powered != self.next_powered
     }
 
@@ -135,19 +152,24 @@ impl Updatable for Repeater {
         updatable: &mut VecDeque<NodeIndex>,
         blocks: &mut RedGraph,
     ) {
-        let locked = blocks
-            .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(_) => false,
-                Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
-            });
-        if self.powered == self.next_powered || locked {
-            return;
-        }
+        // If this repeater will be locked next turn, ...
+
         self.count += 1;
-        if self.count + 1 == self.delay {
+        if self.count == self.delay {
+            self.count = 0;
+            self.powered = self.locking_signal;
             updatable.push_back(idx);
             updatable.extend(blocks.neighbors_directed(idx, Outgoing)); // lockable
+        }
+    }
+}
+
+impl Repeater{
+    pub fn locking_power(&self) -> u8{
+        if self.locking_signal {
+            15
+        } else{
+            0
         }
     }
 }

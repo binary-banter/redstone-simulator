@@ -89,6 +89,16 @@ impl OutputPower for Block {
     }
 }
 
+impl Block {
+    fn locking_power(&self) -> u8 {
+        match self {
+            Block::Repeater(v) => v.locking_power(),
+            _ => self.output_power(),
+        }
+    }
+}
+
+
 pub trait BlockConnections {
     fn can_output(&self, facing: Facing) -> Option<NodeIndex>;
 
