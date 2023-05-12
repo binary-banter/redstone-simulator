@@ -87,7 +87,7 @@ impl Updatable for Repeater {
         &mut self,
         idx: NodeIndex,
         tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
+        blocks: &RedGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
@@ -151,15 +151,16 @@ impl Updatable for Repeater {
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
-    ) {
+        updatable: &mut VecDeque<NodeIndex>
+    ) -> bool {
         self.count += 1;
         updatable.push_back(idx);
         if self.count == self.delay {
             self.count = 0;
             self.powered = self.locking_signal;
-            updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+            true
+        } else {
+            false
         }
     }
 }

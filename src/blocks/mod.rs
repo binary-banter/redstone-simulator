@@ -296,15 +296,14 @@ pub trait Updatable {
         &mut self,
         idx: NodeIndex,
         tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
+        blocks: &RedGraph,
     ) -> bool;
 
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
         updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
-    );
+    ) -> bool;
 }
 
 impl Updatable for Block {
@@ -313,7 +312,7 @@ impl Updatable for Block {
         &mut self,
         idx: NodeIndex,
         tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
+        blocks: &RedGraph,
     ) -> bool {
         match self {
             Block::Repeater(v) => v.update(idx, tick_updatable, blocks),
@@ -327,12 +326,11 @@ impl Updatable for Block {
         &mut self,
         idx: NodeIndex,
         updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
-    ) {
+    ) -> bool {
         match self {
-            Block::Repeater(v) => v.late_updatable(idx, updatable, blocks),
-            Block::Torch(v) => v.late_updatable(idx, updatable, blocks),
-            Block::Comparator(v) => v.late_updatable(idx, updatable, blocks),
+            Block::Repeater(v) => v.late_updatable(idx, updatable),
+            Block::Torch(v) => v.late_updatable(idx, updatable),
+            Block::Comparator(v) => v.late_updatable(idx, updatable),
             Block::Redstone(_) => unreachable!(),
         }
     }

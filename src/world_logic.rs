@@ -18,11 +18,9 @@ impl World {
 
         // End-of-tick updates
         for idx in self.updatable.drain(..).unique() {
-            let mut block = self.blocks[idx].clone();
-
-            block.late_updatable(idx, &mut self.tick_updatable, &mut self.blocks);
-
-            self.blocks[idx] = block;
+            if self.blocks[idx].late_updatable(idx, &mut self.tick_updatable) {
+                self.tick_updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
+            }
         }
     }
 

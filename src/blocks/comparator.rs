@@ -5,7 +5,7 @@ use crate::world::RedGraph;
 use nbt::Value;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::{Incoming, Outgoing};
+use petgraph::{Incoming};
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
@@ -100,7 +100,7 @@ impl Updatable for Comparator {
         &mut self,
         idx: NodeIndex,
         _tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
+        blocks: &RedGraph,
     ) -> bool {
         let rear = blocks
             .edges_directed(idx, Incoming)
@@ -132,12 +132,11 @@ impl Updatable for Comparator {
 
     fn late_updatable(
         &mut self,
-        idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
-    ) {
+        _idx: NodeIndex,
+        _updatable: &mut VecDeque<NodeIndex>,
+    ) -> bool {
         self.signal = self.next_signal;
-        updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+        true
     }
 }
 

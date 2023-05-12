@@ -84,7 +84,7 @@ impl Updatable for Redstone {
         &mut self,
         idx: NodeIndex,
         tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
+        blocks: &RedGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
@@ -107,8 +107,8 @@ impl Updatable for Redstone {
         &mut self,
         _idx: NodeIndex,
         _updatable: &mut VecDeque<NodeIndex>,
-        _blocks: &mut RedGraph,
-    ) {
+    ) -> bool {
+        unreachable!()
     }
 }
 

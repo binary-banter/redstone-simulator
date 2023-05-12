@@ -3,7 +3,7 @@ use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
 use crate::world::RedGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::{Incoming, Outgoing};
+use petgraph::{Incoming};
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
@@ -69,7 +69,7 @@ impl Updatable for Torch {
         &mut self,
         idx: NodeIndex,
         _tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
+        blocks: &RedGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
@@ -83,13 +83,12 @@ impl Updatable for Torch {
 
     fn late_updatable(
         &mut self,
-        idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
-    ) {
+        _idx: NodeIndex,
+        _updatable: &mut VecDeque<NodeIndex>,
+    ) -> bool {
         self.lit = !self.lit;
 
-        updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+        true
     }
 }
 
