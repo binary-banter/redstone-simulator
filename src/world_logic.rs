@@ -17,14 +17,13 @@ impl World {
         }
 
         // End-of-tick updates
-        for &idx in self.updatable.iter().unique() {
+        for idx in self.updatable.drain(..).unique() {
             let mut block = self.blocks[idx].clone();
 
             block.late_updatable(idx, &mut self.tick_updatable, &mut self.blocks);
 
             self.blocks[idx] = block;
         }
-        self.updatable.clear();
     }
 
     pub fn step_with_trigger(&mut self) {

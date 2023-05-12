@@ -155,6 +155,7 @@ impl Updatable for Repeater {
         blocks: &mut RedGraph,
     ) {
         self.count += 1;
+        updatable.push_back(idx);
         if self.count == self.delay {
             self.count = 0;
             self.powered = self.locking_signal;
