@@ -68,6 +68,13 @@ impl Edge {
             Edge::Side(_) => true,
         }
     }
+
+    pub fn strength_loss(&self) -> u8 {
+        match self {
+            Edge::Rear(v) => *v,
+            Edge::Side(v) => *v,
+        }
+    }
 }
 
 impl Add<&Edge> for Edge {

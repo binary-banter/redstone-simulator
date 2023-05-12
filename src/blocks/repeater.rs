@@ -173,6 +173,10 @@ impl Repeater {
             0
         }
     }
+
+    pub fn delay(&self) -> u8 {
+        self.delay
+    }
 }
 
 impl CRepeater {

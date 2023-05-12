@@ -6,13 +6,16 @@ use petgraph::stable_graph::{EdgeIndex, NodeIndex};
 use petgraph::{Incoming, Outgoing};
 use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Entry;
-use petgraph::visit::IntoEdgeReferences;
+use petgraph::visit::{IntoEdgeReferences};
 
 impl World {
     pub fn prune_graph(&mut self) {
         self.prune_redstone();
-        self.prune_dead_nodes();
         self.prune_duplicate_edges();
+        self.prune_too_long_edges();
+        self.prune_groups();
+        self.prune_duplicate_edges();
+        self.prune_dead_nodes();
     }
 
     fn prune_dead_nodes(&mut self) {
@@ -81,7 +84,6 @@ impl World {
     }
 
     fn prune_duplicate_edges(&mut self) {
-        // (15, 12) (15, 12)
         let mut best_edges: HashMap<(NodeIndex, NodeIndex, bool), EdgeIndex> = HashMap::new();
         let mut edges_to_remove = Vec::new();
         for edge in self.blocks.edge_references() {
@@ -106,5 +108,57 @@ impl World {
         edges_to_remove.into_iter().for_each(|e| {
             self.blocks.remove_edge(e);
         })
+    }
+
+    fn prune_too_long_edges(&mut self) {
+        self.blocks.retain_edges(|g, e| {
+            g[e].strength_loss() < 15
+        })
+    }
+
+    fn prune_groups(&mut self) {
+        let mut todo = self.blocks.node_indices().filter(|i| matches!(self.blocks[*i], Block::Repeater(_) | Block::Torch(_))).collect_vec();
+
+        while let Some(idx) = todo.pop() {
+            let mut repeaters: HashMap<usize, Vec<NodeIndex>> = HashMap::new();
+            let mut torches = Vec::new();
+
+            for n_idx in self.blocks.neighbors_directed(idx, Outgoing){
+                // Only group items with a single parent
+                if self.blocks.neighbors_directed(n_idx, Incoming).count() > 1{
+                    continue
+                }
+
+                // Only group repeaters and torches.
+                match &self.blocks[n_idx] {
+                    Block::Repeater(v) => {
+                        repeaters.entry(v.delay() as usize).or_default().push(n_idx);
+                    },
+                    Block::Torch(_) => torches.push(n_idx),
+                    _ => continue,
+                }
+            }
+
+            if torches.len() > 1 {
+                todo.push(self.merge_nodes(torches.into_iter()));
+            }
+            for (_, repeaters) in repeaters.into_iter() {
+                if repeaters.len() > 1 {
+                    todo.push(self.merge_nodes(repeaters.into_iter()));
+                }
+            }
+        }
+    }
+
+    fn merge_nodes(&mut self, mut nodes: impl Iterator<Item=NodeIndex>) -> NodeIndex {
+        let first = nodes.next().unwrap();
+        for other in nodes {
+            let edges = self.blocks.edges_directed(other, Outgoing).map(|e| e.id()).collect_vec();
+            for edge in edges {
+                self.blocks.add_edge(first, self.blocks.edge_endpoints(edge).unwrap().1, self.blocks[edge]);
+            }
+            self.blocks.remove_node(other);
+        }
+        first
     }
 }
