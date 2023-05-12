@@ -207,7 +207,7 @@ impl From<SchemFormat> for World {
 
         world.prune_graph();
 
-        world.updatable = world
+        world.tick_updatable = world
             .blocks
             .node_indices()
             .filter(|x| matches!(world.blocks[*x], Block::Redstone(_)))

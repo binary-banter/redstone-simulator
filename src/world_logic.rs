@@ -2,12 +2,9 @@ use crate::blocks::{redstone_max, redstone_min, Updatable};
 use crate::world::World;
 use itertools::Itertools;
 use petgraph::Outgoing;
-use std::mem;
 
 impl World {
     pub fn step(&mut self) {
-        mem::swap(&mut self.updatable, &mut self.tick_updatable);
-
         // Tick updates
         while let Some(idx) = self.tick_updatable.pop_front() {
             let mut block = self.blocks[idx].clone();
@@ -19,24 +16,22 @@ impl World {
             self.blocks[idx] = block;
         }
 
-        // // End-of-tick updates
-        for &idx in self.updatable.clone().iter().unique() {
+        // End-of-tick updates
+        for &idx in self.updatable.iter().unique() {
             let mut block = self.blocks[idx].clone();
 
-            block.late_updatable(idx, &mut self.updatable, &mut self.blocks);
+            block.late_updatable(idx, &mut self.tick_updatable, &mut self.blocks);
 
             self.blocks[idx] = block;
         }
+        self.updatable.clear();
     }
 
     pub fn step_with_trigger(&mut self) {
         // put redstone power on triggers
         for &t in &self.triggers {
             self.blocks[t] = redstone_max();
-
-            for n in self.blocks.neighbors_directed(t, Outgoing) {
-                self.updatable.push_back(n);
-            }
+            self.tick_updatable.extend(self.blocks.neighbors_directed(t, Outgoing));
         }
 
         self.step();
@@ -44,10 +39,7 @@ impl World {
         // take redstone power off triggers
         for &t in &self.triggers {
             self.blocks[t] = redstone_min();
-
-            for n in self.blocks.neighbors_directed(t, Outgoing) {
-                self.updatable.push_back(n);
-            }
+            self.tick_updatable.extend(self.blocks.neighbors_directed(t, Outgoing));
         }
     }
 }
