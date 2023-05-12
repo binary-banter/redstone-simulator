@@ -15,6 +15,7 @@ pub struct World {
     pub triggers: Vec<NodeIndex>,
     pub probes: BiMap<NodeIndex, String>,
     pub updatable: VecDeque<NodeIndex>,
+    pub tick_updatable: VecDeque<NodeIndex>,
 }
 
 pub type RedGraph = StableGraph<Block, Edge, petgraph::Directed, u32>;
@@ -201,6 +202,7 @@ impl From<SchemFormat> for World {
             triggers,
             probes,
             updatable: VecDeque::new(),
+            tick_updatable: VecDeque::new(),
         };
 
         world.prune_graph();

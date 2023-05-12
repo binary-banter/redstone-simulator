@@ -6,13 +6,13 @@ use std::mem;
 
 impl World {
     pub fn step(&mut self) {
-        let mut tick_updatable = mem::take(&mut self.updatable);
+        mem::swap(&mut self.updatable, &mut self.tick_updatable);
 
         // Tick updates
-        while let Some(idx) = tick_updatable.pop_front() {
+        while let Some(idx) = self.tick_updatable.pop_front() {
             let mut block = self.blocks[idx].clone();
 
-            if block.update(idx, &mut tick_updatable, &mut self.blocks) {
+            if block.update(idx, &mut self.tick_updatable, &mut self.blocks) {
                 self.updatable.push_back(idx);
             }
 

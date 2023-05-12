@@ -102,6 +102,11 @@ impl Updatable for Repeater {
                 Edge::Rear(_) => false,
                 Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
             });
+
+        if locked_now {
+            return false;
+        }
+
         let locked_next_tick =
             blocks
                 .edges_directed(idx, Incoming)
@@ -110,11 +115,6 @@ impl Updatable for Repeater {
                     // No sub since repeater/comparator cannot loose signal strength
                     Edge::Side(_) => blocks[edge.source()].will_lock(),
                 });
-
-        if locked_now {
-            self.count = 0;
-            return false;
-        }
 
         if locked_next_tick == self.locking_signal {
             tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
