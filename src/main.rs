@@ -20,7 +20,7 @@ mod world_prune;
 fn main() {
     let mut world = World::from(File::open("./schematics/cpu_fib.schem").unwrap());
 
-    // println!("nodes: {}, edges: {}", world.blocks.node_count(), world.blocks.edge_count());
+    println!("nodes: {}, edges: {}", world.blocks.node_count(), world.blocks.edge_count());
 
     for _ in 0..40 {
         world.step_with_trigger();

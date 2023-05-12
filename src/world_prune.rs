@@ -2,14 +2,17 @@ use crate::blocks::{Block, Edge};
 use crate::world::World;
 use itertools::Itertools;
 use petgraph::prelude::EdgeRef;
-use petgraph::stable_graph::NodeIndex;
+use petgraph::stable_graph::{EdgeIndex, NodeIndex};
 use petgraph::{Incoming, Outgoing};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+use std::collections::hash_map::Entry;
+use petgraph::visit::IntoEdgeReferences;
 
 impl World {
     pub fn prune_graph(&mut self) {
         self.prune_redstone();
         self.prune_dead_nodes();
+        self.prune_duplicate_edges();
     }
 
     fn prune_dead_nodes(&mut self) {
@@ -24,7 +27,6 @@ impl World {
                         blocks[y],
                         Block::RedstoneBlock | Block::Torch(_) | Block::Comparator(_)
                     )
-                // todo: we can also prune comparators with no incoming rear edges
             });
             if nodes == self.blocks.node_count() {
                 break;
@@ -47,10 +49,10 @@ impl World {
                 for (s, c) in state {
                     for nb_edge in self.blocks.edges_directed(s, Outgoing) {
                         let nb = nb_edge.target();
-                        if visited.contains(&(nb, nb_edge.weight().side())) {
+                        if visited.contains(&(nb, nb_edge.weight().is_side())) {
                             continue;
                         }
-                        visited.insert((nb, nb_edge.weight().side()));
+                        visited.insert((nb, nb_edge.weight().is_side()));
                         if self.probes.contains_left(&nb) {
                             ends.push((nb, c + nb_edge.weight()));
                         }
@@ -76,5 +78,33 @@ impl World {
                 || self.probes.contains_left(&n)
                 || self.triggers.contains(&n)
         });
+    }
+
+    fn prune_duplicate_edges(&mut self) {
+        // (15, 12) (15, 12)
+        let mut best_edges: HashMap<(NodeIndex, NodeIndex, bool), EdgeIndex> = HashMap::new();
+        let mut edges_to_remove = Vec::new();
+        for edge in self.blocks.edge_references() {
+            match best_edges.entry((edge.source(), edge.target(), edge.weight().is_side())) {
+                Entry::Occupied(mut e) => {
+                    if *edge.weight() >= self.blocks[*e.get()] {
+                        // remove edge
+                        edges_to_remove.push(edge.id());
+                    } else{
+                        // new best edge
+                        edges_to_remove.push(*e.get());
+                        e.insert(edge.id());
+                    }
+                }
+                Entry::Vacant(e) => {
+                    e.insert(edge.id());
+                }
+            }
+            edge.source();
+        }
+
+        edges_to_remove.into_iter().for_each(|e| {
+            self.blocks.remove_edge(e);
+        })
     }
 }

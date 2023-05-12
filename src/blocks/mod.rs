@@ -55,14 +55,14 @@ pub enum CBlock {
     Comparator(CComparator),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Edge {
     Rear(u8),
     Side(u8),
 }
 
 impl Edge {
-    pub(crate) fn side(&self) -> bool {
+    pub fn is_side(&self) -> bool {
         match self {
             Edge::Rear(_) => false,
             Edge::Side(_) => true,

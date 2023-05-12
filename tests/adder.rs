@@ -126,8 +126,6 @@ fn adder_6() {
     let file = File::open("./schematics/adder_6h.schem").unwrap();
     let mut world = World::from(file);
 
-    println!("{:?}", world.blocks);
-
     // assert!(!world.get_probe("t"));
     assert!(world.get_probe("q"));
     world.step();
