@@ -105,9 +105,9 @@ impl Updatable for Redstone {
 
     fn late_updatable(
         &mut self,
-        idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>,
-        blocks: &mut RedGraph,
+        _idx: NodeIndex,
+        _updatable: &mut VecDeque<NodeIndex>,
+        _blocks: &mut RedGraph,
     ) {
     }
 }

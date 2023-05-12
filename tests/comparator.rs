@@ -260,3 +260,15 @@ fn cmp_entity() {
     world.step();
     assert!(world.get_probe("cmp_entity"));
 }
+
+#[test]
+fn cmp_prune() {
+    let file = File::open("./schematics/cmp_prune.schem").unwrap();
+    let mut world = World::from(file);
+
+    assert!(!world.get_probe("cmp_prune"));
+    world.step_with_trigger();
+    assert!(!world.get_probe("cmp_prune"));
+    world.step();
+    assert!(!world.get_probe("cmp_prune"));
+}

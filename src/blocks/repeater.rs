@@ -102,12 +102,13 @@ impl Updatable for Repeater {
                 Edge::Rear(_) => false,
                 Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
             });
-        let locked_next_tick = blocks
-            .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(_) => false,
-                Edge::Side(s) => blocks[edge.source()].locking_power().saturating_sub(*s) > 0,
-            });
+        let locked_next_tick =
+            blocks
+                .edges_directed(idx, Incoming)
+                .any(|edge| match edge.weight() {
+                    Edge::Rear(_) => false,
+                    Edge::Side(s) => blocks[edge.source()].locking_power().saturating_sub(*s) > 0,
+                });
 
         if locked_now {
             self.count = 0;
@@ -164,11 +165,11 @@ impl Updatable for Repeater {
     }
 }
 
-impl Repeater{
-    pub fn locking_power(&self) -> u8{
+impl Repeater {
+    pub fn locking_power(&self) -> u8 {
         if self.locking_signal {
             15
-        } else{
+        } else {
             0
         }
     }

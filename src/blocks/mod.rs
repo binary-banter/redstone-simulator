@@ -61,6 +61,15 @@ pub enum Edge {
     Side(u8),
 }
 
+impl Edge {
+    pub(crate) fn side(&self) -> bool {
+        match self {
+            Edge::Rear(_) => false,
+            Edge::Side(_) => true,
+        }
+    }
+}
+
 impl Add<&Edge> for Edge {
     type Output = Self;
 
@@ -97,7 +106,6 @@ impl Block {
         }
     }
 }
-
 
 pub trait BlockConnections {
     fn can_output(&self, facing: Facing) -> Option<NodeIndex>;

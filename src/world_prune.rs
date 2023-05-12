@@ -9,7 +9,7 @@ use std::collections::HashSet;
 impl World {
     pub fn prune_graph(&mut self) {
         self.prune_redstone();
-        // self.prune_dead_nodes();
+        self.prune_dead_nodes();
     }
 
     fn prune_dead_nodes(&mut self) {
@@ -20,7 +20,10 @@ impl World {
                     && blocks.neighbors_directed(y, Incoming).count() > 0)
                     || self.probes.contains_left(&y)
                     || self.triggers.contains(&y)
-                    || matches!(blocks[y], Block::RedstoneBlock | Block::Torch(_) | Block::Comparator(_))
+                    || matches!(
+                        blocks[y],
+                        Block::RedstoneBlock | Block::Torch(_) | Block::Comparator(_)
+                    )
                 // todo: we can also prune comparators with no incoming rear edges
             });
             if nodes == self.blocks.node_count() {
@@ -36,7 +39,7 @@ impl World {
             }
 
             let mut state = vec![(node, Edge::Rear(0))];
-            let mut visited: HashSet<NodeIndex> = HashSet::new();
+            let mut visited: HashSet<(NodeIndex, bool)> = HashSet::new();
             let mut ends = vec![];
 
             loop {
@@ -44,10 +47,10 @@ impl World {
                 for (s, c) in state {
                     for nb_edge in self.blocks.edges_directed(s, Outgoing) {
                         let nb = nb_edge.target();
-                        if visited.contains(&nb) {
+                        if visited.contains(&(nb, nb_edge.weight().side())) {
                             continue;
                         }
-                        visited.insert(nb);
+                        visited.insert((nb, nb_edge.weight().side()));
                         if self.probes.contains_left(&nb) {
                             ends.push((nb, c + nb_edge.weight()));
                         }

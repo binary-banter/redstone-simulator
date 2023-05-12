@@ -60,7 +60,7 @@ impl Updatable for Torch {
     fn update(
         &mut self,
         idx: NodeIndex,
-        tick_updatable: &mut VecDeque<NodeIndex>,
+        _tick_updatable: &mut VecDeque<NodeIndex>,
         blocks: &mut RedGraph,
     ) -> bool {
         let s_new = blocks
