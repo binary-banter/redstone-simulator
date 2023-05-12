@@ -4,7 +4,7 @@ use crate::world::RedGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
 pub struct Torch {
@@ -60,14 +60,14 @@ impl Updatable for Torch {
     fn update(
         &mut self,
         idx: NodeIndex,
-        _tick_updatable: &mut Vec<NodeIndex>,
+        tick_updatable: &mut VecDeque<NodeIndex>,
         blocks: &mut RedGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
             .any(|edge| match edge.weight() {
                 Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
-                Edge::Side(_) => false,
+                Edge::Side(_) => unreachable!(),
             });
 
         s_new == self.lit
@@ -76,7 +76,7 @@ impl Updatable for Torch {
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
-        updatable: &mut Vec<NodeIndex>,
+        updatable: &mut VecDeque<NodeIndex>,
         blocks: &mut RedGraph,
     ) {
         self.lit = !self.lit;

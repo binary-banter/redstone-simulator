@@ -4,7 +4,7 @@ use crate::world::RedGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
 pub struct Repeater {
@@ -83,7 +83,7 @@ impl Updatable for Repeater {
     fn update(
         &mut self,
         idx: NodeIndex,
-        tick_updatable: &mut Vec<NodeIndex>,
+        tick_updatable: &mut VecDeque<NodeIndex>,
         blocks: &mut RedGraph,
     ) -> bool {
         let s_new = blocks
@@ -132,12 +132,21 @@ impl Updatable for Repeater {
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
-        updatable: &mut Vec<NodeIndex>,
+        updatable: &mut VecDeque<NodeIndex>,
         blocks: &mut RedGraph,
     ) {
+        let locked = blocks
+            .edges_directed(idx, Incoming)
+            .any(|edge| match edge.weight() {
+                Edge::Rear(_) => false,
+                Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
+            });
+        if self.powered == self.next_powered || locked {
+            return;
+        }
         self.count += 1;
         if self.count + 1 == self.delay {
-            updatable.push(idx);
+            updatable.push_back(idx);
             updatable.extend(blocks.neighbors_directed(idx, Outgoing)); // lockable
         }
     }

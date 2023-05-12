@@ -9,11 +9,11 @@ impl World {
         let mut tick_updatable = mem::take(&mut self.updatable);
 
         // Tick updates
-        while let Some(idx) = tick_updatable.pop() {
+        while let Some(idx) = tick_updatable.pop_front() {
             let mut block = self.blocks[idx].clone();
 
             if block.update(idx, &mut tick_updatable, &mut self.blocks) {
-                self.updatable.push(idx);
+                self.updatable.push_back(idx);
             }
 
             self.blocks[idx] = block;
@@ -35,7 +35,7 @@ impl World {
             self.blocks[t] = redstone_max();
 
             for n in self.blocks.neighbors_directed(t, Outgoing) {
-                self.updatable.push(n);
+                self.updatable.push_back(n);
             }
         }
 
@@ -46,7 +46,7 @@ impl World {
             self.blocks[t] = redstone_min();
 
             for n in self.blocks.neighbors_directed(t, Outgoing) {
-                self.updatable.push(n);
+                self.updatable.push_back(n);
             }
         }
     }

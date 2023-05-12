@@ -6,7 +6,7 @@ use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
 use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs::File;
 
 #[derive(Debug)]
@@ -14,7 +14,7 @@ pub struct World {
     pub blocks: RedGraph,
     pub triggers: Vec<NodeIndex>,
     pub probes: BiMap<NodeIndex, String>,
-    pub updatable: Vec<NodeIndex>,
+    pub updatable: VecDeque<NodeIndex>,
 }
 
 pub type RedGraph = StableGraph<Block, Edge, petgraph::Directed, u32>;
@@ -200,19 +200,19 @@ impl From<SchemFormat> for World {
             blocks,
             triggers,
             probes,
-            updatable: vec![],
+            updatable: VecDeque::new(),
         };
 
         // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
 
-        world.prune_graph();
+        // world.prune_graph();
 
         // println!("{}", world.blocks.node_indices().filter(|idx| matches!(world.blocks[*idx], Block::Repeater(_))).count());
 
         world.updatable = world
             .blocks
             .node_indices()
-            .filter(|x| world.probes.contains_left(x))
+            .filter(|x| matches!(world.blocks[*x], Block::Redstone(_)))
             .collect();
         world.step();
 
