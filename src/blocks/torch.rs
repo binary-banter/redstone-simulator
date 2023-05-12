@@ -1,10 +1,10 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
 use crate::world::RedGraph;
-use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
 use std::collections::{HashMap, VecDeque};
+use petgraph::prelude::EdgeRef;
 
 #[derive(Clone, Debug)]
 pub struct Torch {
@@ -65,10 +65,7 @@ impl Updatable for Torch {
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
-                Edge::Side(_) => unreachable!(),
-            });
+            .any(|edge| blocks[edge.source()].output_power().saturating_sub(edge.weight().0) > 0);
 
         s_new == self.lit
     }

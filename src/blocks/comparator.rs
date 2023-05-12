@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
 use crate::schematic::SchemBlockEntity;
 use crate::world::RedGraph;
 use nbt::Value;
@@ -104,9 +104,10 @@ impl Updatable for Comparator {
     ) -> bool {
         let rear = blocks
             .edges_directed(idx, Incoming)
-            .filter_map(|edge| match edge.weight() {
-                Edge::Rear(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
-                Edge::Side(_) => None,
+            .filter_map(|edge| if !edge.weight().is_side() {
+                Some(blocks[edge.source()].output_power().saturating_sub(edge.weight().0))
+            }else {
+                None
             })
             .max()
             .max(self.entity_power)
@@ -114,9 +115,10 @@ impl Updatable for Comparator {
 
         let side = blocks
             .edges_directed(idx, Incoming)
-            .filter_map(|edge| match edge.weight() {
-                Edge::Rear(_) => None,
-                Edge::Side(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
+            .filter_map(|edge| if edge.weight().is_side() {
+                Some(blocks[edge.source()].output_power().saturating_sub(edge.weight().0 & 0x0F))
+            }else {
+                None
             })
             .max()
             .unwrap_or(0);

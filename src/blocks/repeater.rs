@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, OutputPower, Updatable};
 use crate::world::RedGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
@@ -91,24 +91,27 @@ impl Updatable for Repeater {
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
-                Edge::Side(_) => false,
+            .any(|edge| if !edge.weight().is_side() {
+                blocks[edge.source()].output_power().saturating_sub(edge.weight().0) > 0
+            }else {
+                false
             });
 
         let locked_now = blocks
             .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(_) => false,
-                Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
+            .any(|edge| if edge.weight().is_side() {
+                blocks[edge.source()].output_power().saturating_sub(edge.weight().0 & 0x0F) > 0
+            }else {
+                false
             });
-        let locked_next_tick =
-            blocks
-                .edges_directed(idx, Incoming)
-                .any(|edge| match edge.weight() {
-                    Edge::Rear(_) => false,
-                    Edge::Side(s) => blocks[edge.source()].locking_power().saturating_sub(*s) > 0,
-                });
+
+        let locked_next_tick = blocks
+            .edges_directed(idx, Incoming)
+            .any(|edge| if edge.weight().is_side() {
+                blocks[edge.source()].locking_power().saturating_sub(edge.weight().0 & 0x0F) > 0
+            }else {
+                false
+            });
 
         if locked_now {
             self.count = 0;

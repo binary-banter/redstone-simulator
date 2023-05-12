@@ -2,11 +2,11 @@ use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, CBlock, Edge, OutputPower, Updatable};
 use crate::world::RedGraph;
 use crate::world_data::WorldData;
-use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
 use std::collections::{HashMap, VecDeque};
 use std::ops::Index;
+use petgraph::prelude::EdgeRef;
 
 #[derive(Clone, Debug, Default)]
 pub struct Redstone {
@@ -88,10 +88,7 @@ impl Updatable for Redstone {
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
-            .filter_map(|edge| match edge.weight() {
-                Edge::Rear(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
-                Edge::Side(_) => unreachable!(),
-            })
+            .map(|edge| blocks[edge.source()].output_power().saturating_sub(edge.weight().0))
             .max()
             .unwrap_or(0);
 
@@ -159,7 +156,7 @@ impl CRedstone {
                 if world[side].iter().all(|b| b.is_transparent())
                     && !world[bottom].iter().all(|b| b.is_transparent())
                 {
-                    blocks.add_edge(idx, n_idx, Edge::Rear(1));
+                    blocks.add_edge(idx, n_idx, Edge(1));
                 }
             }
 
@@ -169,7 +166,7 @@ impl CRedstone {
             })] = world[side_up][..]
             {
                 if world[top].iter().all(|b| b.is_transparent()) {
-                    blocks.add_edge(idx, n_idx, Edge::Rear(1));
+                    blocks.add_edge(idx, n_idx, Edge(1));
                 }
             }
         }

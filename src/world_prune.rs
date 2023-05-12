@@ -40,7 +40,7 @@ impl World {
                 continue;
             }
 
-            let mut state = vec![(node, Edge::Rear(0))];
+            let mut state = vec![(node, Edge(0))];
             let mut visited: HashSet<(NodeIndex, bool)> = HashSet::new();
             let mut ends = vec![];
 
@@ -81,13 +81,12 @@ impl World {
     }
 
     fn prune_duplicate_edges(&mut self) {
-        // (15, 12) (15, 12)
         let mut best_edges: HashMap<(NodeIndex, NodeIndex, bool), EdgeIndex> = HashMap::new();
         let mut edges_to_remove = Vec::new();
         for edge in self.blocks.edge_references() {
             match best_edges.entry((edge.source(), edge.target(), edge.weight().is_side())) {
                 Entry::Occupied(mut e) => {
-                    if *edge.weight() >= self.blocks[*e.get()] {
+                    if edge.weight().0 >= self.blocks[*e.get()].0 {
                         // remove edge
                         edges_to_remove.push(edge.id());
                     } else{

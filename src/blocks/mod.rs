@@ -55,30 +55,21 @@ pub enum CBlock {
     Comparator(CComparator),
 }
 
-#[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
-pub enum Edge {
-    Rear(u8),
-    Side(u8),
-}
+#[derive(Debug, Clone, Copy)]
+pub struct Edge(pub u8);
 
 impl Edge {
     pub fn is_side(&self) -> bool {
-        match self {
-            Edge::Rear(_) => false,
-            Edge::Side(_) => true,
-        }
+        self.0 & 1 << 7 != 0
     }
 }
 
 impl Add<&Edge> for Edge {
     type Output = Self;
 
+    /// Can never add two sides.
     fn add(self, rhs: &Edge) -> Self::Output {
-        match (self, rhs) {
-            (Edge::Rear(s1), Edge::Side(s2)) => Edge::Side(s1 + s2),
-            (Edge::Rear(s1), Edge::Rear(s2)) => Edge::Rear(s1 + s2),
-            _ => unreachable!(),
-        }
+        Edge(self.0 + rhs.0)
     }
 }
 
@@ -276,9 +267,9 @@ impl CBlock {
             matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_));
 
         let weight = match (alternate, redstone_connection) {
-            (true, _) => Edge::Side(0),
-            (false, false) => Edge::Rear(0),
-            (false, true) => Edge::Rear(1),
+            (true, _) => Edge(0b1_0000000),
+            (false, false) => Edge(0b0_0000000),
+            (false, true) => Edge(0b0_0000001),
         };
 
         blocks.add_edge(idx, n_idx, weight);
