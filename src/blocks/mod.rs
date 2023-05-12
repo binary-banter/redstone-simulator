@@ -104,10 +104,11 @@ impl OutputPower for Block {
 }
 
 impl Block {
-    fn locking_power(&self) -> u8 {
+    fn will_lock(&self) -> bool {
         match self {
-            Block::Repeater(v) => v.locking_power(),
-            _ => self.output_power(),
+            Block::Repeater(v) => v.will_lock(),
+            Block::Comparator(v) => v.output_power() > 0,
+            _ => unreachable!(),
         }
     }
 }
@@ -315,10 +316,10 @@ impl Updatable for Block {
         blocks: &mut RedGraph,
     ) -> bool {
         match self {
-            Block::Redstone(v) => v.update(idx, tick_updatable, blocks),
             Block::Repeater(v) => v.update(idx, tick_updatable, blocks),
             Block::Torch(v) => v.update(idx, tick_updatable, blocks),
             Block::Comparator(v) => v.update(idx, tick_updatable, blocks),
+            Block::Redstone(v) => v.update(idx, tick_updatable, blocks),
         }
     }
 
@@ -329,10 +330,10 @@ impl Updatable for Block {
         blocks: &mut RedGraph,
     ) {
         match self {
-            Block::Redstone(_) => unreachable!(),
             Block::Repeater(v) => v.late_updatable(idx, updatable, blocks),
             Block::Torch(v) => v.late_updatable(idx, updatable, blocks),
             Block::Comparator(v) => v.late_updatable(idx, updatable, blocks),
+            Block::Redstone(_) => unreachable!(),
         }
     }
 }

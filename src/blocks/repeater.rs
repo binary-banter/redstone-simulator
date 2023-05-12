@@ -107,7 +107,8 @@ impl Updatable for Repeater {
                 .edges_directed(idx, Incoming)
                 .any(|edge| match edge.weight() {
                     Edge::Rear(_) => false,
-                    Edge::Side(s) => blocks[edge.source()].locking_power().saturating_sub(*s) > 0,
+                    // No sub since repeater/comparator cannot loose signal strength
+                    Edge::Side(_) => blocks[edge.source()].will_lock(),
                 });
 
         if locked_now {
@@ -163,12 +164,8 @@ impl Updatable for Repeater {
 }
 
 impl Repeater {
-    pub fn locking_power(&self) -> u8 {
-        if self.locking_signal {
-            15
-        } else {
-            0
-        }
+    pub fn will_lock(&self) -> bool {
+        self.locking_signal
     }
 
     pub fn delay(&self) -> u8 {
