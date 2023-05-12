@@ -83,6 +83,7 @@ impl BlockConnections for CRepeater {
 }
 
 impl Updatable for Repeater {
+    #[inline(always)]
     fn update(
         &mut self,
         idx: NodeIndex,

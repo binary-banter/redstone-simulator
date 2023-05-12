@@ -80,6 +80,7 @@ impl BlockConnections for CRedstone {
 }
 
 impl Updatable for Redstone {
+    #[inline(always)]
     fn update(
         &mut self,
         idx: NodeIndex,

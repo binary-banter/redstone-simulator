@@ -65,6 +65,7 @@ impl BlockConnections for CTorch {
 }
 
 impl Updatable for Torch {
+    #[inline(always)]
     fn update(
         &mut self,
         idx: NodeIndex,

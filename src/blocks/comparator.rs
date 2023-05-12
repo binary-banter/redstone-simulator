@@ -96,6 +96,7 @@ impl BlockConnections for CComparator {
 }
 
 impl Updatable for Comparator {
+    #[inline(always)]
     fn update(
         &mut self,
         idx: NodeIndex,
