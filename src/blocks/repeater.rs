@@ -153,14 +153,11 @@ impl Updatable for Repeater {
         updatable: &mut VecDeque<NodeIndex>,
         blocks: &mut RedGraph,
     ) {
-        // If this repeater will be locked next turn, ...
-
         self.count += 1;
         if self.count == self.delay {
             self.count = 0;
             self.powered = self.locking_signal;
-            updatable.push_back(idx);
-            updatable.extend(blocks.neighbors_directed(idx, Outgoing)); // lockable
+            updatable.extend(blocks.neighbors_directed(idx, Outgoing));
         }
     }
 }

@@ -307,6 +307,7 @@ pub trait Updatable {
 }
 
 impl Updatable for Block {
+    #[inline(always)]
     fn update(
         &mut self,
         idx: NodeIndex,
