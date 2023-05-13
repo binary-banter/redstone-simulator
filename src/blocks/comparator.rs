@@ -5,7 +5,7 @@ use crate::world::RedGraph;
 use nbt::Value;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::{Incoming};
+use petgraph::Incoming;
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
@@ -23,6 +23,12 @@ pub struct Comparator {
     mode: ComparatorMode,
 
     last_update: usize,
+}
+
+impl Comparator {
+    pub fn contains_entity_power(&self) -> bool {
+        self.entity_power.is_some()
+    }
 }
 
 #[derive(Copy, Clone, Debug)]

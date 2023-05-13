@@ -157,7 +157,7 @@ impl Updatable for Repeater {
         &mut self,
         idx: NodeIndex,
         updatable: &mut VecDeque<NodeIndex>,
-        tick_counter: usize
+        tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update {
             return false;

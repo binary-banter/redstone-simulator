@@ -3,7 +3,7 @@ use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
 use crate::world::RedGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
-use petgraph::{Incoming};
+use petgraph::Incoming;
 use std::collections::{HashMap, VecDeque};
 
 #[derive(Clone, Debug)]
@@ -63,7 +63,10 @@ impl BlockConnections for CTorch {
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
     {
-        self.node = Some(blocks.add_node(Block::Torch(Torch { lit: self.lit, last_update: usize::MAX, })));
+        self.node = Some(blocks.add_node(Block::Torch(Torch {
+            lit: self.lit,
+            last_update: usize::MAX,
+        })));
     }
 }
 

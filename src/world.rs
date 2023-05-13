@@ -204,7 +204,7 @@ impl From<SchemFormat> for World {
             probes,
             updatable: VecDeque::new(),
             tick_updatable: VecDeque::new(),
-            tick_counter: 0
+            tick_counter: 0,
         };
 
         world.prune_graph();

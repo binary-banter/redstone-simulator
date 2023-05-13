@@ -1,8 +1,8 @@
 use crate::blocks::facing::Facing;
+use crate::blocks::torch::Torch;
 use crate::blocks::{Block, BlockConnections};
 use crate::world::RedGraph;
 use petgraph::stable_graph::NodeIndex;
-use crate::blocks::torch::Torch;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRedstoneBlock {

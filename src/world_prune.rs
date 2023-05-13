@@ -3,10 +3,10 @@ use crate::world::World;
 use itertools::Itertools;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::{EdgeIndex, NodeIndex};
+use petgraph::visit::IntoEdgeReferences;
 use petgraph::{Incoming, Outgoing};
-use std::collections::{HashMap, HashSet};
 use std::collections::hash_map::Entry;
-use petgraph::visit::{IntoEdgeReferences};
+use std::collections::{HashMap, HashSet};
 
 impl World {
     pub fn prune_graph(&mut self) {
@@ -22,14 +22,26 @@ impl World {
         loop {
             let nodes = self.blocks.node_count();
             self.blocks.retain_nodes(|blocks, y| {
-                (blocks.neighbors_directed(y, Outgoing).count() > 0
-                    && blocks.neighbors_directed(y, Incoming).count() > 0)
-                    || self.probes.contains_left(&y)
-                    || self.triggers.contains(&y)
-                    || matches!(
-                        blocks[y],
-                        Block::Torch(_) | Block::Comparator(_)
-                    )
+                // block has both input and output
+                if blocks.neighbors_directed(y, Outgoing).count() > 0
+                    && blocks.neighbors_directed(y, Incoming).count() > 0
+                {
+                    return true;
+                }
+
+                match &blocks[y] {
+                    // retain triggers and probes
+                    Block::Redstone(_) => {
+                        self.probes.contains_left(&y) || self.triggers.contains(&y)
+                    }
+                    Block::Repeater(_) => false,
+                    // retain torches with outputs (can be used as redstone blocks)
+                    Block::Torch(_) => blocks.neighbors_directed(y, Outgoing).count() > 0,
+                    Block::Comparator(c) => {
+                        c.contains_entity_power()
+                            && blocks.neighbors_directed(y, Outgoing).count() > 0
+                    }
+                }
             });
             if nodes == self.blocks.node_count() {
                 break;
@@ -92,7 +104,7 @@ impl World {
                     if *edge.weight() >= self.blocks[*e.get()] {
                         // remove edge
                         edges_to_remove.push(edge.id());
-                    } else{
+                    } else {
                         // new best edge
                         edges_to_remove.push(*e.get());
                         e.insert(edge.id());
@@ -111,29 +123,31 @@ impl World {
     }
 
     fn prune_too_long_edges(&mut self) {
-        self.blocks.retain_edges(|g, e| {
-            g[e].strength_loss() < 15
-        })
+        self.blocks.retain_edges(|g, e| g[e].strength_loss() < 15)
     }
 
     fn prune_groups(&mut self) {
-        let mut todo = self.blocks.node_indices().filter(|i| matches!(self.blocks[*i], Block::Repeater(_) | Block::Torch(_))).collect_vec();
+        let mut todo = self
+            .blocks
+            .node_indices()
+            .filter(|i| matches!(self.blocks[*i], Block::Repeater(_) | Block::Torch(_)))
+            .collect_vec();
 
         while let Some(idx) = todo.pop() {
             let mut repeaters: HashMap<usize, Vec<NodeIndex>> = HashMap::new();
             let mut torches = Vec::new();
 
-            for n_idx in self.blocks.neighbors_directed(idx, Outgoing){
+            for n_idx in self.blocks.neighbors_directed(idx, Outgoing) {
                 // Only group items with a single parent
-                if self.blocks.neighbors_directed(n_idx, Incoming).count() > 1{
-                    continue
+                if self.blocks.neighbors_directed(n_idx, Incoming).count() > 1 {
+                    continue;
                 }
 
                 // Only group repeaters and torches.
                 match &self.blocks[n_idx] {
                     Block::Repeater(v) => {
                         repeaters.entry(v.delay() as usize).or_default().push(n_idx);
-                    },
+                    }
                     Block::Torch(_) => torches.push(n_idx),
                     _ => continue,
                 }
@@ -150,12 +164,20 @@ impl World {
         }
     }
 
-    fn merge_nodes(&mut self, mut nodes: impl Iterator<Item=NodeIndex>) -> NodeIndex {
+    fn merge_nodes(&mut self, mut nodes: impl Iterator<Item = NodeIndex>) -> NodeIndex {
         let first = nodes.next().unwrap();
         for other in nodes {
-            let edges = self.blocks.edges_directed(other, Outgoing).map(|e| e.id()).collect_vec();
+            let edges = self
+                .blocks
+                .edges_directed(other, Outgoing)
+                .map(|e| e.id())
+                .collect_vec();
             for edge in edges {
-                self.blocks.add_edge(first, self.blocks.edge_endpoints(edge).unwrap().1, self.blocks[edge]);
+                self.blocks.add_edge(
+                    first,
+                    self.blocks.edge_endpoints(edge).unwrap().1,
+                    self.blocks[edge],
+                );
             }
             self.blocks.remove_node(other);
         }

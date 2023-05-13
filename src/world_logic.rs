@@ -18,7 +18,8 @@ impl World {
         // End-of-tick updates
         for idx in self.updatable.drain(..) {
             if self.blocks[idx].late_updatable(idx, &mut self.tick_updatable, self.tick_counter) {
-                self.tick_updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
+                self.tick_updatable
+                    .extend(self.blocks.neighbors_directed(idx, Outgoing));
             }
         }
 
@@ -29,7 +30,8 @@ impl World {
         // put redstone power on triggers
         for &t in &self.triggers {
             self.blocks[t] = redstone_max();
-            self.tick_updatable.extend(self.blocks.neighbors_directed(t, Outgoing));
+            self.tick_updatable
+                .extend(self.blocks.neighbors_directed(t, Outgoing));
         }
 
         self.step();
@@ -37,7 +39,8 @@ impl World {
         // take redstone power off triggers
         for &t in &self.triggers {
             self.blocks[t] = redstone_min();
-            self.tick_updatable.extend(self.blocks.neighbors_directed(t, Outgoing));
+            self.tick_updatable
+                .extend(self.blocks.neighbors_directed(t, Outgoing));
         }
     }
 }
