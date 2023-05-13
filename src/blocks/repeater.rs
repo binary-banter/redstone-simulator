@@ -21,6 +21,8 @@ pub struct Repeater {
 
     /// Number of ticks passed since a new input signal was detected.
     count: u8,
+
+    last_update: usize,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -78,6 +80,7 @@ impl BlockConnections for CRepeater {
             locking_signal: false,
             delay: self.delay,
             count: 0,
+            last_update: usize::MAX,
         })));
     }
 }
@@ -101,7 +104,8 @@ impl Updatable for Repeater {
             .edges_directed(idx, Incoming)
             .any(|edge| match edge.weight() {
                 Edge::Rear(_) => false,
-                Edge::Side(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
+                // No sub since repeater/comparator cannot loose signal strength
+                Edge::Side(_) => blocks[edge.source()].output_power() > 0,
             });
 
         if locked_now {
@@ -152,8 +156,14 @@ impl Updatable for Repeater {
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>
+        updatable: &mut VecDeque<NodeIndex>,
+        tick_counter: usize
     ) -> bool {
+        if tick_counter == self.last_update {
+            return false;
+        }
+        self.last_update = tick_counter;
+
         self.count += 1;
         updatable.push_back(idx);
         if self.count == self.delay {

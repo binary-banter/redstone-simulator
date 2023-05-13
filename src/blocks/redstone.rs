@@ -108,6 +108,7 @@ impl Updatable for Redstone {
         &mut self,
         _idx: NodeIndex,
         _updatable: &mut VecDeque<NodeIndex>,
+        _tick_counter: usize,
     ) -> bool {
         unreachable!()
     }

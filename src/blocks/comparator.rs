@@ -21,6 +21,8 @@ pub struct Comparator {
     /// Mode of the comparator, can be in `Compare` or `Subtract` mode.
     // todo: we can most likely get rid off this by having both a `Comparator` and `Subtractor`.
     mode: ComparatorMode,
+
+    last_update: usize,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -91,6 +93,7 @@ impl BlockConnections for CComparator {
             next_signal: self.signal,
             entity_power: self.entity_power,
             mode: self.mode,
+            last_update: usize::MAX,
         })));
     }
 }
@@ -135,7 +138,13 @@ impl Updatable for Comparator {
         &mut self,
         _idx: NodeIndex,
         _updatable: &mut VecDeque<NodeIndex>,
+        tick_counter: usize,
     ) -> bool {
+        if tick_counter == self.last_update {
+            return false;
+        }
+        self.last_update = tick_counter;
+
         self.signal = self.next_signal;
         true
     }

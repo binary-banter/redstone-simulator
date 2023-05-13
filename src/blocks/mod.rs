@@ -303,6 +303,7 @@ pub trait Updatable {
         &mut self,
         idx: NodeIndex,
         updatable: &mut VecDeque<NodeIndex>,
+        tick_counter: usize,
     ) -> bool;
 }
 
@@ -326,11 +327,12 @@ impl Updatable for Block {
         &mut self,
         idx: NodeIndex,
         updatable: &mut VecDeque<NodeIndex>,
+        tick_counter: usize,
     ) -> bool {
         match self {
-            Block::Repeater(v) => v.late_updatable(idx, updatable),
-            Block::Torch(v) => v.late_updatable(idx, updatable),
-            Block::Comparator(v) => v.late_updatable(idx, updatable),
+            Block::Repeater(v) => v.late_updatable(idx, updatable, tick_counter),
+            Block::Torch(v) => v.late_updatable(idx, updatable, tick_counter),
+            Block::Comparator(v) => v.late_updatable(idx, updatable, tick_counter),
             Block::Redstone(_) => unreachable!(),
         }
     }

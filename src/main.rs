@@ -26,34 +26,34 @@ fn main() {
     // println!("Comps: {}", world.blocks.node_weights().filter(|b| matches!(b, Block::Comparator(_))).count());
     // println!("Redstone: {}", world.blocks.node_weights().filter(|b| matches!(b, Block::Redstone(_))).count());
 
-    for _ in 0..4000 {
+    for _ in 0..40 {
         world.step_with_trigger();
         world.step_with_trigger();
         for _ in 0..50 {
             world.step();
         }
-        // println!(
-        //     "a: {}{}{}{}{}{}{}{}",
-        //     world.get_probe("7") as u8,
-        //     world.get_probe("6") as u8,
-        //     world.get_probe("5") as u8,
-        //     world.get_probe("4") as u8,
-        //     world.get_probe("3") as u8,
-        //     world.get_probe("2") as u8,
-        //     world.get_probe("1") as u8,
-        //     world.get_probe("0") as u8,
-        // );
-        // println!(
-        //     "pc: {}{}{}{}{}{}{}{}",
-        //     world.get_probe("pc7") as u8,
-        //     world.get_probe("pc6") as u8,
-        //     world.get_probe("pc5") as u8,
-        //     world.get_probe("pc4") as u8,
-        //     world.get_probe("pc3") as u8,
-        //     world.get_probe("pc2") as u8,
-        //     world.get_probe("pc1") as u8,
-        //     world.get_probe("pc0") as u8,
-        // );
-        // println!();
+        println!(
+            "a: {}{}{}{}{}{}{}{}",
+            world.get_probe("7") as u8,
+            world.get_probe("6") as u8,
+            world.get_probe("5") as u8,
+            world.get_probe("4") as u8,
+            world.get_probe("3") as u8,
+            world.get_probe("2") as u8,
+            world.get_probe("1") as u8,
+            world.get_probe("0") as u8,
+        );
+        println!(
+            "pc: {}{}{}{}{}{}{}{}",
+            world.get_probe("pc7") as u8,
+            world.get_probe("pc6") as u8,
+            world.get_probe("pc5") as u8,
+            world.get_probe("pc4") as u8,
+            world.get_probe("pc3") as u8,
+            world.get_probe("pc2") as u8,
+            world.get_probe("pc1") as u8,
+            world.get_probe("pc0") as u8,
+        );
+        println!();
     }
 }

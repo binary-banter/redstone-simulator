@@ -1,6 +1,5 @@
 use crate::blocks::{redstone_max, redstone_min, Updatable};
 use crate::world::World;
-use itertools::Itertools;
 use petgraph::Outgoing;
 
 impl World {
@@ -17,11 +16,13 @@ impl World {
         }
 
         // End-of-tick updates
-        for idx in self.updatable.drain(..).unique() {
-            if self.blocks[idx].late_updatable(idx, &mut self.tick_updatable) {
+        for idx in self.updatable.drain(..) {
+            if self.blocks[idx].late_updatable(idx, &mut self.tick_updatable, self.tick_counter) {
                 self.tick_updatable.extend(self.blocks.neighbors_directed(idx, Outgoing));
             }
         }
+
+        self.tick_counter += 1;
     }
 
     pub fn step_with_trigger(&mut self) {

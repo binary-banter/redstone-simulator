@@ -10,6 +10,8 @@ use std::collections::{HashMap, VecDeque};
 pub struct Torch {
     /// Whether the torch is currently lit.
     lit: bool,
+
+    last_update: usize,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -28,6 +30,7 @@ impl Default for Torch {
     fn default() -> Self {
         Torch {
             lit: true,
+            last_update: usize::MAX,
         }
     }
 }
@@ -60,7 +63,7 @@ impl BlockConnections for CTorch {
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
     {
-        self.node = Some(blocks.add_node(Block::Torch(Torch { lit: self.lit })));
+        self.node = Some(blocks.add_node(Block::Torch(Torch { lit: self.lit, last_update: usize::MAX, })));
     }
 }
 
@@ -86,7 +89,13 @@ impl Updatable for Torch {
         &mut self,
         _idx: NodeIndex,
         _updatable: &mut VecDeque<NodeIndex>,
+        tick_counter: usize,
     ) -> bool {
+        if tick_counter == self.last_update {
+            return false;
+        }
+        self.last_update = tick_counter;
+
         self.lit = !self.lit;
 
         true
