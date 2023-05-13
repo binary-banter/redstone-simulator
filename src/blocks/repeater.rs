@@ -142,12 +142,10 @@ impl Updatable for Repeater {
 
         self.locking_signal = if locked_next_tick {
             self.powered
+        } else if self.count + 1 == self.delay {
+            self.next_powered
         } else {
-            if self.count + 1 == self.delay {
-                self.next_powered
-            } else {
-                self.powered
-            }
+            self.powered
         };
 
         self.powered != self.next_powered

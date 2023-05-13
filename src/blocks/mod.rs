@@ -339,9 +339,17 @@ impl Updatable for Block {
 }
 
 pub fn redstone_min() -> Block {
-    Block::Redstone(Redstone::default())
+    Block::Redstone(Redstone::with_signal(0))
 }
 
 pub fn redstone_max() -> Block {
     Block::Redstone(Redstone::with_signal(15))
+}
+
+pub fn torch_lit() -> Block {
+    Block::Torch(Torch::with_lit(true))
+}
+
+pub fn torch_unlit() -> Block {
+    Block::Torch(Torch::with_lit(false))
 }

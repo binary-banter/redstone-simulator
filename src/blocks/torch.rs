@@ -45,6 +45,15 @@ impl OutputPower for Torch {
     }
 }
 
+impl Torch {
+    pub fn with_lit(lit: bool) -> Torch {
+        Torch {
+            lit,
+            last_update: usize::MAX,
+        }
+    }
+}
+
 impl BlockConnections for CTorch {
     fn can_output(&self, _facing: Facing) -> Option<NodeIndex> {
         self.node

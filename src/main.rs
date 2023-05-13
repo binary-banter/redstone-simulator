@@ -1,6 +1,6 @@
 use crate::blocks::Block;
 use crate::world::World;
-use petgraph::dot::{Config, Dot};
+use petgraph::dot::Dot;
 use std::fs::File;
 use std::io::Write;
 
@@ -24,7 +24,7 @@ fn main() {
     let mut world = World::from(File::open("./schematics/cpu_fib.schem").unwrap());
 
     let mut f = File::create("output.gv").expect("Unable to create file");
-    writeln!(f, "{:?}", Dot::with_config(&world.blocks, &[]));
+    writeln!(f, "{:?}", Dot::with_config(&world.blocks, &[])).unwrap();
 
     println!(
         "nodes: {}, edges: {}",

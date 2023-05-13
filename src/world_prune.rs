@@ -1,4 +1,4 @@
-use crate::blocks::{Block, Edge};
+use crate::blocks::{torch_lit, torch_unlit, Block, Edge, OutputPower};
 use crate::world::World;
 use itertools::Itertools;
 use petgraph::prelude::EdgeRef;
@@ -16,6 +16,7 @@ impl World {
         self.prune_groups();
         self.prune_duplicate_edges();
         self.prune_irrelevant();
+        self.replace_chained_repeaters();
         self.prune_dead_nodes();
     }
 
@@ -186,11 +187,16 @@ impl World {
     }
 
     fn prune_irrelevant(&mut self) {
-        let mut visited: HashSet<NodeIndex> = HashSet::from_iter(self.probes.left_values().cloned().chain(self.triggers.iter().cloned()));
+        let mut visited: HashSet<NodeIndex> = HashSet::from_iter(
+            self.probes
+                .left_values()
+                .cloned()
+                .chain(self.triggers.iter().cloned()),
+        );
         let mut todo: Vec<NodeIndex> = self.probes.left_values().cloned().collect();
 
         while let Some(idx) = todo.pop() {
-            for nb in self.blocks.neighbors_directed(idx, Incoming)  {
+            for nb in self.blocks.neighbors_directed(idx, Incoming) {
                 if visited.contains(&nb) {
                     continue;
                 }
@@ -200,5 +206,52 @@ impl World {
         }
 
         self.blocks.retain_nodes(|_, n| visited.contains(&n));
+    }
+
+    fn replace_chained_repeaters(&mut self) {
+        self.blocks
+            .node_indices()
+            .collect_vec()
+            .into_iter()
+            .for_each(|idx| {
+                let (n_idx, o1, o2) = {
+                    let Some(Block::Repeater(r1)) = self.blocks.node_weight(idx) else {
+                        return;
+                    };
+                    if r1.delay() != 1 {
+                        return;
+                    }
+                    if self
+                        .blocks
+                        .edges_directed(idx, Incoming)
+                        .any(|edge| edge.weight().is_side())
+                    {
+                        return;
+                    };
+                    let Ok(edge) = self.blocks.edges_directed(idx, Outgoing).exactly_one() else {
+                        return
+                    };
+                    if edge.weight().is_side() {
+                        return;
+                    }
+                    let n_idx = edge.target();
+                    let Some(Block::Repeater(r2)) = self.blocks.node_weight(n_idx) else {
+                        return;
+                    };
+                    if r2.delay() != 1 {
+                        return;
+                    }
+                    if self.blocks.neighbors_directed(n_idx, Incoming).count() != 1 {
+                        return;
+                    }
+                    (n_idx, r1.output_power(), r2.output_power())
+                };
+
+                *self.blocks.node_weight_mut(idx).unwrap() =
+                    if o1 > 0 { torch_unlit() } else { torch_lit() };
+
+                *self.blocks.node_weight_mut(n_idx).unwrap() =
+                    if o2 > 0 { torch_lit() } else { torch_unlit() };
+            });
     }
 }

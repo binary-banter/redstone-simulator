@@ -8,7 +8,7 @@ impl World {
         while let Some(idx) = self.tick_updatable.pop_front() {
             let mut block = self.blocks[idx].clone();
 
-            if block.update(idx, &mut self.tick_updatable, &mut self.blocks) {
+            if block.update(idx, &mut self.tick_updatable, &self.blocks) {
                 self.updatable.push_back(idx);
             }
 

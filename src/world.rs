@@ -41,6 +41,7 @@ impl World {
         let mut i = 0;
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
+                #[allow(clippy::needless_range_loop)]
                 for x in 0..format.width as usize {
                     let mut ix: usize = 0;
                     for j in 0.. {
