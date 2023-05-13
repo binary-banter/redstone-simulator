@@ -15,6 +15,7 @@ impl World {
         self.prune_too_long_edges();
         self.prune_groups();
         self.prune_duplicate_edges();
+        self.prune_irrelevant();
         self.prune_dead_nodes();
     }
 
@@ -182,5 +183,22 @@ impl World {
             self.blocks.remove_node(other);
         }
         first
+    }
+
+    fn prune_irrelevant(&mut self) {
+        let mut visited: HashSet<NodeIndex> = HashSet::from_iter(self.probes.left_values().cloned().chain(self.triggers.iter().cloned()));
+        let mut todo: Vec<NodeIndex> = self.probes.left_values().cloned().collect();
+
+        while let Some(idx) = todo.pop() {
+            for nb in self.blocks.neighbors_directed(idx, Incoming)  {
+                if visited.contains(&nb) {
+                    continue;
+                }
+                visited.insert(nb);
+                todo.push(nb);
+            }
+        }
+
+        self.blocks.retain_nodes(|_, n| visited.contains(&n));
     }
 }
