@@ -5,6 +5,7 @@ use crate::blocks::redstone::{CRedstone, Redstone};
 use crate::blocks::redstone_block::CRedstoneBlock;
 use crate::blocks::repeater::{CRepeater, Repeater};
 use crate::blocks::solid::{CSolidStrong, CSolidWeak};
+use crate::blocks::srepeater::SRepeater;
 use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
 use crate::world::RedGraph;
@@ -20,6 +21,7 @@ mod redstone;
 mod redstone_block;
 mod repeater;
 mod solid;
+mod srepeater;
 mod torch;
 mod trigger;
 
@@ -38,6 +40,7 @@ pub enum Block {
     Repeater(Repeater),
     Torch(Torch),
     Comparator(Comparator),
+    SRepeater(SRepeater),
 }
 
 /// Blocks used during the creation of the graph structure of the world.
@@ -99,6 +102,7 @@ impl OutputPower for Block {
             Block::Repeater(v) => v.output_power(),
             Block::Torch(v) => v.output_power(),
             Block::Comparator(v) => v.output_power(),
+            Block::SRepeater(v) => v.output_power(),
         }
     }
 }
@@ -320,6 +324,7 @@ impl Updatable for Block {
             Block::Torch(v) => v.update(idx, tick_updatable, blocks),
             Block::Comparator(v) => v.update(idx, tick_updatable, blocks),
             Block::Redstone(v) => v.update(idx, tick_updatable, blocks),
+            Block::SRepeater(v) => v.update(idx, tick_updatable, blocks),
         }
     }
 
@@ -334,6 +339,7 @@ impl Updatable for Block {
             Block::Torch(v) => v.late_updatable(idx, updatable, tick_counter),
             Block::Comparator(v) => v.late_updatable(idx, updatable, tick_counter),
             Block::Redstone(_) => unreachable!(),
+            Block::SRepeater(v) => v.late_updatable(idx, updatable, tick_counter),
         }
     }
 }
@@ -346,10 +352,10 @@ pub fn redstone_max() -> Block {
     Block::Redstone(Redstone::with_signal(15))
 }
 
-pub fn torch_lit() -> Block {
-    Block::Torch(Torch::with_lit(true))
+pub fn srepeater_powered() -> Block {
+    Block::SRepeater(SRepeater::with_power(true))
 }
 
-pub fn torch_unlit() -> Block {
-    Block::Torch(Torch::with_lit(false))
+pub fn srepeater_unpowered() -> Block {
+    Block::SRepeater(SRepeater::with_power(false))
 }
