@@ -1,8 +1,8 @@
+pub mod create;
+pub(crate) mod data;
+mod logic;
+mod prune;
 pub mod schematic;
-pub mod world_create;
-pub(crate) mod world_data;
-mod world_logic;
-mod world_prune;
 
 use crate::blocks::{Block, Edge};
 use crate::blocks::{CBlock, OutputPower};
@@ -38,7 +38,6 @@ pub struct World {
 
 impl World {
     /// Returns whether the probe is currently powered.
-    // todo: maybe return an Option instead.
     pub fn get_probe(&self, name: &str) -> Option<bool> {
         let Block::Redstone(v) = &self.blocks[*self.probes.get_by_right(name)?] else {
             panic!("Probe was not a `Redstone` block, something went wrong!");
@@ -46,17 +45,15 @@ impl World {
         Some(v.output_power() > 0)
     }
 
+    /// Returns `HashMap` from the names of probes to whether they are currently powered.
     pub fn get_probes(&self) -> HashMap<&str, bool> {
         self.probes
             .iter()
             .map(|(i, s)| {
-                (
-                    &s[..],
-                    match &self.blocks[*i] {
-                        Block::Redstone(s) => s.output_power() > 0,
-                        _ => unreachable!("Probe was not a Solid block. Parsing went wrong."),
-                    },
-                )
+                let Block::Redstone(v) = &self.blocks[*i] else {
+                    panic!("Probe was not a `Redstone` block, something went wrong!");
+                };
+                (s.as_str(), v.output_power() > 0)
             })
             .collect()
     }

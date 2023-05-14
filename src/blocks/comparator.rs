@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
-use crate::world::schematic::SchemBlockEntity;
+use crate::world::data::TileMap;
 use crate::world::BlockGraph;
 use nbt::Value;
 use petgraph::prelude::EdgeRef;
@@ -169,16 +169,22 @@ impl From<HashMap<&str, &str>> for CComparator {
 }
 
 impl CComparator {
-    pub fn signal_from_entity(&mut self, entity: &SchemBlockEntity) {
-        let Some(Value::Byte(s)) = entity.props.get("OutputSignal") else{
+    pub fn update_from_tile(&mut self, p: (usize, usize, usize), tile_map: &TileMap) {
+        // Check what the signal of the comparator is.
+        let Some(Value::Byte(s)) = tile_map.get(&p).unwrap().props.get("OutputSignal") else{
             unreachable!("Every comparator should have an OutputSignal.");
         };
-
         self.signal = *s as u8;
-    }
 
-    pub fn signal_set(&mut self, rear_power: Option<u8>) {
-        self.entity_power = rear_power;
+        // Checks the power the entity behind it gives off.
+        // todo: currently only checks for furnaces and defaults to an output of 1.
+        self.entity_power = tile_map.get(&self.facing().front(p)).and_then(|b| {
+            if b.id == "minecraft:furnace" {
+                Some(1)
+            } else {
+                None
+            }
+        });
     }
 
     pub fn facing(&self) -> Facing {

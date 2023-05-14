@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, CBlock, Edge, OutputPower, Updatable};
-use crate::world::world_data::WorldData;
+use crate::world::data::WorldData;
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
