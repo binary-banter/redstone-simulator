@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{BlockConnections, Edge, InputSide, OutputPower, Updatable};
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
@@ -35,9 +35,6 @@ pub struct CRepeater {
 
     /// Direction of the input side of the repeater.
     facing: Facing,
-
-    /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
 }
 
 impl OutputPower for Repeater {
@@ -63,17 +60,6 @@ impl BlockConnections for CRepeater {
         } else {
             None
         }
-    }
-
-    fn add_node(&mut self, blocks: &mut BlockGraph) {
-        self.node = Some(blocks.add_node(Block::Repeater(Repeater {
-            powered: self.powered,
-            next_powered: self.powered,
-            locking_signal: false,
-            delay: self.delay,
-            count: 0,
-            last_update: usize::MAX,
-        })));
     }
 }
 
@@ -190,7 +176,6 @@ impl From<HashMap<&str, &str>> for CRepeater {
             powered,
             facing: Facing::from(meta["facing"]),
             delay: meta["delay"].parse().unwrap(),
-            node: None,
         }
     }
 }

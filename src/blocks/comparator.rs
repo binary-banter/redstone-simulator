@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{BlockConnections, Edge, InputSide, OutputPower, Updatable};
 use crate::world::data::TileMap;
 use crate::world::BlockGraph;
 use nbt::Value;
@@ -43,9 +43,6 @@ pub struct CComparator {
     mode: ComparatorMode,
 
     entity_power: Option<u8>,
-
-    /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -83,16 +80,6 @@ impl BlockConnections for CComparator {
         } else {
             None
         }
-    }
-
-    fn add_node(&mut self, blocks: &mut BlockGraph) {
-        self.node = Some(blocks.add_node(Block::Comparator(Comparator {
-            signal: self.signal,
-            next_signal: self.signal,
-            entity_power: self.entity_power,
-            mode: self.mode,
-            last_update: usize::MAX,
-        })));
     }
 }
 
@@ -155,7 +142,6 @@ impl From<HashMap<&str, &str>> for CComparator {
             facing: Facing::from(meta["facing"]),
             mode: ComparatorMode::from(meta["mode"]),
             entity_power: None,
-            node: None,
         }
     }
 }

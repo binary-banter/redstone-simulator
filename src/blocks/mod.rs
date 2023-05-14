@@ -135,8 +135,6 @@ pub trait BlockConnections {
     fn can_output(&self, facing: Facing) -> bool;
 
     fn can_input(&self, facing: Facing) -> Option<InputSide>;
-
-    fn add_node(&mut self, blocks: &mut BlockGraph);
 }
 
 fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
@@ -211,20 +209,6 @@ impl BlockConnections for CBlock {
             CBlock::RedstoneBlock(v) => v.can_input(facing),
             CBlock::Torch(v) => v.can_input(facing),
             CBlock::Comparator(v) => v.can_input(facing),
-        }
-    }
-
-    fn add_node(&mut self, blocks: &mut BlockGraph) {
-        match self {
-            CBlock::Redstone(v) => v.add_node(blocks),
-            CBlock::SolidWeak(v) => v.add_node(blocks),
-            CBlock::SolidStrong(v) => v.add_node(blocks),
-            CBlock::Trigger(v) => v.add_node(blocks),
-            CBlock::Probe(v) => v.add_node(blocks),
-            CBlock::Repeater(v) => v.add_node(blocks),
-            CBlock::RedstoneBlock(v) => v.add_node(blocks),
-            CBlock::Torch(v) => v.add_node(blocks),
-            CBlock::Comparator(v) => v.add_node(blocks),
         }
     }
 }

@@ -1,18 +1,12 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections, InputSide};
+use crate::blocks::{ BlockConnections, InputSide};
 use crate::world::data::{neighbours, TileMap};
-use crate::world::BlockGraph;
 use nbt::Value;
-use petgraph::stable_graph::NodeIndex;
 
 #[derive(Clone, Debug, Default)]
 pub struct CProbe {
     /// Name of the probe. Uses the first line of any neighbouring sign it finds.
     pub name: String,
-
-    /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    pub node: Option<NodeIndex>,
 }
 
 impl BlockConnections for CProbe {
@@ -22,11 +16,6 @@ impl BlockConnections for CProbe {
 
     fn can_input(&self, _facing: Facing) -> Option<InputSide> {
         Some(InputSide::Rear)
-    }
-
-    fn add_node(&mut self, blocks: &mut BlockGraph) {
-        let idx = blocks.add_node(Block::Redstone(Redstone::default()));
-        self.node = Some(idx);
     }
 }
 

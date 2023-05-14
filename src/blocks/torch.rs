@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{BlockConnections, Edge, InputSide, OutputPower, Updatable};
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
@@ -21,9 +21,6 @@ pub struct CTorch {
 
     /// Direction the torch points in.
     facing: Facing,
-
-    /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
 }
 
 impl Default for Torch {
@@ -65,13 +62,6 @@ impl BlockConnections for CTorch {
         } else {
             None
         }
-    }
-
-    fn add_node(&mut self, blocks: &mut BlockGraph) {
-        self.node = Some(blocks.add_node(Block::Torch(Torch {
-            lit: self.lit,
-            last_update: usize::MAX,
-        })));
     }
 }
 
@@ -122,7 +112,6 @@ impl From<HashMap<&str, &str>> for CTorch {
         CTorch {
             lit,
             facing,
-            node: None,
         }
     }
 }
