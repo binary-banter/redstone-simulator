@@ -1,7 +1,7 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
 use crate::blocks::{Block, BlockConnections};
-use crate::world::RedGraph;
+use crate::world::BlockGraph;
 use petgraph::stable_graph::NodeIndex;
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -19,7 +19,7 @@ impl BlockConnections for CProbe {
         (self.node, false)
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, _add_trigger: &mut G)
+    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, add_probe: &mut F, _add_trigger: &mut G)
     where
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),

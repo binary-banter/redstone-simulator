@@ -6,23 +6,23 @@ fn adder_0() {
     let file = File::open("./schematics/adder_0.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("0"));
-    assert!(!world.get_probe("1"));
-    assert!(!world.get_probe("2"));
-    assert!(!world.get_probe("3"));
-    assert!(!world.get_probe("4"));
-    assert!(!world.get_probe("5"));
-    assert!(!world.get_probe("6"));
-    assert!(!world.get_probe("7"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(!world.get_probe("1").unwrap());
+    assert!(!world.get_probe("2").unwrap());
+    assert!(!world.get_probe("3").unwrap());
+    assert!(!world.get_probe("4").unwrap());
+    assert!(!world.get_probe("5").unwrap());
+    assert!(!world.get_probe("6").unwrap());
+    assert!(!world.get_probe("7").unwrap());
     world.step();
-    assert!(!world.get_probe("0"));
-    assert!(!world.get_probe("1"));
-    assert!(!world.get_probe("2"));
-    assert!(!world.get_probe("3"));
-    assert!(!world.get_probe("4"));
-    assert!(!world.get_probe("5"));
-    assert!(!world.get_probe("6"));
-    assert!(!world.get_probe("7"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(!world.get_probe("1").unwrap());
+    assert!(!world.get_probe("2").unwrap());
+    assert!(!world.get_probe("3").unwrap());
+    assert!(!world.get_probe("4").unwrap());
+    assert!(!world.get_probe("5").unwrap());
+    assert!(!world.get_probe("6").unwrap());
+    assert!(!world.get_probe("7").unwrap());
 }
 
 #[test]
@@ -33,23 +33,23 @@ fn adder_1() {
     let file = File::open("./schematics/adder_1.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("0"));
-    assert!(!world.get_probe("1"));
-    assert!(world.get_probe("2"));
-    assert!(!world.get_probe("3"));
-    assert!(!world.get_probe("4"));
-    assert!(world.get_probe("5"));
-    assert!(world.get_probe("6"));
-    assert!(!world.get_probe("7"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(!world.get_probe("1").unwrap());
+    assert!(world.get_probe("2").unwrap());
+    assert!(!world.get_probe("3").unwrap());
+    assert!(!world.get_probe("4").unwrap());
+    assert!(world.get_probe("5").unwrap());
+    assert!(world.get_probe("6").unwrap());
+    assert!(!world.get_probe("7").unwrap());
     world.step();
-    assert!(!world.get_probe("0"));
-    assert!(!world.get_probe("1"));
-    assert!(world.get_probe("2"));
-    assert!(!world.get_probe("3"));
-    assert!(!world.get_probe("4"));
-    assert!(world.get_probe("5"));
-    assert!(world.get_probe("6"));
-    assert!(!world.get_probe("7"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(!world.get_probe("1").unwrap());
+    assert!(world.get_probe("2").unwrap());
+    assert!(!world.get_probe("3").unwrap());
+    assert!(!world.get_probe("4").unwrap());
+    assert!(world.get_probe("5").unwrap());
+    assert!(world.get_probe("6").unwrap());
+    assert!(!world.get_probe("7").unwrap());
 }
 
 #[test]
@@ -60,9 +60,9 @@ fn adder_2() {
     let file = File::open("./schematics/adder_2.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(world.get_probe("0"));
+    assert!(world.get_probe("0").unwrap());
     world.step();
-    assert!(world.get_probe("0"));
+    assert!(world.get_probe("0").unwrap());
 }
 
 #[test]
@@ -73,9 +73,9 @@ fn adder_3() {
     let file = File::open("./schematics/adder_3.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("0"));
+    assert!(!world.get_probe("0").unwrap());
     world.step();
-    assert!(!world.get_probe("0"));
+    assert!(!world.get_probe("0").unwrap());
 }
 
 #[test]
@@ -86,23 +86,23 @@ fn adder_4() {
     let file = File::open("./schematics/adder_4.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("0"));
-    assert!(!world.get_probe("1"));
-    assert!(world.get_probe("2"));
-    assert!(!world.get_probe("3"));
-    assert!(!world.get_probe("4"));
-    assert!(world.get_probe("5"));
-    assert!(world.get_probe("6"));
-    assert!(!world.get_probe("7"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(!world.get_probe("1").unwrap());
+    assert!(world.get_probe("2").unwrap());
+    assert!(!world.get_probe("3").unwrap());
+    assert!(!world.get_probe("4").unwrap());
+    assert!(world.get_probe("5").unwrap());
+    assert!(world.get_probe("6").unwrap());
+    assert!(!world.get_probe("7").unwrap());
     world.step();
-    assert!(!world.get_probe("0"));
-    assert!(!world.get_probe("1"));
-    assert!(world.get_probe("2"));
-    assert!(!world.get_probe("3"));
-    assert!(!world.get_probe("4"));
-    assert!(world.get_probe("5"));
-    assert!(world.get_probe("6"));
-    assert!(!world.get_probe("7"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(!world.get_probe("1").unwrap());
+    assert!(world.get_probe("2").unwrap());
+    assert!(!world.get_probe("3").unwrap());
+    assert!(!world.get_probe("4").unwrap());
+    assert!(world.get_probe("5").unwrap());
+    assert!(world.get_probe("6").unwrap());
+    assert!(!world.get_probe("7").unwrap());
 }
 
 #[test]
@@ -113,9 +113,9 @@ fn adder_5() {
     let file = File::open("./schematics/adder_5.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(world.get_probe("0"));
+    assert!(world.get_probe("0").unwrap());
     world.step();
-    assert!(world.get_probe("0"));
+    assert!(world.get_probe("0").unwrap());
 }
 
 #[test]
@@ -127,10 +127,10 @@ fn adder_6() {
     let mut world = World::from(file);
 
     // assert!(!world.get_probe("t"));
-    assert!(world.get_probe("q"));
+    assert!(world.get_probe("q").unwrap());
     world.step();
     // assert!(!world.get_probe("t"));
-    assert!(world.get_probe("q"));
+    assert!(world.get_probe("q").unwrap());
 }
 
 #[test]
@@ -141,11 +141,11 @@ fn adder_7() {
     let file = File::open("./schematics/adder_7.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("0"));
-    assert!(world.get_probe("1"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(world.get_probe("1").unwrap());
     world.step();
-    assert!(!world.get_probe("0"));
-    assert!(world.get_probe("1"));
+    assert!(!world.get_probe("0").unwrap());
+    assert!(world.get_probe("1").unwrap());
 }
 
 #[test]
@@ -156,7 +156,7 @@ fn torch_test() {
     let file = File::open("./schematics/torch_test.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("torch_test"));
+    assert!(!world.get_probe("torch_test").unwrap());
     world.step();
-    assert!(!world.get_probe("torch_test"));
+    assert!(!world.get_probe("torch_test").unwrap());
 }

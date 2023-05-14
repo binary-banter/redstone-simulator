@@ -8,7 +8,7 @@ use crate::blocks::solid::{CSolidStrong, CSolidWeak};
 use crate::blocks::srepeater::SRepeater;
 use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
-use crate::world::RedGraph;
+use crate::world::BlockGraph;
 use once_cell::sync::Lazy;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -122,7 +122,7 @@ pub trait BlockConnections {
 
     fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool);
 
-    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, add_trigger: &mut G)
+    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, add_probe: &mut F, add_trigger: &mut G)
     where
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex);
@@ -203,7 +203,7 @@ impl BlockConnections for CBlock {
         }
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, add_probe: &mut F, add_trigger: &mut G)
+    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, add_probe: &mut F, add_trigger: &mut G)
     where
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
@@ -269,7 +269,7 @@ impl CBlock {
         }
     }
 
-    pub fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut RedGraph) {
+    pub fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut BlockGraph) {
         let Some(idx) = self.can_output(facing) else {
             return;
         };
@@ -300,7 +300,7 @@ pub trait Updatable {
         &mut self,
         idx: NodeIndex,
         tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &RedGraph,
+        blocks: &BlockGraph,
     ) -> bool;
 
     fn late_updatable(
@@ -317,7 +317,7 @@ impl Updatable for Block {
         &mut self,
         idx: NodeIndex,
         tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &RedGraph,
+        blocks: &BlockGraph,
     ) -> bool {
         match self {
             Block::Repeater(v) => v.update(idx, tick_updatable, blocks),

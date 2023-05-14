@@ -6,11 +6,11 @@ fn steady() {
     let file = File::open("./schematics/steady_state.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("probe_1"));
+    assert!(!world.get_probe("probe_1").unwrap());
     world.step_with_trigger();
-    assert!(world.get_probe("probe_1"));
+    assert!(world.get_probe("probe_1").unwrap());
     world.step();
-    assert!(!world.get_probe("probe_1"));
+    assert!(!world.get_probe("probe_1").unwrap());
 }
 
 #[test]
@@ -20,19 +20,19 @@ fn connectivity() {
 
     world.step_with_trigger();
 
-    assert!(world.get_probe("straight"));
-    assert!(world.get_probe("up"));
-    assert!(world.get_probe("down"));
-    assert!(!world.get_probe("up_blocked"));
-    assert!(!world.get_probe("down_blocked"));
-    assert!(!world.get_probe("side_bent"));
-    assert!(world.get_probe("side_bent_over"));
-    assert!(!world.get_probe("side_bent_rep"));
-    assert!(world.get_probe("side_bent_under"));
+    assert!(world.get_probe("straight").unwrap());
+    assert!(world.get_probe("up").unwrap());
+    assert!(world.get_probe("down").unwrap());
+    assert!(!world.get_probe("up_blocked").unwrap());
+    assert!(!world.get_probe("down_blocked").unwrap());
+    assert!(!world.get_probe("side_bent").unwrap());
+    assert!(world.get_probe("side_bent_over").unwrap());
+    assert!(!world.get_probe("side_bent_rep").unwrap());
+    assert!(world.get_probe("side_bent_under").unwrap());
 
     world.step();
 
-    assert!(world.get_probe("side_bent_rep"));
+    assert!(world.get_probe("side_bent_rep").unwrap());
 }
 
 #[test]
@@ -42,8 +42,8 @@ fn indirect() {
 
     world.step_with_trigger();
 
-    assert!(world.get_probe("indirect_down"));
-    assert!(world.get_probe("indirect_up"));
+    assert!(world.get_probe("indirect_down").unwrap());
+    assert!(world.get_probe("indirect_up").unwrap());
 }
 
 #[test]
@@ -53,6 +53,6 @@ fn power_block_with_1_strength() {
 
     world.step_with_trigger();
 
-    assert!(world.get_probe("probe_1"));
-    assert!(world.get_probe("probe_2"));
+    assert!(world.get_probe("probe_1").unwrap());
+    assert!(world.get_probe("probe_2").unwrap());
 }

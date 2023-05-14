@@ -1,5 +1,5 @@
 use crate::blocks::{Edge, OutputPower, Updatable};
-use crate::world::RedGraph;
+use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Incoming;
@@ -29,7 +29,7 @@ impl Updatable for SRepeater {
         &mut self,
         idx: NodeIndex,
         _tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &RedGraph,
+        blocks: &BlockGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)

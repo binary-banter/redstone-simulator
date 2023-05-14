@@ -9,35 +9,35 @@ macro_rules! test {
             let mut world = World::from(file);
 
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b1,
                 "T0 expected {} got {}",
                 $b1,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step_with_trigger();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b2,
                 "T1 expected {} got {}",
                 $b2,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b3,
                 "T2 expected {} got {}",
                 $b3,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b4,
                 "T3 expected {} got {}",
                 $b4,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
         }
     };

@@ -9,59 +9,59 @@ macro_rules! test {
             let mut world = World::from(file);
 
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b1,
                 "T0 expected {} got {}",
                 $b1,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step_with_trigger();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b2,
                 "T1 expected {} got {}",
                 $b2,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b3,
                 "T2 expected {} got {}",
                 $b3,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b4,
                 "T3 expected {} got {}",
                 $b4,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b5,
                 "T4 expected {} got {}",
                 $b5,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b6,
                 "T5 expected {} got {}",
                 $b6,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
             world.step();
             assert_eq!(
-                world.get_probe(stringify!($name)),
+                world.get_probe(stringify!($name)).unwrap(),
                 $b7,
                 "T6 expected {} got {}",
                 $b7,
-                world.get_probe(stringify!($name))
+                world.get_probe(stringify!($name)).unwrap()
             );
         }
     };
@@ -97,23 +97,23 @@ fn register() {
     let file = File::open("./schematics/register.schem").unwrap();
     let mut world = World::from(file);
 
-    assert!(!world.get_probe("out"));
+    assert!(!world.get_probe("out").unwrap());
     world.step_with_trigger();
-    assert!(!world.get_probe("out"));
+    assert!(!world.get_probe("out").unwrap());
     world.step_with_trigger();
-    assert!(!world.get_probe("out"));
+    assert!(!world.get_probe("out").unwrap());
     world.step();
-    assert!(!world.get_probe("out"));
+    assert!(!world.get_probe("out").unwrap());
     world.step();
-    assert!(!world.get_probe("out"));
+    assert!(!world.get_probe("out").unwrap());
     world.step();
-    assert!(world.get_probe("out"));
+    assert!(world.get_probe("out").unwrap());
     world.step();
-    assert!(world.get_probe("out"));
+    assert!(world.get_probe("out").unwrap());
     world.step();
-    assert!(world.get_probe("out"));
+    assert!(world.get_probe("out").unwrap());
     world.step();
-    assert!(world.get_probe("out"));
+    assert!(world.get_probe("out").unwrap());
     world.step();
 }
 

@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
-use crate::world::RedGraph;
+use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Incoming;
@@ -67,7 +67,7 @@ impl BlockConnections for CTorch {
         }
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
+    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, _add_probe: &mut F, _add_trigger: &mut G)
     where
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
@@ -85,7 +85,7 @@ impl Updatable for Torch {
         &mut self,
         idx: NodeIndex,
         _tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &RedGraph,
+        blocks: &BlockGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)

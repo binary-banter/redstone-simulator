@@ -1,7 +1,7 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, CBlock, Edge, OutputPower, Updatable};
-use crate::world::RedGraph;
 use crate::world::world_data::WorldData;
+use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
@@ -68,7 +68,7 @@ impl BlockConnections for CRedstone {
         (self.node, false)
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut RedGraph, _add_probe: &mut F, _add_trigger: &mut G)
+    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, _add_probe: &mut F, _add_trigger: &mut G)
     where
         F: FnMut(NodeIndex),
         G: FnMut(NodeIndex),
@@ -85,7 +85,7 @@ impl Updatable for Redstone {
         &mut self,
         idx: NodeIndex,
         tick_updatable: &mut VecDeque<NodeIndex>,
-        blocks: &RedGraph,
+        blocks: &BlockGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
@@ -139,7 +139,7 @@ impl CRedstone {
     pub fn add_vertical_edges(
         &self,
         (x, y, z): (usize, usize, usize),
-        blocks: &mut RedGraph,
+        blocks: &mut BlockGraph,
         world: &WorldData,
     ) {
         let Some(idx) = self.node else {

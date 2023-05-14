@@ -4,7 +4,6 @@ use std::ops::{Index, IndexMut};
 
 pub struct WorldData(pub Vec<Vec<Vec<Vec<CBlock>>>>);
 
-// impl WorldData {
 /// Returns the coordinates of neighbouring blocks relative to the given position.
 pub fn neighbours((x, y, z): (usize, usize, usize)) -> impl Iterator<Item = (usize, usize, usize)> {
     [
@@ -32,7 +31,6 @@ pub fn neighbours_and_facings(
     ]
     .into_iter()
 }
-// }
 
 const EMPTY_VEC: &Vec<CBlock> = &Vec::new();
 

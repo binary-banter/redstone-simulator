@@ -5,7 +5,6 @@ use std::fs::File;
 use std::io::Write;
 
 mod blocks;
-mod schematic;
 pub mod world;
 
 // sdl 0b1011      // load -5 [0b1111_1011] into adr
@@ -69,25 +68,25 @@ fn main() {
         }
         println!(
             "a: {}{}{}{}{}{}{}{}",
-            world.get_probe("7") as u8,
-            world.get_probe("6") as u8,
-            world.get_probe("5") as u8,
-            world.get_probe("4") as u8,
-            world.get_probe("3") as u8,
-            world.get_probe("2") as u8,
-            world.get_probe("1") as u8,
-            world.get_probe("0") as u8,
+            world.get_probe("7").unwrap() as u8,
+            world.get_probe("6").unwrap() as u8,
+            world.get_probe("5").unwrap() as u8,
+            world.get_probe("4").unwrap() as u8,
+            world.get_probe("3").unwrap() as u8,
+            world.get_probe("2").unwrap() as u8,
+            world.get_probe("1").unwrap() as u8,
+            world.get_probe("0").unwrap() as u8,
         );
         println!(
             "pc: {}{}{}{}{}{}{}{}",
-            world.get_probe("pc7") as u8,
-            world.get_probe("pc6") as u8,
-            world.get_probe("pc5") as u8,
-            world.get_probe("pc4") as u8,
-            world.get_probe("pc3") as u8,
-            world.get_probe("pc2") as u8,
-            world.get_probe("pc1") as u8,
-            world.get_probe("pc0") as u8,
+            world.get_probe("pc7").unwrap() as u8,
+            world.get_probe("pc6").unwrap() as u8,
+            world.get_probe("pc5").unwrap() as u8,
+            world.get_probe("pc4").unwrap() as u8,
+            world.get_probe("pc3").unwrap() as u8,
+            world.get_probe("pc2").unwrap() as u8,
+            world.get_probe("pc1").unwrap() as u8,
+            world.get_probe("pc0").unwrap() as u8,
         );
         println!();
     }
