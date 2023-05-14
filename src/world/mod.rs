@@ -1,7 +1,11 @@
+pub(crate) mod world_data;
+mod world_logic;
+mod world_prune;
+
 use crate::blocks::{Block, BlockConnections, Edge};
 use crate::blocks::{CBlock, OutputPower};
 use crate::schematic::{SchemBlockEntity, SchemFormat};
-use crate::world_data::{neighbours, neighbours_and_facings, WorldData};
+use crate::world::world_data::{neighbours, neighbours_and_facings, WorldData};
 use bimap::BiMap;
 use nbt::{from_gzip_reader, Value};
 use petgraph::prelude::StableGraph;

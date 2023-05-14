@@ -7,9 +7,6 @@ use std::io::Write;
 mod blocks;
 mod schematic;
 pub mod world;
-mod world_data;
-mod world_logic;
-mod world_prune;
 
 // sdl 0b1011      // load -5 [0b1111_1011] into adr
 // sdh 0b1111
