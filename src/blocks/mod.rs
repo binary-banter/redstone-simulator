@@ -12,6 +12,7 @@ use once_cell::sync::Lazy;
 use petgraph::stable_graph::NodeIndex;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::ops::Add;
+use crate::blocks::telescope::Telescope;
 
 mod comparator;
 pub mod facing;
@@ -22,6 +23,7 @@ mod repeater;
 mod solid;
 mod torch;
 mod trigger;
+pub mod telescope;
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
     Lazy::new(|| include_str!("../../resources/solid.txt").lines().collect());
@@ -34,6 +36,7 @@ static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 /// Blocks that end up in the graph structure of the world.
 #[derive(Clone, Debug)]
 pub enum Block {
+    Telescope(Telescope),
     Redstone(Redstone),
     Repeater(Repeater),
     Torch(Torch),
@@ -99,6 +102,7 @@ impl OutputPower for Block {
             Block::Repeater(v) => v.output_power(),
             Block::Torch(v) => v.output_power(),
             Block::Comparator(v) => v.output_power(),
+            Block::Telescope(v) => v.output_power(),
         }
     }
 }
@@ -320,6 +324,7 @@ impl Updatable for Block {
             Block::Torch(v) => v.update(idx, tick_updatable, blocks),
             Block::Comparator(v) => v.update(idx, tick_updatable, blocks),
             Block::Redstone(v) => v.update(idx, tick_updatable, blocks),
+            Block::Telescope(v) => v.update(idx, tick_updatable, blocks),
         }
     }
 
@@ -334,6 +339,7 @@ impl Updatable for Block {
             Block::Torch(v) => v.late_updatable(idx, updatable, tick_counter),
             Block::Comparator(v) => v.late_updatable(idx, updatable, tick_counter),
             Block::Redstone(_) => unreachable!(),
+            Block::Telescope(v) => v.late_updatable(idx, updatable, tick_counter),
         }
     }
 }
