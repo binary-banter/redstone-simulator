@@ -68,11 +68,7 @@ impl BlockConnections for CRedstone {
         (self.node, false)
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, _add_probe: &mut F, _add_trigger: &mut G)
-    where
-        F: FnMut(NodeIndex),
-        G: FnMut(NodeIndex),
-    {
+    fn add_node(&mut self, blocks: &mut BlockGraph) {
         self.node = Some(blocks.add_node(Block::Redstone(Redstone {
             signal: self.signal,
         })));

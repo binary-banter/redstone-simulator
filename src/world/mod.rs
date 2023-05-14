@@ -1,5 +1,5 @@
 pub mod create;
-pub(crate) mod data;
+pub mod data;
 mod logic;
 mod prune;
 pub mod schematic;

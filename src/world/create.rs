@@ -1,11 +1,10 @@
 use crate::blocks::Block;
 use crate::blocks::{BlockConnections, CBlock};
-use crate::world::data::{neighbours, neighbours_and_facings, TileMap, WorldData};
+use crate::world::data::{neighbours_and_facings, TileMap, WorldData};
 use crate::world::schematic::SchemFormat;
 use crate::world::{BlockGraph, World};
 use bimap::BiMap;
-use nbt::{from_gzip_reader, Value};
-use petgraph::stable_graph::NodeIndex;
+use nbt::from_gzip_reader;
 use std::collections::VecDeque;
 use std::fs::File;
 
@@ -29,47 +28,22 @@ impl From<SchemFormat> for World {
         let mut triggers = Vec::new();
         let mut probes = BiMap::new();
 
-        let get_sign = |p| {
-            tile_map.get(&p).and_then(|b| {
-                if b.id == "minecraft:sign" {
-                    if let Some(Value::String(s)) = b.props.get("Text1") {
-                        let j: serde_json::Value = serde_json::from_str(&s).unwrap();
-                        Some(
-                            j.as_object()
-                                .unwrap()
-                                .get("text")
-                                .unwrap()
-                                .as_str()
-                                .unwrap()
-                                .to_string(),
-                        )
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            })
-        };
-
         // construct nodes
         for y in 0..format.height as usize {
             for z in 0..format.length as usize {
                 for x in 0..format.width as usize {
-                    let mut add_probe = |idx: NodeIndex| {
-                        let name = neighbours((x, y, z))
-                            .find_map(get_sign)
-                            .unwrap_or(format!("{x},{y},{z}"));
-
-                        probes.insert(idx, name);
-                    };
-
-                    let mut add_trigger = |idx: NodeIndex| {
-                        triggers.push(idx);
-                    };
-
                     for block in &mut world[(x, y, z)] {
-                        block.add_node(&mut blocks, &mut add_probe, &mut add_trigger);
+                        block.add_node(&mut blocks);
+
+                        match block {
+                            CBlock::Trigger(v) => {
+                                triggers.push(v.node.unwrap());
+                            }
+                            CBlock::Probe(v) => {
+                                probes.insert(v.node.unwrap(), v.name.clone());
+                            }
+                            _ => {}
+                        }
                     }
                 }
             }

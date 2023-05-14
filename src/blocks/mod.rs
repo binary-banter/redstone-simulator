@@ -44,7 +44,7 @@ pub enum Block {
 }
 
 /// Blocks used during the creation of the graph structure of the world.
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub enum CBlock {
     Redstone(CRedstone),
     SolidWeak(CSolidWeak),
@@ -122,10 +122,7 @@ pub trait BlockConnections {
 
     fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool);
 
-    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, add_probe: &mut F, add_trigger: &mut G)
-    where
-        F: FnMut(NodeIndex),
-        G: FnMut(NodeIndex);
+    fn add_node(&mut self, blocks: &mut BlockGraph);
 }
 
 fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
@@ -203,21 +200,17 @@ impl BlockConnections for CBlock {
         }
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, add_probe: &mut F, add_trigger: &mut G)
-    where
-        F: FnMut(NodeIndex),
-        G: FnMut(NodeIndex),
-    {
+    fn add_node(&mut self, blocks: &mut BlockGraph) {
         match self {
-            CBlock::Redstone(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::SolidWeak(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::SolidStrong(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::Trigger(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::Probe(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::Repeater(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::RedstoneBlock(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::Torch(v) => v.add_node(blocks, add_probe, add_trigger),
-            CBlock::Comparator(v) => v.add_node(blocks, add_probe, add_trigger),
+            CBlock::Redstone(v) => v.add_node(blocks),
+            CBlock::SolidWeak(v) => v.add_node(blocks),
+            CBlock::SolidStrong(v) => v.add_node(blocks),
+            CBlock::Trigger(v) => v.add_node(blocks),
+            CBlock::Probe(v) => v.add_node(blocks),
+            CBlock::Repeater(v) => v.add_node(blocks),
+            CBlock::RedstoneBlock(v) => v.add_node(blocks),
+            CBlock::Torch(v) => v.add_node(blocks),
+            CBlock::Comparator(v) => v.add_node(blocks),
         }
     }
 }

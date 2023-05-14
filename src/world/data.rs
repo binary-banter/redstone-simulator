@@ -49,12 +49,18 @@ impl WorldData {
 
         // construct blocks from palette and use entity data to update them.
         for (y, z, x) in iproduct!(0..height, 0..length, 0..width) {
-            world[x][y][z] = palette[read_next()].iter().cloned().map(|mut b| {
-                if let CBlock::Comparator(v) = &mut b {
-                    v.update_from_tile((x,y,z), tile_map);
-                };
-                b
-            }).collect();
+            world[x][y][z] = palette[read_next()]
+                .iter()
+                .cloned()
+                .map(|mut b| {
+                    match &mut b {
+                        CBlock::Comparator(v) => v.update_from_tile((x, y, z), tile_map),
+                        CBlock::Probe(v) => v.update_from_tile((x, y, z), tile_map),
+                        _ => {}
+                    }
+                    b
+                })
+                .collect();
         }
 
         WorldData(world)

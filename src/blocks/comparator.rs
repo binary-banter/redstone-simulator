@@ -89,11 +89,7 @@ impl BlockConnections for CComparator {
         }
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, _add_probe: &mut F, _add_trigger: &mut G)
-    where
-        F: FnMut(NodeIndex),
-        G: FnMut(NodeIndex),
-    {
+    fn add_node(&mut self, blocks: &mut BlockGraph) {
         self.node = Some(blocks.add_node(Block::Comparator(Comparator {
             signal: self.signal,
             next_signal: self.signal,

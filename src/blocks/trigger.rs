@@ -7,7 +7,7 @@ use petgraph::stable_graph::NodeIndex;
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CTrigger {
     /// `NodeIndex` of this block in the graph. Initially set to `None`.
-    node: Option<NodeIndex>,
+    pub node: Option<NodeIndex>,
 }
 
 impl BlockConnections for CTrigger {
@@ -19,13 +19,8 @@ impl BlockConnections for CTrigger {
         (None, false)
     }
 
-    fn add_node<F, G>(&mut self, blocks: &mut BlockGraph, _add_probe: &mut F, add_trigger: &mut G)
-    where
-        F: FnMut(NodeIndex),
-        G: FnMut(NodeIndex),
-    {
+    fn add_node(&mut self, blocks: &mut BlockGraph) {
         let idx = blocks.add_node(Block::Redstone(Redstone::default()));
-        add_trigger(idx);
         self.node = Some(idx);
     }
 }
