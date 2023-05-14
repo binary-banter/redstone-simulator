@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
@@ -51,21 +51,17 @@ impl OutputPower for Repeater {
 }
 
 impl BlockConnections for CRepeater {
-    fn can_output(&self, facing: Facing) -> Option<NodeIndex> {
-        if self.facing == facing.rev() {
-            self.node
-        } else {
-            None
-        }
+    fn can_output(&self, facing: Facing) -> bool {
+        self.facing == facing.rev()
     }
 
-    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool) {
+    fn can_input(&self, facing: Facing) -> Option<InputSide> {
         if self.facing == facing.rotate_left() || self.facing == facing.rotate_right() {
-            (self.node, true)
+            Some(InputSide::Side)
         } else if self.facing == facing.rev() {
-            (self.node, false)
+            Some(InputSide::Rear)
         } else {
-            (None, false)
+            None
         }
     }
 

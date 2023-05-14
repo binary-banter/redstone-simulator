@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, CBlock, Edge, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, Updatable};
 use crate::world::data::WorldData;
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
@@ -56,16 +56,12 @@ impl OutputPower for Redstone {
 }
 
 impl BlockConnections for CRedstone {
-    fn can_output(&self, facing: Facing) -> Option<NodeIndex> {
-        if self.connections[facing] {
-            self.node
-        } else {
-            None
-        }
+    fn can_output(&self, facing: Facing) -> bool {
+        self.connections[facing]
     }
 
-    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
-        (self.node, false)
+    fn can_input(&self, _facing: Facing) -> Option<InputSide> {
+        Some(InputSide::Rear)
     }
 
     fn add_node(&mut self, blocks: &mut BlockGraph) {

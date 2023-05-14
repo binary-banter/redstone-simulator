@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections};
+use crate::blocks::{Block, BlockConnections, InputSide};
 use crate::world::BlockGraph;
 use petgraph::stable_graph::NodeIndex;
 
@@ -17,12 +17,12 @@ pub struct CSolidWeak {
 }
 
 impl BlockConnections for CSolidStrong {
-    fn can_output(&self, _facing: Facing) -> Option<NodeIndex> {
-        self.node
+    fn can_output(&self, _facing: Facing) -> bool {
+        true
     }
 
-    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
-        (self.node, false)
+    fn can_input(&self, _facing: Facing) -> Option<InputSide> {
+        Some(InputSide::Rear)
     }
 
     fn add_node(&mut self, blocks: &mut BlockGraph) {
@@ -31,12 +31,12 @@ impl BlockConnections for CSolidStrong {
 }
 
 impl BlockConnections for CSolidWeak {
-    fn can_output(&self, _facing: Facing) -> Option<NodeIndex> {
-        self.node
+    fn can_output(&self, _facing: Facing) -> bool {
+        true
     }
 
-    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
-        (self.node, false)
+    fn can_input(&self, _facing: Facing) -> Option<InputSide> {
+        Some(InputSide::Rear)
     }
 
     fn add_node(&mut self, blocks: &mut BlockGraph) {

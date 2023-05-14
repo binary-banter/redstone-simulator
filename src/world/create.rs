@@ -1,9 +1,10 @@
 use crate::blocks::Block;
-use crate::blocks::{BlockConnections, CBlock};
+use crate::blocks::{CBlock};
 use crate::world::data::{neighbours_and_facings, TileMap, WorldData};
 use crate::world::schematic::SchemFormat;
-use crate::world::{BlockGraph, World};
+use crate::world::{BlockGraph, CBlockGraph, World};
 use bimap::BiMap;
+use itertools::iproduct;
 use nbt::from_gzip_reader;
 use std::collections::VecDeque;
 use std::fs::File;
@@ -22,49 +23,41 @@ impl From<SchemFormat> for World {
             .map(|b| ((b.pos[0] as usize, b.pos[1] as usize, b.pos[2] as usize), b))
             .collect();
 
-        let mut world = WorldData::from_format(&format, &tile_map);
+        let world = WorldData::from_format(&format, &tile_map);
         let mut blocks = BlockGraph::new();
 
+        let height = format.height as usize;
+        let length = format.length as usize;
+        let width = format.width as usize;
+
+        let mut cblocks = CBlockGraph::new();
+        let mut indexes = vec![vec![vec![vec![]; length]; height]; width];
+
+        //TODO initialize
         let mut triggers = Vec::new();
         let mut probes = BiMap::new();
 
-        // construct nodes
-        for y in 0..format.height as usize {
-            for z in 0..format.length as usize {
-                for x in 0..format.width as usize {
-                    for block in &mut world[(x, y, z)] {
-                        block.add_node(&mut blocks);
-
-                        match block {
-                            CBlock::Trigger(v) => {
-                                triggers.push(v.node.unwrap());
-                            }
-                            CBlock::Probe(v) => {
-                                probes.insert(v.node.unwrap(), v.name.clone());
-                            }
-                            _ => {}
-                        }
-                    }
-                }
+        // Construct nodes.
+        for (x, y, z) in iproduct!(0..width, 0..height, 0..length) {
+            for block in &world[(x, y, z)] {
+                indexes[x][y][z].push(cblocks.add_node(block.clone()));
             }
         }
 
-        // construct edges
-        for y in 0..format.height as usize {
-            for z in 0..format.length as usize {
-                for x in 0..format.width as usize {
-                    for block in &world[(x, y, z)] {
-                        for (np, f) in neighbours_and_facings((x, y, z)) {
-                            for n_block in &world[np] {
-                                block.add_edge(n_block, f, &mut blocks);
-                            }
-                        }
-
-                        // construct vertical edges for redstone
-                        if let CBlock::Redstone(v) = block {
-                            v.add_vertical_edges((x, y, z), &mut blocks, &world)
+        // Construct edges.
+        for (x, y, z) in iproduct!(0..width, 0..height, 0..length) {
+            for (block, &idx) in world[(x, y, z)].iter().zip(indexes[x][y][z].iter()) {
+                for (np, f) in neighbours_and_facings((x, y, z)) {
+                    for (n_block, &n_idx) in world[np].iter().zip(indexes[np.0][np.1][np.2].iter()) {
+                        if let Some(edge) = block.get_edge(n_block, f){
+                            cblocks.add_edge(idx, n_idx, edge);
                         }
                     }
+                }
+
+                // construct vertical edges for redstone
+                if let CBlock::Redstone(v) = block {
+                    v.add_vertical_edges((x, y, z), &mut blocks, &world)
                 }
             }
         }

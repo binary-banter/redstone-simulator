@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::torch::Torch;
-use crate::blocks::{Block, BlockConnections};
+use crate::blocks::{Block, BlockConnections, InputSide};
 use crate::world::BlockGraph;
 use petgraph::stable_graph::NodeIndex;
 
@@ -11,12 +11,12 @@ pub struct CRedstoneBlock {
 }
 
 impl BlockConnections for CRedstoneBlock {
-    fn can_output(&self, _facing: Facing) -> Option<NodeIndex> {
-        self.node
+    fn can_output(&self, _facing: Facing) -> bool {
+        true
     }
 
-    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
-        (None, false)
+    fn can_input(&self, _facing: Facing) -> Option<InputSide> {
+        None
     }
 
     fn add_node(&mut self, blocks: &mut BlockGraph) {

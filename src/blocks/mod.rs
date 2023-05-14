@@ -117,10 +117,24 @@ impl Block {
     }
 }
 
-pub trait BlockConnections {
-    fn can_output(&self, facing: Facing) -> Option<NodeIndex>;
+pub enum InputSide {
+    Rear,
+    Side
+}
 
-    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool);
+impl InputSide {
+    pub fn to_edge(&self, v: u8) -> Edge {
+        match self {
+            InputSide::Rear => Edge::Rear(v),
+            InputSide::Side => Edge::Side(v),
+        }
+    }
+}
+
+pub trait BlockConnections {
+    fn can_output(&self, facing: Facing) -> bool;
+
+    fn can_input(&self, facing: Facing) -> Option<InputSide>;
 
     fn add_node(&mut self, blocks: &mut BlockGraph);
 }
@@ -172,13 +186,13 @@ fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
 }
 
 impl BlockConnections for CBlock {
-    fn can_output(&self, facing: Facing) -> Option<NodeIndex> {
+    fn can_output(&self, facing: Facing) -> bool {
         match self {
             CBlock::Redstone(v) => v.can_output(facing),
             CBlock::SolidWeak(v) => v.can_output(facing),
             CBlock::SolidStrong(v) => v.can_output(facing),
             CBlock::Trigger(v) => v.can_output(facing),
-            CBlock::Probe(_) => None,
+            CBlock::Probe(v) => v.can_output(facing),
             CBlock::Repeater(v) => v.can_output(facing),
             CBlock::RedstoneBlock(v) => v.can_output(facing),
             CBlock::Torch(v) => v.can_output(facing),
@@ -186,15 +200,15 @@ impl BlockConnections for CBlock {
         }
     }
 
-    fn can_input(&self, facing: Facing) -> (Option<NodeIndex>, bool) {
+    fn can_input(&self, facing: Facing) -> Option<InputSide> {
         match self {
             CBlock::Redstone(v) => v.can_input(facing),
             CBlock::SolidWeak(v) => v.can_input(facing),
             CBlock::SolidStrong(v) => v.can_input(facing),
-            CBlock::Trigger(_) => (None, false),
+            CBlock::Trigger(v) => v.can_input(facing),
             CBlock::Probe(v) => v.can_input(facing),
             CBlock::Repeater(v) => v.can_input(facing),
-            CBlock::RedstoneBlock(_) => (None, false),
+            CBlock::RedstoneBlock(v) => v.can_input(facing),
             CBlock::Torch(v) => v.can_input(facing),
             CBlock::Comparator(v) => v.can_input(facing),
         }
@@ -262,29 +276,24 @@ impl CBlock {
         }
     }
 
-    pub fn add_edge(&self, target: &CBlock, facing: Facing, blocks: &mut BlockGraph) {
-        let Some(idx) = self.can_output(facing) else {
-            return;
-        };
+    pub fn get_edge(&self, target: &CBlock, facing: Facing) -> Option<Edge> {
+        if matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_)){
+            return Some(Edge::Rear(1));
+        }
 
-        let (Some(n_idx), alternate) = target.can_input(facing) else {
-            return;
+        if !self.can_output(facing) {
+            return None;
+        }
+
+        let Some(input_side) = target.can_input(facing) else {
+            return None;
         };
 
         if !can_connect(self, target, facing) {
-            return;
+            return None;
         }
 
-        let redstone_connection =
-            matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_));
-
-        let weight = match (alternate, redstone_connection) {
-            (true, _) => Edge::Side(0),
-            (false, false) => Edge::Rear(0),
-            (false, true) => Edge::Rear(1),
-        };
-
-        blocks.add_edge(idx, n_idx, weight);
+        Some(input_side.to_edge(0))
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections};
+use crate::blocks::{Block, BlockConnections, InputSide};
 use crate::world::data::{neighbours, TileMap};
 use crate::world::BlockGraph;
 use nbt::Value;
@@ -16,12 +16,12 @@ pub struct CProbe {
 }
 
 impl BlockConnections for CProbe {
-    fn can_output(&self, _facing: Facing) -> Option<NodeIndex> {
-        None
+    fn can_output(&self, _facing: Facing) -> bool {
+        false
     }
 
-    fn can_input(&self, _facing: Facing) -> (Option<NodeIndex>, bool) {
-        (self.node, false)
+    fn can_input(&self, _facing: Facing) -> Option<InputSide> {
+        Some(InputSide::Rear)
     }
 
     fn add_node(&mut self, blocks: &mut BlockGraph) {
