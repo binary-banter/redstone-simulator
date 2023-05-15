@@ -1,8 +1,8 @@
-use std::collections::HashMap;
-use itertools::Itertools;
-use petgraph::prelude::*;
 use crate::blocks::CBlock;
 use crate::world::CBlockGraph;
+use itertools::Itertools;
+use petgraph::prelude::*;
+use std::collections::HashMap;
 
 pub fn prune_groups(cblocks: &mut CBlockGraph) {
     let mut todo = cblocks

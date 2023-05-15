@@ -13,9 +13,7 @@ pub struct CSRepeater {
 
 impl CSRepeater {
     pub fn with_powered(powered: bool) -> CSRepeater {
-        CSRepeater {
-            powered
-        }
+        CSRepeater { powered }
     }
 }
 

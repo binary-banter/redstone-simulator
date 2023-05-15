@@ -44,7 +44,11 @@ impl World {
         }
 
         for edge in cblocks.edge_references() {
-            blocks.add_edge(nodes_map[&edge.source()], nodes_map[&edge.target()], edge.weight().clone());
+            blocks.add_edge(
+                nodes_map[&edge.source()],
+                nodes_map[&edge.target()],
+                edge.weight().clone(),
+            );
         }
 
         (blocks, triggers, probes)

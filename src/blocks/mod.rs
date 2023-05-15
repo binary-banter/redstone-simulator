@@ -14,16 +14,16 @@ use petgraph::stable_graph::NodeIndex;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::ops::Add;
 
-mod comparator;
+pub mod comparator;
 pub mod facing;
-mod probe;
-mod redstone;
-mod redstone_block;
-mod repeater;
-mod solid;
-mod srepeater;
-mod torch;
-mod trigger;
+pub mod probe;
+pub mod redstone;
+pub mod redstone_block;
+pub mod repeater;
+pub mod solid;
+pub mod srepeater;
+pub mod torch;
+pub mod trigger;
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
     Lazy::new(|| include_str!("../../resources/solid.txt").lines().collect());
@@ -352,16 +352,4 @@ impl Updatable for Block {
             Block::SRepeater(v) => v.late_updatable(idx, updatable, tick_counter),
         }
     }
-}
-
-pub fn redstone_min() -> Block {
-    Block::Redstone(Redstone::with_signal(0))
-}
-
-pub fn redstone_max() -> Block {
-    Block::Redstone(Redstone::with_signal(15))
-}
-
-pub fn csrepeater(powered: bool) -> CBlock {
-    CBlock::SRepeater(CSRepeater::with_powered(powered))
 }

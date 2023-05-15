@@ -1,8 +1,8 @@
 pub mod create;
 pub mod data;
-mod logic;
 mod prune;
 pub mod schematic;
+mod step;
 
 use crate::blocks::{Block, Edge};
 use crate::blocks::{CBlock, OutputPower};

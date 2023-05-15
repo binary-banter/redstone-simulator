@@ -1,8 +1,8 @@
-use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use crate::world::CBlockGraph;
 use petgraph::prelude::*;
 use petgraph::visit::IntoEdgeReferences;
-use crate::world::CBlockGraph;
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 
 pub fn prune_duplicate_edges(cblocks: &mut CBlockGraph) {
     let mut best_edges: HashMap<(NodeIndex, NodeIndex, bool), EdgeIndex> = HashMap::new();

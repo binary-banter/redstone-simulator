@@ -1,5 +1,7 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, ToBlock, Updatable};
+use crate::blocks::{
+    Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, ToBlock, Updatable,
+};
 use crate::world::data::WorldData;
 use crate::world::{BlockGraph, CBlockGraph};
 use petgraph::prelude::EdgeRef;
