@@ -3,6 +3,7 @@ use crate::blocks::{CBlock, Edge};
 use crate::world::CBlockGraph;
 use itertools::Itertools;
 use petgraph::{Incoming, Outgoing};
+use petgraph::visit::EdgeRef;
 
 pub fn replace_simple_repeaters(cblocks: &mut CBlockGraph) {
     cblocks
@@ -20,7 +21,7 @@ pub fn replace_simple_repeaters(cblocks: &mut CBlockGraph) {
 
             if cblocks
                 .edges_directed(idx, Outgoing)
-                .any(|edge| matches!(edge.weight(), Edge::Side(_)))
+                .any(|edge| matches!(edge.weight(), Edge::Side(_)) && matches!(cblocks[edge.target()], CBlock::Repeater(_)))
             {
                 return;
             }
