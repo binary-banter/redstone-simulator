@@ -4,7 +4,7 @@ use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Incoming;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 
 #[derive(Clone, Debug)]
 pub struct Torch {
@@ -78,7 +78,7 @@ impl Updatable for Torch {
     fn update(
         &mut self,
         idx: NodeIndex,
-        _tick_updatable: &mut VecDeque<NodeIndex>,
+        _tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool {
         let s_new = blocks
@@ -94,7 +94,7 @@ impl Updatable for Torch {
     fn late_updatable(
         &mut self,
         _idx: NodeIndex,
-        _updatable: &mut VecDeque<NodeIndex>,
+        _updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update {

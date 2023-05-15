@@ -10,7 +10,7 @@ use bimap::BiMap;
 use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Graph;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
 pub type BlockGraph = Graph<Block, Edge, petgraph::Directed, u32>;
@@ -28,10 +28,10 @@ pub struct World {
     probes: BiMap<NodeIndex, String>,
 
     /// Queue that holds indexes of blocks that require an end-of-tick update.
-    updatable: VecDeque<NodeIndex>,
+    updatable: Vec<NodeIndex>,
 
     /// Queue that holds indexes of blocks that require intra-tick update.
-    tick_updatable: VecDeque<NodeIndex>,
+    tick_updatable: Vec<NodeIndex>,
 
     /// Global tick counter.
     tick_counter: usize,

@@ -9,7 +9,7 @@ use nbt::from_gzip_reader;
 use petgraph::graph::NodeIndex;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdgeReferences, IntoNodeReferences};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::fs::File;
 
 impl From<File> for World {
@@ -113,8 +113,8 @@ impl From<SchemFormat> for World {
             blocks,
             triggers,
             probes,
-            updatable: VecDeque::new(),
-            tick_updatable: VecDeque::new(),
+            updatable: Vec::new(),
+            tick_updatable: Vec::new(),
             tick_counter: 0,
         };
 

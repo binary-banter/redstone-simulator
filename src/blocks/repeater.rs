@@ -4,7 +4,7 @@ use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 
 #[derive(Clone, Debug)]
 pub struct Repeater {
@@ -80,7 +80,7 @@ impl Updatable for Repeater {
     fn update(
         &mut self,
         idx: NodeIndex,
-        tick_updatable: &mut VecDeque<NodeIndex>,
+        tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool {
         let s_new = blocks
@@ -144,7 +144,7 @@ impl Updatable for Repeater {
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>,
+        updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update {
@@ -153,7 +153,7 @@ impl Updatable for Repeater {
         self.last_update = tick_counter;
 
         self.count += 1;
-        updatable.push_back(idx);
+        updatable.push(idx);
         if self.count == self.delay {
             self.count = 0;
             self.powered = self.locking_signal;

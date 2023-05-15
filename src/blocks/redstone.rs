@@ -7,7 +7,7 @@ use crate::world::{BlockGraph, CBlockGraph};
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 use std::ops::Index;
 
 #[derive(Clone, Debug, Default)]
@@ -76,7 +76,7 @@ impl Updatable for Redstone {
     fn update(
         &mut self,
         idx: NodeIndex,
-        tick_updatable: &mut VecDeque<NodeIndex>,
+        tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool {
         let s_new = blocks
@@ -99,7 +99,7 @@ impl Updatable for Redstone {
     fn late_updatable(
         &mut self,
         _idx: NodeIndex,
-        _updatable: &mut VecDeque<NodeIndex>,
+        _updatable: &mut Vec<NodeIndex>,
         _tick_counter: usize,
     ) -> bool {
         unreachable!()

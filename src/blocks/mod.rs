@@ -11,7 +11,7 @@ use crate::blocks::trigger::CTrigger;
 use crate::world::BlockGraph;
 use once_cell::sync::Lazy;
 use petgraph::stable_graph::NodeIndex;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::ops::Add;
 
 pub mod comparator;
@@ -309,14 +309,14 @@ pub trait Updatable {
     fn update(
         &mut self,
         idx: NodeIndex,
-        tick_updatable: &mut VecDeque<NodeIndex>,
+        tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool;
 
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>,
+        updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool;
 }
@@ -326,7 +326,7 @@ impl Updatable for Block {
     fn update(
         &mut self,
         idx: NodeIndex,
-        tick_updatable: &mut VecDeque<NodeIndex>,
+        tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool {
         match self {
@@ -341,7 +341,7 @@ impl Updatable for Block {
     fn late_updatable(
         &mut self,
         idx: NodeIndex,
-        updatable: &mut VecDeque<NodeIndex>,
+        updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
         match self {

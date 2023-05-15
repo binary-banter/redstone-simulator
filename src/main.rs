@@ -19,75 +19,75 @@ pub mod world;
 fn main() {
     let mut world = World::from(File::open("./schematics/cpu_fib.schem").unwrap());
 
-    let mut f = File::create("output.gv").expect("Unable to create file");
-    writeln!(f, "{:?}", Dot::with_config(&world.blocks, &[])).unwrap();
+    // let mut f = File::create("output.gv").expect("Unable to create file");
+    // writeln!(f, "{:?}", Dot::with_config(&world.blocks, &[])).unwrap();
+    //
+    // println!(
+    //     "nodes: {}, edges: {}",
+    //     world.blocks.node_count(),
+    //     world.blocks.edge_count()
+    // );
+    // println!(
+    //     "Repeaters: {}",
+    //     world
+    //         .blocks
+    //         .node_weights()
+    //         .filter(|b| matches!(b, Block::Repeater(_)))
+    //         .count()
+    // );
+    // println!(
+    //     "Torches: {}",
+    //     world
+    //         .blocks
+    //         .node_weights()
+    //         .filter(|b| matches!(b, Block::Torch(_)))
+    //         .count()
+    // );
+    // println!(
+    //     "Comps: {}",
+    //     world
+    //         .blocks
+    //         .node_weights()
+    //         .filter(|b| matches!(b, Block::Comparator(_)))
+    //         .count()
+    // );
+    // println!(
+    //     "Redstone: {}",
+    //     world
+    //         .blocks
+    //         .node_weights()
+    //         .filter(|b| matches!(b, Block::Redstone(_)))
+    //         .count()
+    // );
 
-    println!(
-        "nodes: {}, edges: {}",
-        world.blocks.node_count(),
-        world.blocks.edge_count()
-    );
-    println!(
-        "Repeaters: {}",
-        world
-            .blocks
-            .node_weights()
-            .filter(|b| matches!(b, Block::Repeater(_)))
-            .count()
-    );
-    println!(
-        "Torches: {}",
-        world
-            .blocks
-            .node_weights()
-            .filter(|b| matches!(b, Block::Torch(_)))
-            .count()
-    );
-    println!(
-        "Comps: {}",
-        world
-            .blocks
-            .node_weights()
-            .filter(|b| matches!(b, Block::Comparator(_)))
-            .count()
-    );
-    println!(
-        "Redstone: {}",
-        world
-            .blocks
-            .node_weights()
-            .filter(|b| matches!(b, Block::Redstone(_)))
-            .count()
-    );
-
-    for _ in 0..40 {
+    for _ in 0..400000 {
         world.step_with_trigger();
         world.step_with_trigger();
         for _ in 0..50 {
             world.step();
         }
-        println!(
-            "a: {}{}{}{}{}{}{}{}",
-            world.get_probe("7").unwrap() as u8,
-            world.get_probe("6").unwrap() as u8,
-            world.get_probe("5").unwrap() as u8,
-            world.get_probe("4").unwrap() as u8,
-            world.get_probe("3").unwrap() as u8,
-            world.get_probe("2").unwrap() as u8,
-            world.get_probe("1").unwrap() as u8,
-            world.get_probe("0").unwrap() as u8,
-        );
-        println!(
-            "pc: {}{}{}{}{}{}{}{}",
-            world.get_probe("pc7").unwrap() as u8,
-            world.get_probe("pc6").unwrap() as u8,
-            world.get_probe("pc5").unwrap() as u8,
-            world.get_probe("pc4").unwrap() as u8,
-            world.get_probe("pc3").unwrap() as u8,
-            world.get_probe("pc2").unwrap() as u8,
-            world.get_probe("pc1").unwrap() as u8,
-            world.get_probe("pc0").unwrap() as u8,
-        );
-        println!();
+        // println!(
+        //     "a: {}{}{}{}{}{}{}{}",
+        //     world.get_probe("7").unwrap() as u8,
+        //     world.get_probe("6").unwrap() as u8,
+        //     world.get_probe("5").unwrap() as u8,
+        //     world.get_probe("4").unwrap() as u8,
+        //     world.get_probe("3").unwrap() as u8,
+        //     world.get_probe("2").unwrap() as u8,
+        //     world.get_probe("1").unwrap() as u8,
+        //     world.get_probe("0").unwrap() as u8,
+        // );
+        // println!(
+        //     "pc: {}{}{}{}{}{}{}{}",
+        //     world.get_probe("pc7").unwrap() as u8,
+        //     world.get_probe("pc6").unwrap() as u8,
+        //     world.get_probe("pc5").unwrap() as u8,
+        //     world.get_probe("pc4").unwrap() as u8,
+        //     world.get_probe("pc3").unwrap() as u8,
+        //     world.get_probe("pc2").unwrap() as u8,
+        //     world.get_probe("pc1").unwrap() as u8,
+        //     world.get_probe("pc0").unwrap() as u8,
+        // );
+        // println!();
     }
 }

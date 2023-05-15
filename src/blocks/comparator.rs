@@ -6,7 +6,7 @@ use nbt::Value;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Incoming;
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 
 #[derive(Clone, Debug)]
 pub struct Comparator {
@@ -99,7 +99,7 @@ impl Updatable for Comparator {
     fn update(
         &mut self,
         idx: NodeIndex,
-        _tick_updatable: &mut VecDeque<NodeIndex>,
+        _tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool {
         let rear = blocks
@@ -133,7 +133,7 @@ impl Updatable for Comparator {
     fn late_updatable(
         &mut self,
         _idx: NodeIndex,
-        _updatable: &mut VecDeque<NodeIndex>,
+        _updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update {

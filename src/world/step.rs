@@ -6,14 +6,14 @@ use petgraph::Outgoing;
 impl World {
     pub fn step(&mut self) {
         // Tick updates
-        while let Some(idx) = self.tick_updatable.pop_front() {
+        while let Some(idx) = self.tick_updatable.pop() {
             // TODO this is terribly terribly unsound
             // let block: &mut Block = unsafe { &mut *((&mut self.blocks[idx]) as *mut Block) };
 
             let mut block = self.blocks[idx].clone();
 
             if block.update(idx, &mut self.tick_updatable, &self.blocks) {
-                self.updatable.push_back(idx);
+                self.updatable.push(idx);
             }
 
             self.blocks[idx] = block;
