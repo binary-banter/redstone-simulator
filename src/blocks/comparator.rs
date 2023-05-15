@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
 use crate::world::data::TileMap;
 use crate::world::BlockGraph;
 use nbt::Value;
@@ -80,6 +80,16 @@ impl BlockConnections for CComparator {
         } else {
             None
         }
+    }
+
+    fn to_block(&self) -> Block {
+        Block::Comparator(Comparator {
+            signal: self.signal,
+            next_signal: self.signal,
+            entity_power: self.entity_power,
+            mode: self.mode,
+            last_update: usize::MAX,
+        })
     }
 }
 

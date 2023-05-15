@@ -9,10 +9,11 @@ use crate::blocks::{CBlock, OutputPower};
 use bimap::BiMap;
 use petgraph::prelude::StableGraph;
 use petgraph::stable_graph::NodeIndex;
+use petgraph::Graph;
 use std::collections::{HashMap, VecDeque};
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
-pub type BlockGraph = StableGraph<Block, Edge, petgraph::Directed, u32>;
+pub type BlockGraph = Graph<Block, Edge, petgraph::Directed, u32>;
 
 /// The `World` is a pruned instance of a redstone circuit.
 pub struct World {

@@ -5,7 +5,6 @@ use crate::world::World;
 use itertools::Itertools;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::{EdgeIndex, NodeIndex};
-use petgraph::visit::IntoEdgeReferences;
 use petgraph::{Incoming, Outgoing};
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};

@@ -1,7 +1,7 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, Updatable};
 use crate::world::data::WorldData;
-use crate::world::BlockGraph;
+use crate::world::{BlockGraph, CBlockGraph};
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
@@ -59,6 +59,12 @@ impl BlockConnections for CRedstone {
 
     fn can_input(&self, _facing: Facing) -> Option<InputSide> {
         Some(InputSide::Rear)
+    }
+
+    fn to_block(&self) -> Block {
+        Block::Redstone(Redstone {
+            signal: self.signal,
+        })
     }
 }
 
@@ -121,42 +127,35 @@ impl CRedstone {
     pub fn add_vertical_edges(
         &self,
         (x, y, z): (usize, usize, usize),
-        blocks: &mut BlockGraph,
+        blocks: &mut CBlockGraph,
         world: &WorldData,
+        indexes: &Vec<Vec<Vec<Vec<NodeIndex>>>>,
     ) {
-        todo!()
-        // let Some(idx) = self.node else {
-        //     unreachable!("All nodes should have an index.");
-        // };
-        //
-        // let top = (x, y.wrapping_add(1), z);
-        // let bottom = (x, y.wrapping_sub(1), z);
-        // for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
-        //     let side = f.front((x, y, z));
-        //     let side_down = (side.0, side.1.wrapping_sub(1), side.2);
-        //     let side_up = (side.0, side.1.wrapping_add(1), side.2);
-        //
-        //     // Side-down out
-        //     if let [CBlock::Redstone(CRedstone {
-        //         node: Some(n_idx), ..
-        //     })] = world[side_down][..]
-        //     {
-        //         if world[side].iter().all(|b| b.is_transparent())
-        //             && !world[bottom].iter().all(|b| b.is_transparent())
-        //         {
-        //             blocks.add_edge(idx, n_idx, Edge::Rear(1));
-        //         }
-        //     }
-        //
-        //     // Side-up out
-        //     if let [CBlock::Redstone(CRedstone {
-        //         node: Some(n_idx), ..
-        //     })] = world[side_up][..]
-        //     {
-        //         if world[top].iter().all(|b| b.is_transparent()) {
-        //             blocks.add_edge(idx, n_idx, Edge::Rear(1));
-        //         }
-        //     }
-        // }
+        let idx = indexes[x][y][z][0];
+        let top = (x, y.wrapping_add(1), z);
+        let bottom = (x, y.wrapping_sub(1), z);
+        for f in [Facing::North, Facing::East, Facing::South, Facing::West] {
+            let side = f.front((x, y, z));
+            let side_down = (side.0, side.1.wrapping_sub(1), side.2);
+            let side_up = (side.0, side.1.wrapping_add(1), side.2);
+
+            // Side-down out
+            if let [CBlock::Redstone(CRedstone { .. })] = world[side_down][..]
+            {
+                if world[side].iter().all(|b| b.is_transparent())
+                    && !world[bottom].iter().all(|b| b.is_transparent())
+                {
+                    blocks.add_edge(idx, indexes[side_down.0][side_down.1][side_down.2][0], Edge::Rear(1));
+                }
+            }
+
+            // Side-up out
+            if let [CBlock::Redstone(CRedstone { .. })] = world[side_up][..]
+            {
+                if world[top].iter().all(|b| b.is_transparent()) {
+                    blocks.add_edge(idx, indexes[side_up.0][side_up.1][side_up.2][0], Edge::Rear(1));
+                }
+            }
+        }
     }
 }

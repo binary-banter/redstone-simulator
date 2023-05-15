@@ -6,6 +6,8 @@ fn steady() {
     let file = File::open("./schematics/steady_state.schem").unwrap();
     let mut world = World::from(file);
 
+    println!("{:?}", world.blocks);
+
     assert!(!world.get_probe("probe_1").unwrap());
     world.step_with_trigger();
     assert!(world.get_probe("probe_1").unwrap());

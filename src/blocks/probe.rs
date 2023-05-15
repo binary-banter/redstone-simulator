@@ -1,5 +1,6 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{ BlockConnections, InputSide};
+use crate::blocks::redstone::Redstone;
+use crate::blocks::{Block, BlockConnections, InputSide};
 use crate::world::data::{neighbours, TileMap};
 use nbt::Value;
 
@@ -16,6 +17,10 @@ impl BlockConnections for CProbe {
 
     fn can_input(&self, _facing: Facing) -> Option<InputSide> {
         Some(InputSide::Rear)
+    }
+
+    fn to_block(&self) -> Block {
+        Block::Redstone(Redstone::default())
     }
 }
 

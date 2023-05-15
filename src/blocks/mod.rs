@@ -119,7 +119,7 @@ impl Block {
 
 pub enum InputSide {
     Rear,
-    Side
+    Side,
 }
 
 impl InputSide {
@@ -135,6 +135,8 @@ pub trait BlockConnections {
     fn can_output(&self, facing: Facing) -> bool;
 
     fn can_input(&self, facing: Facing) -> Option<InputSide>;
+
+    fn to_block(&self) -> Block;
 }
 
 fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
@@ -211,6 +213,20 @@ impl BlockConnections for CBlock {
             CBlock::Comparator(v) => v.can_input(facing),
         }
     }
+
+    fn to_block(&self) -> Block {
+        match self {
+            CBlock::Redstone(v) => v.to_block(),
+            CBlock::SolidWeak(v) => v.to_block(),
+            CBlock::SolidStrong(v) => v.to_block(),
+            CBlock::Trigger(v) => v.to_block(),
+            CBlock::Probe(v) => v.to_block(),
+            CBlock::Repeater(v) => v.to_block(),
+            CBlock::RedstoneBlock(v) => v.to_block(),
+            CBlock::Torch(v) => v.to_block(),
+            CBlock::Comparator(v) => v.to_block(),
+        }
+    }
 }
 
 impl CBlock {
@@ -261,7 +277,7 @@ impl CBlock {
     }
 
     pub fn get_edge(&self, target: &CBlock, facing: Facing) -> Option<Edge> {
-        if matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_)){
+        if matches!(self, CBlock::Redstone(_)) && matches!(target, CBlock::Redstone(_)) {
             return Some(Edge::Rear(1));
         }
 
