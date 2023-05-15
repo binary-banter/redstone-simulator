@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
@@ -63,7 +63,8 @@ impl BlockConnections for CTorch {
             None
         }
     }
-
+}
+impl ToBlock for CTorch {
     fn to_block(&self) -> Block {
         Block::Torch(Torch {
             lit: self.lit,

@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::TileMap;
 use crate::world::BlockGraph;
 use nbt::Value;
@@ -25,7 +25,7 @@ pub struct Comparator {
     last_update: usize,
 }
 
-impl Comparator {
+impl CComparator {
     pub fn contains_entity_power(&self) -> bool {
         self.entity_power.is_some()
     }
@@ -81,7 +81,8 @@ impl BlockConnections for CComparator {
             None
         }
     }
-
+}
+impl ToBlock for CComparator {
     fn to_block(&self) -> Block {
         Block::Comparator(Comparator {
             signal: self.signal,

@@ -1,6 +1,6 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::redstone::Redstone;
-use crate::blocks::{Block, BlockConnections, InputSide};
+use crate::blocks::{Block, BlockConnections, InputSide, ToBlock};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CSolidStrong {}
@@ -16,7 +16,8 @@ impl BlockConnections for CSolidStrong {
     fn can_input(&self, _facing: Facing) -> Option<InputSide> {
         Some(InputSide::Rear)
     }
-
+}
+impl ToBlock for CSolidStrong {
     fn to_block(&self) -> Block {
         Block::Redstone(Redstone::default())
     }
@@ -30,7 +31,8 @@ impl BlockConnections for CSolidWeak {
     fn can_input(&self, _facing: Facing) -> Option<InputSide> {
         Some(InputSide::Rear)
     }
-
+}
+impl ToBlock for CSolidWeak {
     fn to_block(&self) -> Block {
         Block::Redstone(Redstone::default())
     }

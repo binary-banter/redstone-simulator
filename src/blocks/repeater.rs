@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
@@ -61,7 +61,8 @@ impl BlockConnections for CRepeater {
             None
         }
     }
-
+}
+impl ToBlock for CRepeater {
     fn to_block(&self) -> Block {
         Block::Repeater(Repeater {
             powered: self.powered,
@@ -167,15 +168,19 @@ impl Repeater {
     pub fn will_lock(&self) -> bool {
         self.locking_signal
     }
-
-    pub fn delay(&self) -> u8 {
-        self.delay
-    }
 }
 
 impl CRepeater {
+    pub fn delay(&self) -> u8 {
+        self.delay
+    }
+
     pub fn facing(&self) -> Facing {
         self.facing
+    }
+
+    pub fn is_powered(&self) -> bool {
+        self.powered
     }
 }
 

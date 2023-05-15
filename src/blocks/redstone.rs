@@ -1,5 +1,5 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, Updatable};
+use crate::blocks::{Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::WorldData;
 use crate::world::{BlockGraph, CBlockGraph};
 use petgraph::prelude::EdgeRef;
@@ -60,7 +60,8 @@ impl BlockConnections for CRedstone {
     fn can_input(&self, _facing: Facing) -> Option<InputSide> {
         Some(InputSide::Rear)
     }
-
+}
+impl ToBlock for CRedstone {
     fn to_block(&self) -> Block {
         Block::Redstone(Redstone {
             signal: self.signal,
@@ -140,20 +141,26 @@ impl CRedstone {
             let side_up = (side.0, side.1.wrapping_add(1), side.2);
 
             // Side-down out
-            if let [CBlock::Redstone(CRedstone { .. })] = world[side_down][..]
-            {
+            if let [CBlock::Redstone(CRedstone { .. })] = world[side_down][..] {
                 if world[side].iter().all(|b| b.is_transparent())
                     && !world[bottom].iter().all(|b| b.is_transparent())
                 {
-                    blocks.add_edge(idx, indexes[side_down.0][side_down.1][side_down.2][0], Edge::Rear(1));
+                    blocks.add_edge(
+                        idx,
+                        indexes[side_down.0][side_down.1][side_down.2][0],
+                        Edge::Rear(1),
+                    );
                 }
             }
 
             // Side-up out
-            if let [CBlock::Redstone(CRedstone { .. })] = world[side_up][..]
-            {
+            if let [CBlock::Redstone(CRedstone { .. })] = world[side_up][..] {
                 if world[top].iter().all(|b| b.is_transparent()) {
-                    blocks.add_edge(idx, indexes[side_up.0][side_up.1][side_up.2][0], Edge::Rear(1));
+                    blocks.add_edge(
+                        idx,
+                        indexes[side_up.0][side_up.1][side_up.2][0],
+                        Edge::Rear(1),
+                    );
                 }
             }
         }

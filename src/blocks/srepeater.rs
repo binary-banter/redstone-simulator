@@ -1,9 +1,32 @@
-use crate::blocks::{Edge, OutputPower, Updatable};
+use crate::blocks::{Block, Edge, OutputPower, ToBlock, Updatable};
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Incoming;
 use std::collections::VecDeque;
+
+#[derive(Clone, Debug)]
+pub struct CSRepeater {
+    /// Whether the repeater is currently powered.
+    powered: bool,
+}
+
+impl CSRepeater {
+    pub fn with_powered(powered: bool) -> CSRepeater {
+        CSRepeater {
+            powered
+        }
+    }
+}
+
+impl ToBlock for CSRepeater {
+    fn to_block(&self) -> Block {
+        Block::SRepeater(SRepeater {
+            powered: self.powered,
+            last_update: usize::MAX,
+        })
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct SRepeater {

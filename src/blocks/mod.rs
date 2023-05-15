@@ -5,7 +5,7 @@ use crate::blocks::redstone::{CRedstone, Redstone};
 use crate::blocks::redstone_block::CRedstoneBlock;
 use crate::blocks::repeater::{CRepeater, Repeater};
 use crate::blocks::solid::{CSolidStrong, CSolidWeak};
-use crate::blocks::srepeater::SRepeater;
+use crate::blocks::srepeater::{CSRepeater, SRepeater};
 use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
 use crate::world::BlockGraph;
@@ -52,6 +52,7 @@ pub enum CBlock {
     Trigger(CTrigger),
     Probe(CProbe),
     Repeater(CRepeater),
+    SRepeater(CSRepeater),
     RedstoneBlock(CRedstoneBlock),
     Torch(CTorch),
     Comparator(CComparator),
@@ -135,7 +136,9 @@ pub trait BlockConnections {
     fn can_output(&self, facing: Facing) -> bool;
 
     fn can_input(&self, facing: Facing) -> Option<InputSide>;
+}
 
+pub trait ToBlock {
     fn to_block(&self) -> Block;
 }
 
@@ -197,6 +200,7 @@ impl BlockConnections for CBlock {
             CBlock::RedstoneBlock(v) => v.can_output(facing),
             CBlock::Torch(v) => v.can_output(facing),
             CBlock::Comparator(v) => v.can_output(facing),
+            CBlock::SRepeater(_) => unreachable!(),
         }
     }
 
@@ -211,9 +215,11 @@ impl BlockConnections for CBlock {
             CBlock::RedstoneBlock(v) => v.can_input(facing),
             CBlock::Torch(v) => v.can_input(facing),
             CBlock::Comparator(v) => v.can_input(facing),
+            CBlock::SRepeater(_) => unreachable!(),
         }
     }
-
+}
+impl ToBlock for CBlock {
     fn to_block(&self) -> Block {
         match self {
             CBlock::Redstone(v) => v.to_block(),
@@ -225,6 +231,7 @@ impl BlockConnections for CBlock {
             CBlock::RedstoneBlock(v) => v.to_block(),
             CBlock::Torch(v) => v.to_block(),
             CBlock::Comparator(v) => v.to_block(),
+            CBlock::SRepeater(v) => v.to_block(),
         }
     }
 }
@@ -273,6 +280,7 @@ impl CBlock {
             CBlock::Comparator { .. } => true,
             CBlock::Torch { .. } => true,
             CBlock::Probe { .. } => false,
+            CBlock::SRepeater { .. } => unreachable!(),
         }
     }
 
@@ -354,10 +362,6 @@ pub fn redstone_max() -> Block {
     Block::Redstone(Redstone::with_signal(15))
 }
 
-pub fn srepeater_powered() -> Block {
-    Block::SRepeater(SRepeater::with_power(true))
-}
-
-pub fn srepeater_unpowered() -> Block {
-    Block::SRepeater(SRepeater::with_power(false))
+pub fn csrepeater(powered: bool) -> CBlock {
+    CBlock::SRepeater(CSRepeater::with_powered(powered))
 }

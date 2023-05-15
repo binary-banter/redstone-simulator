@@ -1,6 +1,6 @@
-use crate::blocks::CBlock;
-use crate::blocks::{Block, BlockConnections};
+use crate::blocks::{CBlock, ToBlock};
 use crate::world::data::{neighbours_and_facings, TileMap, WorldData};
+use crate::world::prune::prune_graph;
 use crate::world::schematic::SchemFormat;
 use crate::world::{BlockGraph, CBlockGraph, World};
 use bimap::BiHashMap;
@@ -9,7 +9,7 @@ use nbt::from_gzip_reader;
 use petgraph::graph::NodeIndex;
 use petgraph::prelude::*;
 use petgraph::visit::{IntoEdgeReferences, IntoNodeReferences};
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::fs::File;
 
 impl From<File> for World {
@@ -27,8 +27,11 @@ impl World {
         let mut triggers = Vec::new();
         let mut probes = BiHashMap::new();
 
-        for (_, cblock) in cblocks.node_references() {
+        let mut nodes_map = HashMap::with_capacity(cblocks.node_count());
+
+        for (idx_old, cblock) in cblocks.node_references() {
             let idx = blocks.add_node(cblock.to_block());
+            nodes_map.insert(idx_old, idx);
             match cblock {
                 CBlock::Probe(p) => {
                     probes.insert(idx, p.name.clone());
@@ -41,7 +44,7 @@ impl World {
         }
 
         for edge in cblocks.edge_references() {
-            blocks.add_edge(edge.source(), edge.target(), edge.weight().clone());
+            blocks.add_edge(nodes_map[&edge.source()], nodes_map[&edge.target()], edge.weight().clone());
         }
 
         (blocks, triggers, probes)
@@ -97,6 +100,8 @@ impl From<SchemFormat> for World {
             }
         }
 
+        prune_graph(&mut cblocks);
+
         // CBlock graph to Block graph
         let (blocks, triggers, probes) = World::cblock_to_block(cblocks);
 
@@ -109,13 +114,8 @@ impl From<SchemFormat> for World {
             tick_counter: 0,
         };
 
-        // world.prune_graph();
-
-        world.tick_updatable = world
-            .blocks
-            .node_indices()
-            .filter(|x| matches!(world.blocks[*x], Block::Redstone(_)))
-            .collect();
+        // Update probes for initial state.
+        world.tick_updatable = world.probes.left_values().cloned().collect();
         world.step();
 
         world
