@@ -1,13 +1,10 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, ToBlock, Updatable};
+use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::TileMap;
-use crate::world::BlockGraph;
 use nbt::Value;
-use petgraph::prelude::EdgeRef;
-use petgraph::stable_graph::NodeIndex;
-use petgraph::Incoming;
 use std::collections::{HashMap};
 use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
+use crate::world::graph::GNode;
 
 #[derive(Debug)]
 pub struct Comparator {
@@ -99,28 +96,11 @@ impl Updatable for Comparator {
     #[inline(always)]
     fn update(
         &self,
-        idx: NodeIndex,
-        _tick_updatable: &mut Vec<NodeIndex>,
-        blocks: &BlockGraph,
+        idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
     ) -> bool {
-        let rear = blocks
-            .edges_directed(idx, Incoming)
-            .filter_map(|edge| match edge.weight() {
-                Edge::Rear(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
-                Edge::Side(_) => None,
-            })
-            .max()
-            .max(self.entity_power)
-            .unwrap_or(0);
-
-        let side = blocks
-            .edges_directed(idx, Incoming)
-            .filter_map(|edge| match edge.weight() {
-                Edge::Rear(_) => None,
-                Edge::Side(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
-            })
-            .max()
-            .unwrap_or(0);
+        let rear = idx.incoming_rear.iter().map(|e| e.node.weight.output_power().saturating_sub(e.weight)).max().max(self.entity_power).unwrap_or(0);
+        let side = idx.incoming_side.iter().map(|e| e.node.weight.output_power().saturating_sub(e.weight)).max().unwrap_or(0);
 
         self.next_signal.store(match self.mode {
             ComparatorMode::Compare if side <= rear => rear,
@@ -133,8 +113,8 @@ impl Updatable for Comparator {
 
     fn late_updatable(
         &self,
-        _idx: NodeIndex,
-        _updatable: &mut Vec<NodeIndex>,
+        _idx: &'static GNode<Block, u8>,
+        _updatable: &mut Vec<&'static GNode<Block, u8>>,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {

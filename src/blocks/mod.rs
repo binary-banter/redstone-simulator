@@ -8,11 +8,10 @@ use crate::blocks::solid::{CSolidStrong, CSolidWeak};
 use crate::blocks::srepeater::{CSRepeater, SRepeater};
 use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
-use crate::world::BlockGraph;
 use once_cell::sync::Lazy;
-use petgraph::stable_graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
 use std::ops::Add;
+use crate::world::graph::GNode;
 
 pub mod comparator;
 pub mod facing;
@@ -308,15 +307,14 @@ impl CBlock {
 pub trait Updatable {
     fn update(
         &self,
-        idx: NodeIndex,
-        tick_updatable: &mut Vec<NodeIndex>,
-        blocks: &BlockGraph,
+        idx: &'static GNode<Block, u8>,
+        tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
     ) -> bool;
 
     fn late_updatable(
         &self,
-        idx: NodeIndex,
-        updatable: &mut Vec<NodeIndex>,
+        idx: &'static GNode<Block, u8>,
+        updatable: &mut Vec<&'static GNode<Block, u8>>,
         tick_counter: usize,
     ) -> bool;
 }
@@ -325,23 +323,22 @@ impl Updatable for Block {
     #[inline(always)]
     fn update(
         &self,
-        idx: NodeIndex,
-        tick_updatable: &mut Vec<NodeIndex>,
-        blocks: &BlockGraph,
+        idx: &'static GNode<Block, u8>,
+        tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
     ) -> bool {
         match self {
-            Block::Repeater(v) => v.update(idx, tick_updatable, blocks),
-            Block::Torch(v) => v.update(idx, tick_updatable, blocks),
-            Block::Comparator(v) => v.update(idx, tick_updatable, blocks),
-            Block::Redstone(v) => v.update(idx, tick_updatable, blocks),
-            Block::SRepeater(v) => v.update(idx, tick_updatable, blocks),
+            Block::Repeater(v) => v.update(idx, tick_updatable),
+            Block::Torch(v) => v.update(idx, tick_updatable),
+            Block::Comparator(v) => v.update(idx, tick_updatable),
+            Block::Redstone(v) => v.update(idx, tick_updatable),
+            Block::SRepeater(v) => v.update(idx, tick_updatable),
         }
     }
 
     fn late_updatable(
         &self,
-        idx: NodeIndex,
-        updatable: &mut Vec<NodeIndex>,
+        idx: &'static GNode<Block, u8>,
+        updatable: &mut Vec<&'static GNode<Block, u8>>,
         tick_counter: usize,
     ) -> bool {
         match self {

@@ -1,22 +1,19 @@
-use crate::blocks::redstone::Redstone;
 use crate::blocks::{Block, Updatable};
 use crate::world::World;
-use petgraph::Outgoing;
 
 impl World {
     pub fn step(&mut self) {
         // Tick updates
         while let Some(idx) = self.tick_updatable.pop() {
-            if self.blocks[idx].update(idx, &mut self.tick_updatable, &self.blocks) {
+            if idx.weight.update(idx, &mut self.tick_updatable) {
                 self.updatable.push(idx);
             }
         }
 
         // End-of-tick updates
         for idx in self.updatable.drain(..) {
-            if self.blocks[idx].late_updatable(idx, &mut self.tick_updatable, self.tick_counter) {
-                self.tick_updatable
-                    .extend(self.blocks.neighbors_directed(idx, Outgoing));
+            if idx.weight.late_updatable(idx, &mut self.tick_updatable, self.tick_counter) {
+                self.tick_updatable.extend(idx.outgoing_neighbours());
             }
         }
 
@@ -26,18 +23,24 @@ impl World {
     pub fn step_with_trigger(&mut self) {
         // put redstone power on triggers
         for &t in &self.triggers {
-            self.blocks[t] = Block::Redstone(Redstone::with_signal(true));
-            self.tick_updatable
-                .extend(self.blocks.neighbors_directed(t, Outgoing));
+            let Block::Redstone(r) = &t.weight else {
+                unreachable!()
+            };
+            r.toggle_signal();
+
+            self.tick_updatable.extend(t.outgoing_neighbours());
         }
 
         self.step();
 
         // take redstone power off triggers
         for &t in &self.triggers {
-            self.blocks[t] = Block::Redstone(Redstone::with_signal(false));
-            self.tick_updatable
-                .extend(self.blocks.neighbors_directed(t, Outgoing));
+            let Block::Redstone(r) = &t.weight else {
+                unreachable!()
+            };
+            r.toggle_signal();
+
+            self.tick_updatable.extend(t.outgoing_neighbours());
         }
     }
 }

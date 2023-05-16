@@ -1,16 +1,13 @@
-use crate::blocks::{CBlock, ToBlock};
+use crate::blocks::{Block, CBlock};
 use crate::world::data::{neighbours_and_facings, TileMap, WorldData};
 use crate::world::prune::prune_graph;
 use crate::world::schematic::SchemFormat;
 use crate::world::{BlockGraph, CBlockGraph, World};
-use bimap::BiHashMap;
 use itertools::iproduct;
 use nbt::from_gzip_reader;
-use petgraph::graph::NodeIndex;
-use petgraph::prelude::*;
-use petgraph::visit::{IntoEdgeReferences, IntoNodeReferences};
 use std::collections::{HashMap};
 use std::fs::File;
+use crate::world::graph::GNode;
 
 impl From<File> for World {
     fn from(file: File) -> Self {
@@ -21,35 +18,20 @@ impl From<File> for World {
 impl World {
     fn cblock_to_block(
         cblocks: CBlockGraph,
-    ) -> (BlockGraph, Vec<NodeIndex>, BiHashMap<NodeIndex, String>) {
-        let mut blocks = BlockGraph::with_capacity(cblocks.node_count(), cblocks.edge_count());
-
+    ) -> (BlockGraph, Vec<&'static GNode<Block, u8>>, HashMap<String, &'static GNode<Block, u8>>) {
         let mut triggers = Vec::new();
-        let mut probes = BiHashMap::new();
-
-        let mut nodes_map = HashMap::with_capacity(cblocks.node_count());
-
-        for (idx_old, cblock) in cblocks.node_references() {
-            let idx = blocks.add_node(cblock.to_block());
-            nodes_map.insert(idx_old, idx);
+        let mut probes = HashMap::new();
+        let blocks = BlockGraph::from_petgraph(&cblocks, |cblock, block_ref| {
             match cblock {
                 CBlock::Probe(p) => {
-                    probes.insert(idx, p.name.clone());
+                    probes.insert(p.name.clone(), block_ref);
                 }
                 CBlock::Trigger(_) => {
-                    triggers.push(idx);
+                    triggers.push(block_ref);
                 }
                 _ => {}
             }
-        }
-
-        for edge in cblocks.edge_references() {
-            blocks.add_edge(
-                nodes_map[&edge.source()],
-                nodes_map[&edge.target()],
-                edge.weight().clone(),
-            );
-        }
+        });
 
         (blocks, triggers, probes)
     }
@@ -119,7 +101,7 @@ impl From<SchemFormat> for World {
         };
 
         // Update probes for initial state.
-        world.tick_updatable = world.probes.left_values().cloned().collect();
+        world.tick_updatable = world.probes.values().cloned().collect();
         world.step();
 
         world

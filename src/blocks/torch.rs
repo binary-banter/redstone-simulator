@@ -1,11 +1,8 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, ToBlock, Updatable};
-use crate::world::BlockGraph;
-use petgraph::prelude::EdgeRef;
-use petgraph::stable_graph::NodeIndex;
-use petgraph::Incoming;
+use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use std::collections::{HashMap};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use crate::world::graph::GNode;
 
 #[derive(Debug)]
 pub struct Torch {
@@ -78,24 +75,18 @@ impl Updatable for Torch {
     #[inline(always)]
     fn update(
         &self,
-        idx: NodeIndex,
-        _tick_updatable: &mut Vec<NodeIndex>,
-        blocks: &BlockGraph,
+        idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
     ) -> bool {
-        let s_new = blocks
-            .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
-                Edge::Side(_) => unreachable!(),
-            });
+        let s_new = idx.incoming_rear.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
         s_new == self.lit.load(Ordering::Relaxed)
     }
 
     fn late_updatable(
         &self,
-        _idx: NodeIndex,
-        _updatable: &mut Vec<NodeIndex>,
+        _idx: &'static GNode<Block, u8>,
+        _updatable: &mut Vec<&'static GNode<Block, u8>>,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {

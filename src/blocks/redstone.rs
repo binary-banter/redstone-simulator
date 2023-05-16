@@ -3,13 +3,12 @@ use crate::blocks::{
     Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, ToBlock, Updatable,
 };
 use crate::world::data::WorldData;
-use crate::world::{BlockGraph, CBlockGraph};
-use petgraph::prelude::EdgeRef;
+use crate::world::{CBlockGraph};
 use petgraph::stable_graph::NodeIndex;
-use petgraph::{Incoming, Outgoing};
 use std::collections::{HashMap};
 use std::ops::Index;
 use std::sync::atomic::{AtomicBool, Ordering};
+use crate::world::graph::GNode;
 
 #[derive(Debug, Default)]
 pub struct Redstone {
@@ -80,20 +79,14 @@ impl Updatable for Redstone {
     #[inline(always)]
     fn update(
         &self,
-        idx: NodeIndex,
-        tick_updatable: &mut Vec<NodeIndex>,
-        blocks: &BlockGraph,
+        idx: &'static GNode<Block, u8>,
+        tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
     ) -> bool {
-        let s_new = blocks
-            .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
-                Edge::Side(_) => unreachable!(),
-            });
+        let s_new = idx.incoming_rear.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
         if self.signal.load(Ordering::Relaxed) != s_new {
             self.signal.store( s_new, Ordering::Relaxed);
-            tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+            tick_updatable.extend(idx.outgoing_neighbours());
         }
 
         false
@@ -101,8 +94,8 @@ impl Updatable for Redstone {
 
     fn late_updatable(
         &self,
-        _idx: NodeIndex,
-        _updatable: &mut Vec<NodeIndex>,
+        _idx: &'static GNode<Block, u8>,
+        _updatable: &mut Vec<&'static GNode<Block, u8>>,
         _tick_counter: usize,
     ) -> bool {
         unreachable!()
@@ -126,6 +119,10 @@ impl From<HashMap<&str, &str>> for CRedstone {
 impl Redstone {
     pub fn with_signal(signal: bool) -> Self {
         Redstone { signal: AtomicBool::new(signal) }
+    }
+
+    pub fn toggle_signal(&self){
+        self.signal.fetch_xor(true, Ordering::Relaxed);
     }
 }
 

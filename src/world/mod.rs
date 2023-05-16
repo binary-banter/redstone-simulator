@@ -3,18 +3,16 @@ pub mod data;
 mod prune;
 pub mod schematic;
 mod step;
-mod graph;
+pub mod graph;
 
 use crate::blocks::{Block, Edge};
 use crate::blocks::{CBlock, OutputPower};
-use bimap::BiMap;
 use petgraph::prelude::StableGraph;
-use petgraph::stable_graph::NodeIndex;
-use petgraph::Graph;
 use std::collections::{HashMap};
+use crate::world::graph::{FastGraph, GNode};
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
-pub type BlockGraph = Graph<Block, Edge, petgraph::Directed, u32>;
+pub type BlockGraph = FastGraph<Block, u8>;
 
 /// The `World` is a pruned instance of a redstone circuit.
 pub struct World {
@@ -23,16 +21,16 @@ pub struct World {
     pub blocks: BlockGraph,
 
     /// Stores the indexes of the triggers in the `blocks` graph.
-    triggers: Vec<NodeIndex>,
+    triggers: Vec<&'static GNode<Block, u8>>,
 
     /// Stores a bijective map of the indexes the probes in the `blocks` graph to their names.
-    probes: BiMap<NodeIndex, String>,
+    probes: HashMap<String, &'static GNode<Block, u8>>,
 
     /// Queue that holds indexes of blocks that require an end-of-tick update.
-    updatable: Vec<NodeIndex>,
+    updatable: Vec<&'static GNode<Block, u8>>,
 
     /// Queue that holds indexes of blocks that require intra-tick update.
-    tick_updatable: Vec<NodeIndex>,
+    tick_updatable: Vec<&'static GNode<Block, u8>>,
 
     /// Global tick counter.
     tick_counter: usize,
@@ -41,7 +39,7 @@ pub struct World {
 impl World {
     /// Returns whether the probe is currently powered.
     pub fn get_probe(&self, name: &str) -> Option<bool> {
-        let Block::Redstone(v) = &self.blocks[*self.probes.get_by_right(name)?] else {
+        let Block::Redstone(v) = &self.probes.get(name)?.weight else {
             panic!("Probe was not a `Redstone` block, something went wrong!");
         };
         Some(v.output_power() > 0)
@@ -51,8 +49,8 @@ impl World {
     pub fn get_probes(&self) -> HashMap<&str, bool> {
         self.probes
             .iter()
-            .map(|(i, s)| {
-                let Block::Redstone(v) = &self.blocks[*i] else {
+            .map(|(s, i)| {
+                let Block::Redstone(v) = &i.weight else {
                     panic!("Probe was not a `Redstone` block, something went wrong!");
                 };
                 (s.as_str(), v.output_power() > 0)

@@ -1,11 +1,8 @@
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, Edge, InputSide, OutputPower, ToBlock, Updatable};
-use crate::world::BlockGraph;
-use petgraph::prelude::EdgeRef;
-use petgraph::stable_graph::NodeIndex;
-use petgraph::{Incoming, Outgoing};
+use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use std::collections::{HashMap};
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
+use crate::world::graph::GNode;
 
 #[derive(Debug)]
 pub struct Repeater {
@@ -80,40 +77,21 @@ impl Updatable for Repeater {
     #[inline(always)]
     fn update(
         &self,
-        idx: NodeIndex,
-        tick_updatable: &mut Vec<NodeIndex>,
-        blocks: &BlockGraph,
+        idx: &'static GNode<Block, u8>,
+        tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
     ) -> bool {
-        let s_new = blocks
-            .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
-                Edge::Side(_) => false,
-            });
+        let s_new = idx.incoming_rear.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
-        let locked_now = blocks
-            .edges_directed(idx, Incoming)
-            .any(|edge| match edge.weight() {
-                Edge::Rear(_) => false,
-                // No sub since repeater/comparator cannot loose signal strength
-                Edge::Side(_) => blocks[edge.source()].output_power() > 0,
-            });
+        let locked_now = idx.incoming_side.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
         if locked_now {
             return false;
         }
 
-        let locked_next_tick =
-            blocks
-                .edges_directed(idx, Incoming)
-                .any(|edge| match edge.weight() {
-                    Edge::Rear(_) => false,
-                    // No sub since repeater/comparator cannot loose signal strength
-                    Edge::Side(_) => blocks[edge.source()].will_lock(),
-                });
+        let locked_next_tick = idx.incoming_side.iter().any(|e| e.node.weight.will_lock());
 
         if locked_next_tick == self.locking_signal.load(Ordering::Relaxed) {
-            tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
+            tick_updatable.extend(idx.outgoing_neighbours());
         }
 
         // if signal strength has changed, update neighbours
@@ -144,8 +122,8 @@ impl Updatable for Repeater {
 
     fn late_updatable(
         &self,
-        idx: NodeIndex,
-        updatable: &mut Vec<NodeIndex>,
+        idx: &'static GNode<Block, u8>,
+        updatable: &mut Vec<&'static GNode<Block, u8>>,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
