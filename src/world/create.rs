@@ -1,13 +1,13 @@
 use crate::blocks::{Block, CBlock};
 use crate::world::data::{neighbours_and_facings, TileMap, WorldData};
+use crate::world::graph::GNode;
 use crate::world::prune::prune_graph;
 use crate::world::schematic::SchemFormat;
-use crate::world::{BlockGraph, CBlockGraph, World};
+use crate::world::{BlockGraph, CBlockGraph, UpdatableList, World};
 use itertools::iproduct;
 use nbt::from_gzip_reader;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::fs::File;
-use crate::world::graph::GNode;
 
 impl From<File> for World {
     fn from(file: File) -> Self {
@@ -18,19 +18,21 @@ impl From<File> for World {
 impl World {
     fn cblock_to_block(
         cblocks: CBlockGraph,
-    ) -> (BlockGraph, Vec<&'static GNode<Block, u8>>, HashMap<String, &'static GNode<Block, u8>>) {
+    ) -> (
+        BlockGraph,
+        UpdatableList,
+        HashMap<String, &'static GNode<Block, u8>>,
+    ) {
         let mut triggers = Vec::new();
         let mut probes = HashMap::new();
-        let blocks = BlockGraph::from_petgraph(&cblocks, |cblock, block_ref| {
-            match cblock {
-                CBlock::Probe(p) => {
-                    probes.insert(p.name.clone(), block_ref);
-                }
-                CBlock::Trigger(_) => {
-                    triggers.push(block_ref);
-                }
-                _ => {}
+        let blocks = BlockGraph::from_petgraph(&cblocks, |cblock, block_ref| match cblock {
+            CBlock::Probe(p) => {
+                probes.insert(p.name.clone(), block_ref);
             }
+            CBlock::Trigger(_) => {
+                triggers.push(block_ref);
+            }
+            _ => {}
         });
 
         (blocks, triggers, probes)

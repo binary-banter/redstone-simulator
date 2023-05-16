@@ -3,12 +3,12 @@ use crate::blocks::{
     Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, ToBlock, Updatable,
 };
 use crate::world::data::WorldData;
-use crate::world::{CBlockGraph};
+use crate::world::graph::GNode;
+use crate::world::{CBlockGraph, UpdatableList};
 use petgraph::stable_graph::NodeIndex;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::ops::Index;
 use std::sync::atomic::{AtomicBool, Ordering};
-use crate::world::graph::GNode;
 
 #[derive(Debug, Default)]
 pub struct Redstone {
@@ -52,7 +52,7 @@ impl OutputPower for Redstone {
     fn output_power(&self) -> u8 {
         if self.signal.load(Ordering::Relaxed) {
             15
-        } else{
+        } else {
             0
         }
     }
@@ -77,15 +77,14 @@ impl ToBlock for CRedstone {
 
 impl Updatable for Redstone {
     #[inline(always)]
-    fn update(
-        &self,
-        idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
-    ) -> bool {
-        let s_new = idx.incoming_rear.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList) -> bool {
+        let s_new = idx
+            .incoming_rear
+            .iter()
+            .any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
         if self.signal.load(Ordering::Relaxed) != s_new {
-            self.signal.store( s_new, Ordering::Relaxed);
+            self.signal.store(s_new, Ordering::Relaxed);
             tick_updatable.extend(idx.outgoing_neighbours());
         }
 
@@ -95,7 +94,7 @@ impl Updatable for Redstone {
     fn late_updatable(
         &self,
         _idx: &'static GNode<Block, u8>,
-        _updatable: &mut Vec<&'static GNode<Block, u8>>,
+        _updatable: &mut UpdatableList,
         _tick_counter: usize,
     ) -> bool {
         unreachable!()
@@ -105,7 +104,7 @@ impl Updatable for Redstone {
 impl From<HashMap<&str, &str>> for CRedstone {
     fn from(meta: HashMap<&str, &str>) -> Self {
         CRedstone {
-            signal: if meta["power"].parse::<u8>().unwrap() > 0 { true} else { false },
+            signal: meta["power"].parse::<u8>().unwrap() > 0,
             connections: Connections {
                 north: meta["north"] != "none",
                 east: meta["east"] != "none",
@@ -118,10 +117,12 @@ impl From<HashMap<&str, &str>> for CRedstone {
 
 impl Redstone {
     pub fn with_signal(signal: bool) -> Self {
-        Redstone { signal: AtomicBool::new(signal) }
+        Redstone {
+            signal: AtomicBool::new(signal),
+        }
     }
 
-    pub fn toggle_signal(&self){
+    pub fn toggle_signal(&self) {
         self.signal.fetch_xor(true, Ordering::Relaxed);
     }
 }

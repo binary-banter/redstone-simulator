@@ -1,6 +1,7 @@
-use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use crate::blocks::{Block, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
+use crate::world::UpdatableList;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
 #[derive(Clone, Debug)]
 pub struct CSRepeater {
@@ -43,12 +44,11 @@ impl OutputPower for SRepeater {
 
 impl Updatable for SRepeater {
     #[inline(always)]
-    fn update(
-        &self,
-        idx: &'static GNode<Block, u8>,
-        _tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
-    ) -> bool {
-        let s_new = idx.incoming_rear.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
+    fn update(&self, idx: &'static GNode<Block, u8>, _tick_updatable: &mut UpdatableList) -> bool {
+        let s_new = idx
+            .incoming_rear
+            .iter()
+            .any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
         s_new != self.powered.load(Ordering::Relaxed)
     }
@@ -56,7 +56,7 @@ impl Updatable for SRepeater {
     fn late_updatable(
         &self,
         _idx: &'static GNode<Block, u8>,
-        _updatable: &mut Vec<&'static GNode<Block, u8>>,
+        _updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
@@ -64,7 +64,8 @@ impl Updatable for SRepeater {
         }
         self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.powered.store(!self.powered.load(Ordering::Relaxed), Ordering::Relaxed);
+        self.powered
+            .store(!self.powered.load(Ordering::Relaxed), Ordering::Relaxed);
 
         true
     }

@@ -12,7 +12,10 @@ impl World {
 
         // End-of-tick updates
         for idx in self.updatable.drain(..) {
-            if idx.weight.late_updatable(idx, &mut self.tick_updatable, self.tick_counter) {
+            if idx
+                .weight
+                .late_updatable(idx, &mut self.tick_updatable, self.tick_counter)
+            {
                 self.tick_updatable.extend(idx.outgoing_neighbours());
             }
         }

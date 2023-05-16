@@ -1,18 +1,19 @@
 pub mod create;
 pub mod data;
+pub mod graph;
 mod prune;
 pub mod schematic;
 mod step;
-pub mod graph;
 
 use crate::blocks::{Block, Edge};
 use crate::blocks::{CBlock, OutputPower};
-use petgraph::prelude::StableGraph;
-use std::collections::{HashMap};
 use crate::world::graph::{FastGraph, GNode};
+use petgraph::prelude::StableGraph;
+use std::collections::HashMap;
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
 pub type BlockGraph = FastGraph<Block, u8>;
+pub type UpdatableList = Vec<&'static GNode<Block, u8>>;
 
 /// The `World` is a pruned instance of a redstone circuit.
 pub struct World {
@@ -21,16 +22,16 @@ pub struct World {
     pub blocks: BlockGraph,
 
     /// Stores the indexes of the triggers in the `blocks` graph.
-    triggers: Vec<&'static GNode<Block, u8>>,
+    triggers: UpdatableList,
 
     /// Stores a bijective map of the indexes the probes in the `blocks` graph to their names.
     probes: HashMap<String, &'static GNode<Block, u8>>,
 
     /// Queue that holds indexes of blocks that require an end-of-tick update.
-    updatable: Vec<&'static GNode<Block, u8>>,
+    updatable: UpdatableList,
 
     /// Queue that holds indexes of blocks that require intra-tick update.
-    tick_updatable: Vec<&'static GNode<Block, u8>>,
+    tick_updatable: UpdatableList,
 
     /// Global tick counter.
     tick_counter: usize,

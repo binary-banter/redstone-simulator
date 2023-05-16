@@ -32,7 +32,7 @@ impl CProbe {
                 tile_map.get(&p).and_then(|b| {
                     if b.id == "minecraft:sign" {
                         if let Some(Value::String(s)) = b.props.get("Text1") {
-                            let j = serde_json::from_str::<serde_json::Value>(&s).unwrap();
+                            let j = serde_json::from_str::<serde_json::Value>(s).unwrap();
                             return Some(
                                 j.as_object()
                                     .unwrap()

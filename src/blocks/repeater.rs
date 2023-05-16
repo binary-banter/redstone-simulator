@@ -1,8 +1,9 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
-use std::collections::{HashMap};
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 use crate::world::graph::GNode;
+use crate::world::UpdatableList;
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 
 #[derive(Debug)]
 pub struct Repeater {
@@ -75,14 +76,16 @@ impl ToBlock for CRepeater {
 
 impl Updatable for Repeater {
     #[inline(always)]
-    fn update(
-        &self,
-        idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
-    ) -> bool {
-        let s_new = idx.incoming_rear.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList) -> bool {
+        let s_new = idx
+            .incoming_rear
+            .iter()
+            .any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
-        let locked_now = idx.incoming_side.iter().any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
+        let locked_now = idx
+            .incoming_side
+            .iter()
+            .any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
         if locked_now {
             return false;
@@ -95,27 +98,34 @@ impl Updatable for Repeater {
         }
 
         // if signal strength has changed, update neighbours
-        match (s_new, self.next_powered.load(Ordering::Relaxed) == s_new, self.count.load(Ordering::Relaxed) == 0) {
+        match (
+            s_new,
+            self.next_powered.load(Ordering::Relaxed) == s_new,
+            self.count.load(Ordering::Relaxed) == 0,
+        ) {
             // Signal changed upwards: update next signal and reset count.
             (true, false, _) => {
-                self.next_powered.store( s_new, Ordering::Relaxed);
-                self.count.store(0,Ordering::Relaxed);
+                self.next_powered.store(s_new, Ordering::Relaxed);
+                self.count.store(0, Ordering::Relaxed);
             }
             // Signal changed downward, and is not propagating already: update next signal.
             (false, false, true) => {
-                self.next_powered.store( s_new, Ordering::Relaxed);
+                self.next_powered.store(s_new, Ordering::Relaxed);
             }
             // Other cases.
             (_, _, _) => {}
         };
 
-        self.locking_signal.store(if locked_next_tick {
-            self.powered.load(Ordering::Relaxed)
-        } else if self.count.load(Ordering::Relaxed) + 1 == self.delay {
-            self.next_powered.load(Ordering::Relaxed)
-        } else {
-            self.powered.load(Ordering::Relaxed)
-        }, Ordering::Relaxed);
+        self.locking_signal.store(
+            if locked_next_tick {
+                self.powered.load(Ordering::Relaxed)
+            } else if self.count.load(Ordering::Relaxed) + 1 == self.delay {
+                self.next_powered.load(Ordering::Relaxed)
+            } else {
+                self.powered.load(Ordering::Relaxed)
+            },
+            Ordering::Relaxed,
+        );
 
         self.powered.load(Ordering::Relaxed) != self.next_powered.load(Ordering::Relaxed)
     }
@@ -123,7 +133,7 @@ impl Updatable for Repeater {
     fn late_updatable(
         &self,
         idx: &'static GNode<Block, u8>,
-        updatable: &mut Vec<&'static GNode<Block, u8>>,
+        updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
@@ -131,11 +141,15 @@ impl Updatable for Repeater {
         }
         self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.count.store(self.count.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+        self.count
+            .store(self.count.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
         updatable.push(idx);
         if self.count.load(Ordering::Relaxed) == self.delay {
             self.count.store(0, Ordering::Relaxed);
-            self.powered.store(self.locking_signal.load(Ordering::Relaxed), Ordering::Relaxed);
+            self.powered.store(
+                self.locking_signal.load(Ordering::Relaxed),
+                Ordering::Relaxed,
+            );
             true
         } else {
             false

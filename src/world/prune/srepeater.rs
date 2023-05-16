@@ -2,8 +2,8 @@ use crate::blocks::srepeater::CSRepeater;
 use crate::blocks::{CBlock, Edge};
 use crate::world::CBlockGraph;
 use itertools::Itertools;
-use petgraph::{Incoming, Outgoing};
 use petgraph::visit::EdgeRef;
+use petgraph::{Incoming, Outgoing};
 
 pub fn replace_simple_repeaters(cblocks: &mut CBlockGraph) {
     cblocks
@@ -19,10 +19,10 @@ pub fn replace_simple_repeaters(cblocks: &mut CBlockGraph) {
                 return;
             }
 
-            if cblocks
-                .edges_directed(idx, Outgoing)
-                .any(|edge| matches!(edge.weight(), Edge::Side(_)) && matches!(cblocks[edge.target()], CBlock::Repeater(_)))
-            {
+            if cblocks.edges_directed(idx, Outgoing).any(|edge| {
+                matches!(edge.weight(), Edge::Side(_))
+                    && matches!(cblocks[edge.target()], CBlock::Repeater(_))
+            }) {
                 return;
             }
 

@@ -1,10 +1,11 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::TileMap;
-use nbt::Value;
-use std::collections::{HashMap};
-use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 use crate::world::graph::GNode;
+use crate::world::UpdatableList;
+use nbt::Value;
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
 #[derive(Debug)]
 pub struct Comparator {
@@ -94,19 +95,29 @@ impl ToBlock for CComparator {
 
 impl Updatable for Comparator {
     #[inline(always)]
-    fn update(
-        &self,
-        idx: &'static GNode<Block, u8>,
-        _tick_updatable: &mut Vec<&'static GNode<Block, u8>>,
-    ) -> bool {
-        let rear = idx.incoming_rear.iter().map(|e| e.node.weight.output_power().saturating_sub(e.weight)).max().max(self.entity_power).unwrap_or(0);
-        let side = idx.incoming_side.iter().map(|e| e.node.weight.output_power().saturating_sub(e.weight)).max().unwrap_or(0);
+    fn update(&self, idx: &'static GNode<Block, u8>, _tick_updatable: &mut UpdatableList) -> bool {
+        let rear = idx
+            .incoming_rear
+            .iter()
+            .map(|e| e.node.weight.output_power().saturating_sub(e.weight))
+            .max()
+            .max(self.entity_power)
+            .unwrap_or(0);
+        let side = idx
+            .incoming_side
+            .iter()
+            .map(|e| e.node.weight.output_power().saturating_sub(e.weight))
+            .max()
+            .unwrap_or(0);
 
-        self.next_signal.store(match self.mode {
-            ComparatorMode::Compare if side <= rear => rear,
-            ComparatorMode::Compare => 0,
-            ComparatorMode::Subtract => rear.saturating_sub(side),
-        }, Ordering::Relaxed);
+        self.next_signal.store(
+            match self.mode {
+                ComparatorMode::Compare if side <= rear => rear,
+                ComparatorMode::Compare => 0,
+                ComparatorMode::Subtract => rear.saturating_sub(side),
+            },
+            Ordering::Relaxed,
+        );
 
         self.signal.load(Ordering::Relaxed) != self.next_signal.load(Ordering::Relaxed)
     }
@@ -114,7 +125,7 @@ impl Updatable for Comparator {
     fn late_updatable(
         &self,
         _idx: &'static GNode<Block, u8>,
-        _updatable: &mut Vec<&'static GNode<Block, u8>>,
+        _updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
@@ -122,7 +133,8 @@ impl Updatable for Comparator {
         }
         self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.signal.store(self.next_signal.load(Ordering::Relaxed), Ordering::Relaxed);
+        self.signal
+            .store(self.next_signal.load(Ordering::Relaxed), Ordering::Relaxed);
         true
     }
 }

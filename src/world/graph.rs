@@ -1,13 +1,13 @@
+use crate::blocks::{Block, CBlock, ToBlock};
+use crate::world::CBlockGraph;
+use bumpalo::Bump;
+use itertools::Itertools;
+use petgraph::prelude::{EdgeRef, NodeIndex};
+use petgraph::visit::IntoNodeReferences;
+use petgraph::{Incoming, Outgoing};
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::mem;
-use bumpalo::Bump;
-use itertools::Itertools;
-use petgraph::{Incoming, Outgoing};
-use petgraph::prelude::{EdgeRef, NodeIndex};
-use petgraph::visit::{ IntoNodeReferences};
-use crate::blocks::{Block, CBlock, ToBlock};
-use crate::world::CBlockGraph;
 
 pub struct GNode<N: 'static, E: 'static> {
     pub weight: N,
@@ -26,7 +26,10 @@ pub struct FastGraph<N: 'static, E: 'static> {
 }
 
 impl FastGraph<Block, u8> {
-    pub fn from_petgraph(g: &CBlockGraph, mut callback: impl FnMut(&CBlock, &'static GNode<Block, u8>)) -> Self {
+    pub fn from_petgraph(
+        g: &CBlockGraph,
+        mut callback: impl FnMut(&CBlock, &'static GNode<Block, u8>),
+    ) -> Self {
         let bump: &'static Bump = Box::leak(Box::new(Bump::new()));
 
         let mut nodes: HashMap<NodeIndex, &'static mut GNode<Block, u8>> = HashMap::new();
@@ -42,23 +45,41 @@ impl FastGraph<Block, u8> {
 
         // Safety invariant: Do NOT read from the references in this map
         {
-            let map_read: &HashMap<NodeIndex, &'static mut GNode<Block, u8>> = unsafe { &*(&nodes as *const HashMap<NodeIndex, &'static mut GNode<Block, u8>>) };
+            let map_read: &HashMap<NodeIndex, &'static mut GNode<Block, u8>> =
+                unsafe { &*(&nodes as *const HashMap<NodeIndex, &'static mut GNode<Block, u8>>) };
 
             for idx in g.node_indices() {
                 let node = nodes.get_mut(&idx).unwrap();
 
-                node.outgoing = bump.alloc_slice_fill_iter(g.edges_directed(idx, Outgoing).map(|e| GEdge {
-                    weight: e.weight().strength_loss(),
-                    node: map_read[&e.target()],
-                }).collect_vec().into_iter());
-                node.incoming_rear = bump.alloc_slice_fill_iter(g.edges_directed(idx, Incoming).filter(|e| !e.weight().is_side()).map(|e| GEdge {
-                    weight: e.weight().strength_loss(),
-                    node: map_read[&e.source()],
-                }).collect_vec().into_iter());
-                node.incoming_side = bump.alloc_slice_fill_iter(g.edges_directed(idx, Incoming).filter(|e| e.weight().is_side()).map(|e| GEdge {
-                    weight: e.weight().strength_loss(),
-                    node: map_read[&e.source()],
-                }).collect_vec().into_iter());
+                node.outgoing = bump.alloc_slice_fill_iter(
+                    g.edges_directed(idx, Outgoing)
+                        .map(|e| GEdge {
+                            weight: e.weight().strength_loss(),
+                            node: map_read[&e.target()],
+                        })
+                        .collect_vec()
+                        .into_iter(),
+                );
+                node.incoming_rear = bump.alloc_slice_fill_iter(
+                    g.edges_directed(idx, Incoming)
+                        .filter(|e| !e.weight().is_side())
+                        .map(|e| GEdge {
+                            weight: e.weight().strength_loss(),
+                            node: map_read[&e.source()],
+                        })
+                        .collect_vec()
+                        .into_iter(),
+                );
+                node.incoming_side = bump.alloc_slice_fill_iter(
+                    g.edges_directed(idx, Incoming)
+                        .filter(|e| e.weight().is_side())
+                        .map(|e| GEdge {
+                            weight: e.weight().strength_loss(),
+                            node: map_read[&e.source()],
+                        })
+                        .collect_vec()
+                        .into_iter(),
+                );
             }
         }
         // Safety invariant holds until here. We can now read from the references in map because map_read no longer exists
@@ -68,7 +89,6 @@ impl FastGraph<Block, u8> {
         for (idx, block_ref) in nodes {
             callback(&g[idx], block_ref);
         }
-
 
         FastGraph {
             phantom: Default::default(),
@@ -81,7 +101,7 @@ impl<N: 'static, E: 'static> GNode<N, E> {
         self.outgoing
     }
 
-    pub fn outgoing_neighbours(&self) -> impl Iterator<Item=&'static GNode<N, E>> {
+    pub fn outgoing_neighbours(&self) -> impl Iterator<Item = &'static GNode<N, E>> {
         self.outgoing.iter().map(|e| e.node)
     }
 
@@ -93,4 +113,3 @@ impl<N: 'static, E: 'static> GNode<N, E> {
         self.incoming_side
     }
 }
-
