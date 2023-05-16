@@ -85,7 +85,6 @@ impl Updatable for Redstone {
 
         if self.signal.load(Ordering::Relaxed) != s_new {
             self.signal.store(s_new, Ordering::Relaxed);
-            tick_updatable.extend(idx.outgoing_neighbours());
         }
 
         false
