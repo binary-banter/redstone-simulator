@@ -20,7 +20,7 @@ impl World {
         cblocks: CBlockGraph,
     ) -> (
         BlockGraph,
-        UpdatableList,
+        Vec<&'static GNode<Block, u8>>,
         HashMap<String, &'static GNode<Block, u8>>,
     ) {
         let mut triggers = Vec::new();
@@ -97,8 +97,8 @@ impl From<SchemFormat> for World {
             blocks,
             triggers,
             probes,
-            updatable: Vec::new(),
-            tick_updatable: Vec::new(),
+            updatable: UpdatableList::new(),
+            tick_updatable: UpdatableList::new(),
             tick_counter: 0,
         };
 

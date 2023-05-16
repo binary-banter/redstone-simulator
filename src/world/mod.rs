@@ -9,7 +9,7 @@ use crate::blocks::{Block, Edge};
 use crate::blocks::{CBlock, OutputPower};
 use crate::world::graph::{FastGraph, GNode};
 use petgraph::prelude::StableGraph;
-use std::collections::HashMap;
+use std::collections::{HashMap};
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
 pub type BlockGraph = FastGraph<Block, u8>;
@@ -22,7 +22,7 @@ pub struct World {
     pub blocks: BlockGraph,
 
     /// Stores the indexes of the triggers in the `blocks` graph.
-    triggers: UpdatableList,
+    triggers: Vec<&'static GNode<Block, u8>>,
 
     /// Stores a bijective map of the indexes the probes in the `blocks` graph to their names.
     probes: HashMap<String, &'static GNode<Block, u8>>,
