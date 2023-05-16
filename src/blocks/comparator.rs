@@ -2,10 +2,10 @@ use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::TileMap;
 use crate::world::graph::GNode;
+use crate::world::UpdatableList;
 use nbt::Value;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
-use crate::world::UpdatableList;
 
 #[derive(Debug)]
 pub struct Comparator {
@@ -88,7 +88,7 @@ impl BlockConnections for CComparator {
     }
 }
 impl ToBlock for CComparator {
-    fn to_block(&self, on_inputs: u8) -> Block {
+    fn to_block(&self, _on_inputs: u8) -> Block {
         Block::Comparator(Comparator {
             signal: AtomicU8::new(self.signal),
             next_signal: AtomicU8::new(self.signal),
@@ -101,7 +101,12 @@ impl ToBlock for CComparator {
 
 impl Updatable for Comparator {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
+    fn update(
+        &self,
+        idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut UpdatableList,
+        _up: bool,
+    ) -> bool {
         let rear = idx
             .incoming_rear
             .iter()
@@ -130,8 +135,8 @@ impl Updatable for Comparator {
 
     fn late_update(
         &self,
-        idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut UpdatableList,
+        _idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {

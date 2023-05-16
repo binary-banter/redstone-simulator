@@ -1,7 +1,7 @@
 use crate::blocks::{Block, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 use crate::world::UpdatableList;
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 
 #[derive(Clone, Debug)]
 pub struct CSRepeater {
@@ -55,24 +55,35 @@ impl OutputPower for CSRepeater {
 
 impl Updatable for SRepeater {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
-        if up{
+    fn update(
+        &self,
+        _idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut UpdatableList,
+        up: bool,
+    ) -> bool {
+        if up {
             //TODO fetch_add
-            self.on_inputs.store(self.on_inputs.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+            self.on_inputs.store(
+                self.on_inputs.load(Ordering::Relaxed) + 1,
+                Ordering::Relaxed,
+            );
             // assert_eq!(self.on_inputs.load(Ordering::Relaxed) as usize, idx.incoming_rear.iter().filter(|n| n.node.weight.output_power().saturating_sub(n.weight) > 0).count());
-            return self.on_inputs.load(Ordering::Relaxed) == 1
+            self.on_inputs.load(Ordering::Relaxed) == 1
         } else {
             //TODO fetch_sub
-            self.on_inputs.store(self.on_inputs.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
+            self.on_inputs.store(
+                self.on_inputs.load(Ordering::Relaxed) - 1,
+                Ordering::Relaxed,
+            );
             // assert_eq!(self.on_inputs.load(Ordering::Relaxed) as usize, idx.incoming_rear.iter().filter(|n| n.node.weight.output_power().saturating_sub(n.weight) > 0).count());
-            return self.on_inputs.load(Ordering::Relaxed) == 0
+            self.on_inputs.load(Ordering::Relaxed) == 0
         }
     }
 
     fn late_update(
         &self,
-        idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut UpdatableList,
+        _idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {

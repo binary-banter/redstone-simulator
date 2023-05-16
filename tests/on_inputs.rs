@@ -1,5 +1,5 @@
-use std::fs::File;
 use redstone_simulator::world::World;
+use std::fs::File;
 
 #[test]
 fn comparator_strengths() {
@@ -102,4 +102,3 @@ fn comparator_strengths2() {
     assert!(!world.get_probe("14").unwrap());
     assert!(!world.get_probe("15").unwrap());
 }
-

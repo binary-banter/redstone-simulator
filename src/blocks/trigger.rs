@@ -15,7 +15,7 @@ impl BlockConnections for CTrigger {
     }
 }
 impl ToBlock for CTrigger {
-    fn to_block(&self, on_inputs: u8) -> Block {
+    fn to_block(&self, _on_inputs: u8) -> Block {
         Block::Redstone(Redstone::default())
     }
 }

@@ -1,9 +1,9 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
+use crate::world::UpdatableList;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
-use crate::world::UpdatableList;
 
 #[derive(Debug)]
 pub struct Repeater {
@@ -72,7 +72,7 @@ impl BlockConnections for CRepeater {
     }
 }
 impl ToBlock for CRepeater {
-    fn to_block(&self, on_inputs: u8) -> Block {
+    fn to_block(&self, _on_inputs: u8) -> Block {
         Block::Repeater(Repeater {
             powered: AtomicBool::new(self.powered),
             next_powered: AtomicBool::new(self.powered),
@@ -86,7 +86,12 @@ impl ToBlock for CRepeater {
 
 impl Updatable for Repeater {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
+    fn update(
+        &self,
+        idx: &'static GNode<Block, u8>,
+        tick_updatable: &mut UpdatableList,
+        _up: bool,
+    ) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -106,7 +111,7 @@ impl Updatable for Repeater {
         if locked_next_tick == self.locking_signal.load(Ordering::Relaxed) {
             tick_updatable.extend(
                 idx.outgoing_neighbours()
-                    .filter(|b| matches!(b.weight, Block::Repeater(_))) //TODO filter may not be needed if we pre-compute
+                    .filter(|b| matches!(b.weight, Block::Repeater(_))), //TODO filter may not be needed if we pre-compute
             );
         }
 

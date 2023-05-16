@@ -1,8 +1,8 @@
 use crate::blocks::facing::Facing;
+use crate::blocks::srepeater::SRepeater;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize};
-use crate::blocks::srepeater::SRepeater;
 
 #[derive(Copy, Clone, Debug)]
 pub struct CTorch {

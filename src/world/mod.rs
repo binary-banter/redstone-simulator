@@ -9,7 +9,7 @@ use crate::blocks::{Block, Edge};
 use crate::blocks::{CBlock, OutputPower};
 use crate::world::graph::{FastGraph, GNode};
 use petgraph::prelude::StableGraph;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
 pub type BlockGraph = FastGraph<Block, u8>;

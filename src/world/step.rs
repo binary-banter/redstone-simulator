@@ -18,34 +18,37 @@ impl World {
         // End-of-tick updates
         for idx in self.updatable.drain(..) {
             let prev_power = idx.weight.output_power();
-            idx.weight.late_update(idx, &mut self.tick_updatable.down, self.tick_counter);
+            idx.weight
+                .late_update(idx, &mut self.tick_updatable.down, self.tick_counter);
             let next_power = idx.weight.output_power();
 
             match (prev_power, next_power) {
                 (0, 15) => {
                     self.tick_updatable.up.extend(idx.outgoing_neighbours());
-                },
-                (15, 0)=> {
+                }
+                (15, 0) => {
                     self.tick_updatable.down.extend(idx.outgoing_neighbours());
-                },
+                }
                 (prev, next) => {
                     if next > prev {
                         self.tick_updatable.up.extend(
-                            idx.outgoing_edges().iter()
+                            idx.outgoing_edges()
+                                .iter()
                                 .filter(|e| (prev..next).contains(&e.weight))
-                                .map(|e| e.node)
+                                .map(|e| e.node),
                         )
                     } else {
                         self.tick_updatable.down.extend(
-                            idx.outgoing_edges().iter()
+                            idx.outgoing_edges()
+                                .iter()
                                 .filter(|e| (next..prev).contains(&e.weight))
-                                .map(|e| e.node)
+                                .map(|e| e.node),
                         )
                     }
-                },
+                }
             }
 
-        //self.tick_updatable.extend(idx.outgoing_neighbours());
+            //self.tick_updatable.extend(idx.outgoing_neighbours());
         }
 
         self.tick_counter += 1;

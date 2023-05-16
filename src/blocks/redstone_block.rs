@@ -1,7 +1,7 @@
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize};
 use crate::blocks::facing::Facing;
-use crate::blocks::{Block, BlockConnections, InputSide, ToBlock};
 use crate::blocks::srepeater::SRepeater;
+use crate::blocks::{Block, BlockConnections, InputSide, ToBlock};
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRedstoneBlock {}

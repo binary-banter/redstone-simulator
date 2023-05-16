@@ -68,7 +68,7 @@ impl BlockConnections for CRedstone {
     }
 }
 impl ToBlock for CRedstone {
-    fn to_block(&self, on_inputs: u8) -> Block {
+    fn to_block(&self, _on_inputs: u8) -> Block {
         Block::Redstone(Redstone {
             signal: AtomicBool::new(self.signal),
         })
@@ -77,7 +77,12 @@ impl ToBlock for CRedstone {
 
 impl Updatable for Redstone {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
+    fn update(
+        &self,
+        idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut UpdatableList,
+        _up: bool,
+    ) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -92,9 +97,9 @@ impl Updatable for Redstone {
 
     fn late_update(
         &self,
-        idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut UpdatableList,
-        tick_counter: usize,
+        _idx: &'static GNode<Block, u8>,
+        _tick_updatable: &mut UpdatableList,
+        _tick_counter: usize,
     ) -> bool {
         unreachable!()
     }
