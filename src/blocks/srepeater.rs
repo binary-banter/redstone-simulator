@@ -81,15 +81,19 @@ impl Updatable for SRepeater {
         _idx: &'static GNode<Block, u8>,
         _tick_updatable: &mut UpdatableList,
         tick_counter: usize,
-    ) -> bool {
+    ) -> Option<(u8, u8)> {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
-            return false;
+            return None;
         }
         self.last_update.store(tick_counter, Ordering::Relaxed);
 
         self.powered
             .store(!self.powered.load(Ordering::Relaxed), Ordering::Relaxed);
 
-        true
+        if self.powered.load(Ordering::Relaxed){
+            Some((0, 15))
+        } else{
+            Some((15, 0))
+        }
     }
 }

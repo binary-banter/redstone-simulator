@@ -138,15 +138,17 @@ impl Updatable for Comparator {
         _idx: &'static GNode<Block, u8>,
         _tick_updatable: &mut UpdatableList,
         tick_counter: usize,
-    ) -> bool {
+    ) -> Option<(u8, u8)> {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
-            return false;
+            return None;
         }
         self.last_update.store(tick_counter, Ordering::Relaxed);
 
+        let old = self.signal.load(Ordering::Relaxed);
         self.signal
             .store(self.next_signal.load(Ordering::Relaxed), Ordering::Relaxed);
-        true
+
+        Some((old ,self.signal.load(Ordering::Relaxed)))
     }
 }
 

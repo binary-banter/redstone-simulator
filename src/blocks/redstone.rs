@@ -100,7 +100,7 @@ impl Updatable for Redstone {
         _idx: &'static GNode<Block, u8>,
         _tick_updatable: &mut UpdatableList,
         _tick_counter: usize,
-    ) -> bool {
+    ) -> Option<(u8, u8)> {
         unreachable!()
     }
 }

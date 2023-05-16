@@ -1,4 +1,4 @@
-use crate::blocks::{Block, OutputPower, Updatable};
+use crate::blocks::{Block, Updatable};
 use crate::world::World;
 
 impl World {
@@ -17,19 +17,14 @@ impl World {
 
         // End-of-tick updates
         for idx in self.updatable.drain(..) {
-            let prev_power = idx.weight.output_power();
-            idx.weight
-                .late_update(idx, &mut self.tick_updatable.down, self.tick_counter);
-            let next_power = idx.weight.output_power();
-
-            match (prev_power, next_power) {
-                (0, 15) => {
+            match idx.weight.late_update(idx, &mut self.tick_updatable.down, self.tick_counter){
+                Some((0, 15)) => {
                     self.tick_updatable.up.extend(idx.outgoing_neighbours());
                 }
-                (15, 0) => {
+                Some((15, 0)) => {
                     self.tick_updatable.down.extend(idx.outgoing_neighbours());
                 }
-                (prev, next) => {
+                Some((prev, next)) => {
                     if next > prev {
                         self.tick_updatable.up.extend(
                             idx.outgoing_edges()
@@ -46,6 +41,7 @@ impl World {
                         )
                     }
                 }
+                None => {},
             }
         }
 

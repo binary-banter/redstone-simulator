@@ -333,7 +333,7 @@ pub trait Updatable {
         idx: &'static GNode<Block, u8>,
         tick_updatable: &mut UpdatableList,
         tick_counter: usize,
-    ) -> bool;
+    ) -> Option<(u8, u8)>;
 }
 
 impl Updatable for Block {
@@ -357,7 +357,7 @@ impl Updatable for Block {
         idx: &'static GNode<Block, u8>,
         tick_updatable: &mut UpdatableList,
         tick_counter: usize,
-    ) -> bool {
+    ) -> Option<(u8, u8)> {
         match self {
             Block::Repeater(v) => v.late_update(idx, tick_updatable, tick_counter),
             Block::Comparator(v) => v.late_update(idx, tick_updatable, tick_counter),
