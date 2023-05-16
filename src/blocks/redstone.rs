@@ -4,7 +4,7 @@ use crate::blocks::{
 };
 use crate::world::data::WorldData;
 use crate::world::graph::GNode;
-use crate::world::{CBlockGraph, UpdatableList};
+use crate::world::{CBlockGraph, TickUpdatableList};
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
 use std::ops::Index;
@@ -68,7 +68,7 @@ impl BlockConnections for CRedstone {
     }
 }
 impl ToBlock for CRedstone {
-    fn to_block(&self) -> Block {
+    fn to_block(&self, on_inputs: u8) -> Block {
         Block::Redstone(Redstone {
             signal: AtomicBool::new(self.signal),
         })
@@ -77,7 +77,7 @@ impl ToBlock for CRedstone {
 
 impl Updatable for Redstone {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -90,11 +90,11 @@ impl Updatable for Redstone {
         false
     }
 
-    fn late_updatable(
+    fn late_update(
         &self,
-        _idx: &'static GNode<Block, u8>,
-        _updatable: &mut UpdatableList,
-        _tick_counter: usize,
+        idx: &'static GNode<Block, u8>,
+        tick_updatable: &mut TickUpdatableList,
+        tick_counter: usize,
     ) -> bool {
         unreachable!()
     }

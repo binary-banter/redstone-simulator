@@ -15,7 +15,7 @@ impl BlockConnections for CRedstoneBlock {
     }
 }
 impl ToBlock for CRedstoneBlock {
-    fn to_block(&self) -> Block {
+    fn to_block(&self, on_inputs: u8) -> Block {
         Block::Torch(Torch::default())
     }
 }

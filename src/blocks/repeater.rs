@@ -1,7 +1,7 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
-use crate::world::UpdatableList;
+use crate::world::{TickUpdatableList};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 
@@ -46,6 +46,16 @@ impl OutputPower for Repeater {
     }
 }
 
+impl OutputPower for CRepeater {
+    fn output_power(&self) -> u8 {
+        if self.powered {
+            15
+        } else {
+            0
+        }
+    }
+}
+
 impl BlockConnections for CRepeater {
     fn can_output(&self, facing: Facing) -> bool {
         self.facing == facing.rev()
@@ -62,7 +72,7 @@ impl BlockConnections for CRepeater {
     }
 }
 impl ToBlock for CRepeater {
-    fn to_block(&self) -> Block {
+    fn to_block(&self, on_inputs: u8) -> Block {
         Block::Repeater(Repeater {
             powered: AtomicBool::new(self.powered),
             next_powered: AtomicBool::new(self.powered),
@@ -76,7 +86,7 @@ impl ToBlock for CRepeater {
 
 impl Updatable for Repeater {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -94,7 +104,11 @@ impl Updatable for Repeater {
         let locked_next_tick = idx.incoming_side.iter().any(|e| e.node.weight.will_lock());
 
         if locked_next_tick == self.locking_signal.load(Ordering::Relaxed) {
-            tick_updatable.extend(idx.outgoing_neighbours());
+            tick_updatable.extend(
+                idx.outgoing_neighbours()
+                    .filter(|b| matches!(b.weight, Block::Repeater(_))) //TODO filter may not be needed if we pre-compute
+                    .map(|n| (n, false))
+            );
         }
 
         // if signal strength has changed, update neighbours
@@ -130,10 +144,10 @@ impl Updatable for Repeater {
         self.powered.load(Ordering::Relaxed) != self.next_powered.load(Ordering::Relaxed)
     }
 
-    fn late_updatable(
+    fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        updatable: &mut UpdatableList,
+        tick_updatable: &mut TickUpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
@@ -141,9 +155,8 @@ impl Updatable for Repeater {
         }
         self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.count
-            .store(self.count.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
-        updatable.push(idx);
+        self.count.fetch_add(1, Ordering::Relaxed);
+        tick_updatable.push((idx, false));
         if self.count.load(Ordering::Relaxed) == self.delay {
             self.count.store(0, Ordering::Relaxed);
             self.powered.store(

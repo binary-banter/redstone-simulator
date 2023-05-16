@@ -9,7 +9,7 @@ use crate::blocks::srepeater::{CSRepeater, SRepeater};
 use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
 use crate::world::graph::GNode;
-use crate::world::UpdatableList;
+use crate::world::{TickUpdatableList};
 use once_cell::sync::Lazy;
 use std::collections::{HashMap, HashSet};
 use std::ops::Add;
@@ -108,6 +108,23 @@ impl OutputPower for Block {
     }
 }
 
+impl OutputPower for CBlock {
+    fn output_power(&self) -> u8 {
+        match self {
+            CBlock::Redstone(_) => unreachable!(),
+            CBlock::Repeater(v) => v.output_power(),
+            CBlock::Torch(v) => v.output_power(),
+            CBlock::Comparator(v) => v.output_power(),
+            CBlock::SRepeater(v) => v.output_power(),
+            CBlock::SolidWeak(_) => unreachable!(),
+            CBlock::SolidStrong(_) => unreachable!(),
+            CBlock::Trigger(_) => 0,
+            CBlock::Probe(_) => unreachable!(),
+            CBlock::RedstoneBlock(_) => 15,
+        }
+    }
+}
+
 impl Block {
     fn will_lock(&self) -> bool {
         match self {
@@ -139,7 +156,7 @@ pub trait BlockConnections {
 }
 
 pub trait ToBlock {
-    fn to_block(&self) -> Block;
+    fn to_block(&self, on_inputs: u8) -> Block;
 }
 
 fn can_connect(source: &CBlock, target: &CBlock, facing: Facing) -> bool {
@@ -220,18 +237,18 @@ impl BlockConnections for CBlock {
     }
 }
 impl ToBlock for CBlock {
-    fn to_block(&self) -> Block {
+    fn to_block(&self, on_inputs: u8) -> Block {
         match self {
-            CBlock::Redstone(v) => v.to_block(),
-            CBlock::SolidWeak(v) => v.to_block(),
-            CBlock::SolidStrong(v) => v.to_block(),
-            CBlock::Trigger(v) => v.to_block(),
-            CBlock::Probe(v) => v.to_block(),
-            CBlock::Repeater(v) => v.to_block(),
-            CBlock::RedstoneBlock(v) => v.to_block(),
-            CBlock::Torch(v) => v.to_block(),
-            CBlock::Comparator(v) => v.to_block(),
-            CBlock::SRepeater(v) => v.to_block(),
+            CBlock::Redstone(v) => v.to_block(on_inputs),
+            CBlock::SolidWeak(v) => v.to_block(on_inputs),
+            CBlock::SolidStrong(v) => v.to_block(on_inputs),
+            CBlock::Trigger(v) => v.to_block(on_inputs),
+            CBlock::Probe(v) => v.to_block(on_inputs),
+            CBlock::Repeater(v) => v.to_block(on_inputs),
+            CBlock::RedstoneBlock(v) => v.to_block(on_inputs),
+            CBlock::Torch(v) => v.to_block(on_inputs),
+            CBlock::Comparator(v) => v.to_block(on_inputs),
+            CBlock::SRepeater(v) => v.to_block(on_inputs),
         }
     }
 }
@@ -306,40 +323,40 @@ impl CBlock {
 }
 
 pub trait Updatable {
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList) -> bool;
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool;
 
-    fn late_updatable(
+    fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        updatable: &mut UpdatableList,
+        tick_updatable: &mut TickUpdatableList,
         tick_counter: usize,
     ) -> bool;
 }
 
 impl Updatable for Block {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
         match self {
-            Block::Repeater(v) => v.update(idx, tick_updatable),
-            Block::Torch(v) => v.update(idx, tick_updatable),
-            Block::Comparator(v) => v.update(idx, tick_updatable),
-            Block::Redstone(v) => v.update(idx, tick_updatable),
-            Block::SRepeater(v) => v.update(idx, tick_updatable),
+            Block::Repeater(v) => v.update(idx, tick_updatable, up),
+            Block::Torch(v) => v.update(idx, tick_updatable, up),
+            Block::Comparator(v) => v.update(idx, tick_updatable, up),
+            Block::Redstone(v) => v.update(idx, tick_updatable, up),
+            Block::SRepeater(v) => v.update(idx, tick_updatable, up),
         }
     }
 
-    fn late_updatable(
+    fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        updatable: &mut UpdatableList,
+        tick_updatable: &mut TickUpdatableList,
         tick_counter: usize,
     ) -> bool {
         match self {
-            Block::Repeater(v) => v.late_updatable(idx, updatable, tick_counter),
-            Block::Torch(v) => v.late_updatable(idx, updatable, tick_counter),
-            Block::Comparator(v) => v.late_updatable(idx, updatable, tick_counter),
+            Block::Repeater(v) => v.late_update(idx, tick_updatable, tick_counter),
+            Block::Torch(v) => v.late_update(idx, tick_updatable, tick_counter),
+            Block::Comparator(v) => v.late_update(idx, tick_updatable, tick_counter),
             Block::Redstone(_) => unreachable!(),
-            Block::SRepeater(v) => v.late_updatable(idx, updatable, tick_counter),
+            Block::SRepeater(v) => v.late_update(idx, tick_updatable, tick_counter),
         }
     }
 }

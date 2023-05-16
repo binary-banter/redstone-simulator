@@ -1,7 +1,7 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
-use crate::world::UpdatableList;
+use crate::world::{TickUpdatableList};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
@@ -41,6 +41,16 @@ impl OutputPower for Torch {
     }
 }
 
+impl OutputPower for CTorch {
+    fn output_power(&self) -> u8 {
+        if self.lit {
+            15
+        } else {
+            0
+        }
+    }
+}
+
 impl Torch {
     pub fn with_lit(lit: bool) -> Torch {
         Torch {
@@ -64,7 +74,7 @@ impl BlockConnections for CTorch {
     }
 }
 impl ToBlock for CTorch {
-    fn to_block(&self) -> Block {
+    fn to_block(&self, on_inputs: u8) -> Block {
         Block::Torch(Torch {
             lit: AtomicBool::new(self.lit),
             last_update: AtomicUsize::new(usize::MAX),
@@ -74,7 +84,7 @@ impl ToBlock for CTorch {
 
 impl Updatable for Torch {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, _tick_updatable: &mut UpdatableList) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -83,10 +93,10 @@ impl Updatable for Torch {
         s_new == self.lit.load(Ordering::Relaxed)
     }
 
-    fn late_updatable(
+    fn late_update(
         &self,
-        _idx: &'static GNode<Block, u8>,
-        _updatable: &mut UpdatableList,
+        idx: &'static GNode<Block, u8>,
+        tick_updatable: &mut TickUpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {

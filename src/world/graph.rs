@@ -1,4 +1,4 @@
-use crate::blocks::{Block, CBlock, ToBlock};
+use crate::blocks::{Block, CBlock, OutputPower, ToBlock};
 use crate::world::CBlockGraph;
 use bumpalo::Bump;
 use itertools::Itertools;
@@ -34,8 +34,13 @@ impl FastGraph<Block, u8> {
 
         let mut nodes: HashMap<NodeIndex, &'static mut GNode<Block, u8>> = HashMap::new();
         for (idx, block) in g.node_references() {
+            let on_inputs = g
+                .neighbors_directed(idx, Incoming)
+                .filter(|n_idx| g[*n_idx].output_power() > 0)
+                .count() as u8;
+
             let block_ref = bump.alloc(GNode {
-                weight: block.to_block(),
+                weight: block.to_block(on_inputs),
                 outgoing: &[],
                 incoming_rear: &[],
                 incoming_side: &[],
@@ -97,6 +102,7 @@ impl FastGraph<Block, u8> {
 }
 
 impl<N: 'static, E: 'static> GNode<N, E> {
+    //TODO make iterator?
     pub fn outgoing_edges(&self) -> &'static [GEdge<N, E>] {
         self.outgoing
     }
