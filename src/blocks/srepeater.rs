@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use crate::blocks::{Block, Edge, OutputPower, ToBlock, Updatable};
 use crate::world::BlockGraph;
 use petgraph::prelude::EdgeRef;
@@ -19,23 +20,23 @@ impl CSRepeater {
 impl ToBlock for CSRepeater {
     fn to_block(&self) -> Block {
         Block::SRepeater(SRepeater {
-            powered: self.powered,
-            last_update: usize::MAX,
+            powered: AtomicBool::new(self.powered),
+            last_update: AtomicUsize::new(usize::MAX),
         })
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct SRepeater {
     /// Whether the repeater is currently powered.
-    powered: bool,
+    powered: AtomicBool,
 
-    last_update: usize,
+    last_update: AtomicUsize,
 }
 
 impl OutputPower for SRepeater {
     fn output_power(&self) -> u8 {
-        if self.powered {
+        if self.powered.load(Ordering::Relaxed) {
             15
         } else {
             0
@@ -46,7 +47,7 @@ impl OutputPower for SRepeater {
 impl Updatable for SRepeater {
     #[inline(always)]
     fn update(
-        &mut self,
+        &self,
         idx: NodeIndex,
         _tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
@@ -58,21 +59,21 @@ impl Updatable for SRepeater {
                 Edge::Side(_) => unreachable!(),
             });
 
-        s_new != self.powered
+        s_new != self.powered.load(Ordering::Relaxed)
     }
 
     fn late_updatable(
-        &mut self,
+        &self,
         _idx: NodeIndex,
         _updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
-        if tick_counter == self.last_update {
+        if tick_counter == self.last_update.load(Ordering::Relaxed) {
             return false;
         }
-        self.last_update = tick_counter;
+        self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.powered = !self.powered;
+        self.powered.store(!self.powered.load(Ordering::Relaxed), Ordering::Relaxed);
 
         true
     }
@@ -81,8 +82,8 @@ impl Updatable for SRepeater {
 impl SRepeater {
     pub fn with_power(powered: bool) -> SRepeater {
         SRepeater {
-            powered,
-            last_update: usize::MAX,
+            powered: AtomicBool::new(powered),
+            last_update: AtomicUsize::new(usize::MAX),
         }
     }
 }

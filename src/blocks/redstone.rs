@@ -9,17 +9,18 @@ use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
 use std::collections::{HashMap};
 use std::ops::Index;
+use std::sync::atomic::{AtomicBool, Ordering};
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default)]
 pub struct Redstone {
     /// Signal ranges from 0 to 15 inclusive.
-    signal: u8,
+    signal: AtomicBool,
 }
 
 #[derive(Copy, Clone, Debug)]
 pub struct CRedstone {
     /// Signal ranges from 0 to 15 inclusive.
-    signal: u8,
+    signal: bool,
 
     /// Directions in which this block points.
     connections: Connections,
@@ -50,7 +51,11 @@ impl Index<Facing> for Connections {
 
 impl OutputPower for Redstone {
     fn output_power(&self) -> u8 {
-        self.signal
+        if self.signal.load(Ordering::Relaxed) {
+            15
+        } else{
+            0
+        }
     }
 }
 
@@ -66,7 +71,7 @@ impl BlockConnections for CRedstone {
 impl ToBlock for CRedstone {
     fn to_block(&self) -> Block {
         Block::Redstone(Redstone {
-            signal: self.signal,
+            signal: AtomicBool::new(self.signal),
         })
     }
 }
@@ -74,22 +79,20 @@ impl ToBlock for CRedstone {
 impl Updatable for Redstone {
     #[inline(always)]
     fn update(
-        &mut self,
+        &self,
         idx: NodeIndex,
         tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool {
         let s_new = blocks
             .edges_directed(idx, Incoming)
-            .filter_map(|edge| match edge.weight() {
-                Edge::Rear(s) => Some(blocks[edge.source()].output_power().saturating_sub(*s)),
+            .any(|edge| match edge.weight() {
+                Edge::Rear(s) => blocks[edge.source()].output_power().saturating_sub(*s) > 0,
                 Edge::Side(_) => unreachable!(),
-            })
-            .max()
-            .unwrap_or(0);
+            });
 
-        if self.signal != s_new {
-            self.signal = s_new;
+        if self.signal.load(Ordering::Relaxed) != s_new {
+            self.signal.store( s_new, Ordering::Relaxed);
             tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
         }
 
@@ -97,7 +100,7 @@ impl Updatable for Redstone {
     }
 
     fn late_updatable(
-        &mut self,
+        &self,
         _idx: NodeIndex,
         _updatable: &mut Vec<NodeIndex>,
         _tick_counter: usize,
@@ -109,7 +112,7 @@ impl Updatable for Redstone {
 impl From<HashMap<&str, &str>> for CRedstone {
     fn from(meta: HashMap<&str, &str>) -> Self {
         CRedstone {
-            signal: meta["power"].parse().unwrap(),
+            signal: if meta["power"].parse::<u8>().unwrap() > 0 { true} else { false },
             connections: Connections {
                 north: meta["north"] != "none",
                 east: meta["east"] != "none",
@@ -121,8 +124,8 @@ impl From<HashMap<&str, &str>> for CRedstone {
 }
 
 impl Redstone {
-    pub fn with_signal(signal: u8) -> Self {
-        Redstone { signal }
+    pub fn with_signal(signal: bool) -> Self {
+        Redstone { signal: AtomicBool::new(signal) }
     }
 }
 

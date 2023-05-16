@@ -5,24 +5,25 @@ use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::{Incoming, Outgoing};
 use std::collections::{HashMap};
+use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Repeater {
     /// Whether the repeater is currently powered.
-    powered: bool,
+    powered: AtomicBool,
 
     /// Next power when count reaches the repeater delay.
-    next_powered: bool,
+    next_powered: AtomicBool,
 
-    locking_signal: bool,
+    locking_signal: AtomicBool,
 
     /// The repeater delay in ticks, ranges from 1 to 4 inclusive.
     delay: u8,
 
     /// Number of ticks passed since a new input signal was detected.
-    count: u8,
+    count: AtomicU8,
 
-    last_update: usize,
+    last_update: AtomicUsize,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -39,7 +40,7 @@ pub struct CRepeater {
 
 impl OutputPower for Repeater {
     fn output_power(&self) -> u8 {
-        if self.powered {
+        if self.powered.load(Ordering::Relaxed) {
             15
         } else {
             0
@@ -65,12 +66,12 @@ impl BlockConnections for CRepeater {
 impl ToBlock for CRepeater {
     fn to_block(&self) -> Block {
         Block::Repeater(Repeater {
-            powered: self.powered,
-            next_powered: self.powered,
-            locking_signal: false,
+            powered: AtomicBool::new(self.powered),
+            next_powered: AtomicBool::new(self.powered),
+            locking_signal: AtomicBool::new(false),
             delay: self.delay,
-            count: 0,
-            last_update: usize::MAX,
+            count: AtomicU8::new(0),
+            last_update: AtomicUsize::new(usize::MAX),
         })
     }
 }
@@ -78,7 +79,7 @@ impl ToBlock for CRepeater {
 impl Updatable for Repeater {
     #[inline(always)]
     fn update(
-        &mut self,
+        &self,
         idx: NodeIndex,
         tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
@@ -111,52 +112,52 @@ impl Updatable for Repeater {
                     Edge::Side(_) => blocks[edge.source()].will_lock(),
                 });
 
-        if locked_next_tick == self.locking_signal {
+        if locked_next_tick == self.locking_signal.load(Ordering::Relaxed) {
             tick_updatable.extend(blocks.neighbors_directed(idx, Outgoing));
         }
 
         // if signal strength has changed, update neighbours
-        match (s_new, self.next_powered == s_new, self.count == 0) {
+        match (s_new, self.next_powered.load(Ordering::Relaxed) == s_new, self.count.load(Ordering::Relaxed) == 0) {
             // Signal changed upwards: update next signal and reset count.
             (true, false, _) => {
-                self.next_powered = s_new;
-                self.count = 0;
+                self.next_powered.store( s_new, Ordering::Relaxed);
+                self.count.store(0,Ordering::Relaxed);
             }
             // Signal changed downward, and is not propagating already: update next signal.
             (false, false, true) => {
-                self.next_powered = s_new;
+                self.next_powered.store( s_new, Ordering::Relaxed);
             }
             // Other cases.
             (_, _, _) => {}
         };
 
-        self.locking_signal = if locked_next_tick {
-            self.powered
-        } else if self.count + 1 == self.delay {
-            self.next_powered
+        self.locking_signal.store(if locked_next_tick {
+            self.powered.load(Ordering::Relaxed)
+        } else if self.count.load(Ordering::Relaxed) + 1 == self.delay {
+            self.next_powered.load(Ordering::Relaxed)
         } else {
-            self.powered
-        };
+            self.powered.load(Ordering::Relaxed)
+        }, Ordering::Relaxed);
 
-        self.powered != self.next_powered
+        self.powered.load(Ordering::Relaxed) != self.next_powered.load(Ordering::Relaxed)
     }
 
     fn late_updatable(
-        &mut self,
+        &self,
         idx: NodeIndex,
         updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
-        if tick_counter == self.last_update {
+        if tick_counter == self.last_update.load(Ordering::Relaxed) {
             return false;
         }
-        self.last_update = tick_counter;
+        self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.count += 1;
+        self.count.store(self.count.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
         updatable.push(idx);
-        if self.count == self.delay {
-            self.count = 0;
-            self.powered = self.locking_signal;
+        if self.count.load(Ordering::Relaxed) == self.delay {
+            self.count.store(0, Ordering::Relaxed);
+            self.powered.store(self.locking_signal.load(Ordering::Relaxed), Ordering::Relaxed);
             true
         } else {
             false
@@ -166,7 +167,7 @@ impl Updatable for Repeater {
 
 impl Repeater {
     pub fn will_lock(&self) -> bool {
-        self.locking_signal
+        self.locking_signal.load(Ordering::Relaxed)
     }
 }
 

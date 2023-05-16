@@ -5,13 +5,14 @@ use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Incoming;
 use std::collections::{HashMap};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Torch {
     /// Whether the torch is currently lit.
-    lit: bool,
+    lit: AtomicBool,
 
-    last_update: usize,
+    last_update: AtomicUsize,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -26,15 +27,15 @@ pub struct CTorch {
 impl Default for Torch {
     fn default() -> Self {
         Torch {
-            lit: true,
-            last_update: usize::MAX,
+            lit: AtomicBool::new(true),
+            last_update: AtomicUsize::new(usize::MAX),
         }
     }
 }
 
 impl OutputPower for Torch {
     fn output_power(&self) -> u8 {
-        if self.lit {
+        if self.lit.load(Ordering::Relaxed) {
             15
         } else {
             0
@@ -45,8 +46,8 @@ impl OutputPower for Torch {
 impl Torch {
     pub fn with_lit(lit: bool) -> Torch {
         Torch {
-            lit,
-            last_update: usize::MAX,
+            lit: AtomicBool::new(lit),
+            last_update: AtomicUsize::new(usize::MAX),
         }
     }
 }
@@ -67,8 +68,8 @@ impl BlockConnections for CTorch {
 impl ToBlock for CTorch {
     fn to_block(&self) -> Block {
         Block::Torch(Torch {
-            lit: self.lit,
-            last_update: usize::MAX,
+            lit: AtomicBool::new(self.lit),
+            last_update: AtomicUsize::new(usize::MAX),
         })
     }
 }
@@ -76,7 +77,7 @@ impl ToBlock for CTorch {
 impl Updatable for Torch {
     #[inline(always)]
     fn update(
-        &mut self,
+        &self,
         idx: NodeIndex,
         _tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
@@ -88,21 +89,21 @@ impl Updatable for Torch {
                 Edge::Side(_) => unreachable!(),
             });
 
-        s_new == self.lit
+        s_new == self.lit.load(Ordering::Relaxed)
     }
 
     fn late_updatable(
-        &mut self,
+        &self,
         _idx: NodeIndex,
         _updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
-        if tick_counter == self.last_update {
+        if tick_counter == self.last_update.load(Ordering::Relaxed) {
             return false;
         }
-        self.last_update = tick_counter;
+        self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.lit = !self.lit;
+        self.lit.store(!self.lit.load(Ordering::Relaxed), Ordering::Relaxed);
 
         true
     }

@@ -3,6 +3,7 @@ pub mod data;
 mod prune;
 pub mod schematic;
 mod step;
+mod graph;
 
 use crate::blocks::{Block, Edge};
 use crate::blocks::{CBlock, OutputPower};

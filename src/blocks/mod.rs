@@ -34,7 +34,7 @@ static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 });
 
 /// Blocks that end up in the graph structure of the world.
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub enum Block {
     Redstone(Redstone),
     Repeater(Repeater),
@@ -307,14 +307,14 @@ impl CBlock {
 
 pub trait Updatable {
     fn update(
-        &mut self,
+        &self,
         idx: NodeIndex,
         tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
     ) -> bool;
 
     fn late_updatable(
-        &mut self,
+        &self,
         idx: NodeIndex,
         updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
@@ -324,7 +324,7 @@ pub trait Updatable {
 impl Updatable for Block {
     #[inline(always)]
     fn update(
-        &mut self,
+        &self,
         idx: NodeIndex,
         tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
@@ -339,7 +339,7 @@ impl Updatable for Block {
     }
 
     fn late_updatable(
-        &mut self,
+        &self,
         idx: NodeIndex,
         updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,

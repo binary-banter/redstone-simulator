@@ -7,14 +7,15 @@ use petgraph::prelude::EdgeRef;
 use petgraph::stable_graph::NodeIndex;
 use petgraph::Incoming;
 use std::collections::{HashMap};
+use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Comparator {
     /// Signal ranges from 0 to 15 inclusive.
-    signal: u8,
+    signal: AtomicU8,
 
     /// Signal of the comparator during the next tick.
-    next_signal: u8,
+    next_signal: AtomicU8,
 
     entity_power: Option<u8>,
 
@@ -22,7 +23,7 @@ pub struct Comparator {
     // todo: we can most likely get rid off this by having both a `Comparator` and `Subtractor`.
     mode: ComparatorMode,
 
-    last_update: usize,
+    last_update: AtomicUsize,
 }
 
 impl CComparator {
@@ -63,7 +64,7 @@ impl From<&str> for ComparatorMode {
 
 impl OutputPower for Comparator {
     fn output_power(&self) -> u8 {
-        self.signal
+        self.signal.load(Ordering::Relaxed)
     }
 }
 
@@ -85,11 +86,11 @@ impl BlockConnections for CComparator {
 impl ToBlock for CComparator {
     fn to_block(&self) -> Block {
         Block::Comparator(Comparator {
-            signal: self.signal,
-            next_signal: self.signal,
+            signal: AtomicU8::new(self.signal),
+            next_signal: AtomicU8::new(self.signal),
             entity_power: self.entity_power,
             mode: self.mode,
-            last_update: usize::MAX,
+            last_update: AtomicUsize::new(usize::MAX),
         })
     }
 }
@@ -97,7 +98,7 @@ impl ToBlock for CComparator {
 impl Updatable for Comparator {
     #[inline(always)]
     fn update(
-        &mut self,
+        &self,
         idx: NodeIndex,
         _tick_updatable: &mut Vec<NodeIndex>,
         blocks: &BlockGraph,
@@ -121,27 +122,27 @@ impl Updatable for Comparator {
             .max()
             .unwrap_or(0);
 
-        self.next_signal = match self.mode {
+        self.next_signal.store(match self.mode {
             ComparatorMode::Compare if side <= rear => rear,
             ComparatorMode::Compare => 0,
             ComparatorMode::Subtract => rear.saturating_sub(side),
-        };
+        }, Ordering::Relaxed);
 
-        self.signal != self.next_signal
+        self.signal.load(Ordering::Relaxed) != self.next_signal.load(Ordering::Relaxed)
     }
 
     fn late_updatable(
-        &mut self,
+        &self,
         _idx: NodeIndex,
         _updatable: &mut Vec<NodeIndex>,
         tick_counter: usize,
     ) -> bool {
-        if tick_counter == self.last_update {
+        if tick_counter == self.last_update.load(Ordering::Relaxed) {
             return false;
         }
-        self.last_update = tick_counter;
+        self.last_update.store(tick_counter, Ordering::Relaxed);
 
-        self.signal = self.next_signal;
+        self.signal.store(self.next_signal.load(Ordering::Relaxed), Ordering::Relaxed);
         true
     }
 }
