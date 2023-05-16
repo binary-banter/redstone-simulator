@@ -1,9 +1,9 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
-use crate::world::{TickUpdatableList};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+use crate::world::UpdatableList;
 
 #[derive(Debug)]
 pub struct Torch {
@@ -84,7 +84,7 @@ impl ToBlock for CTorch {
 
 impl Updatable for Torch {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -96,7 +96,7 @@ impl Updatable for Torch {
     fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut TickUpdatableList,
+        tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {

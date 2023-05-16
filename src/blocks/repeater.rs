@@ -1,9 +1,9 @@
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
-use crate::world::{TickUpdatableList};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
+use crate::world::UpdatableList;
 
 #[derive(Debug)]
 pub struct Repeater {
@@ -86,7 +86,7 @@ impl ToBlock for CRepeater {
 
 impl Updatable for Repeater {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -107,7 +107,6 @@ impl Updatable for Repeater {
             tick_updatable.extend(
                 idx.outgoing_neighbours()
                     .filter(|b| matches!(b.weight, Block::Repeater(_))) //TODO filter may not be needed if we pre-compute
-                    .map(|n| (n, false))
             );
         }
 
@@ -147,7 +146,7 @@ impl Updatable for Repeater {
     fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut TickUpdatableList,
+        tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {
@@ -156,7 +155,7 @@ impl Updatable for Repeater {
         self.last_update.store(tick_counter, Ordering::Relaxed);
 
         self.count.fetch_add(1, Ordering::Relaxed);
-        tick_updatable.push((idx, false));
+        tick_updatable.push(idx);
         if self.count.load(Ordering::Relaxed) == self.delay {
             self.count.store(0, Ordering::Relaxed);
             self.powered.store(

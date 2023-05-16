@@ -1,7 +1,7 @@
 use crate::blocks::{Block, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
-use crate::world::{TickUpdatableList};
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize, Ordering};
+use crate::world::UpdatableList;
 
 #[derive(Clone, Debug)]
 pub struct CSRepeater {
@@ -55,7 +55,7 @@ impl OutputPower for CSRepeater {
 
 impl Updatable for SRepeater {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
         if up{
             //TODO fetch_add
             self.on_inputs.store(self.on_inputs.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
@@ -72,7 +72,7 @@ impl Updatable for SRepeater {
     fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut TickUpdatableList,
+        tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         if tick_counter == self.last_update.load(Ordering::Relaxed) {

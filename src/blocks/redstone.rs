@@ -4,7 +4,7 @@ use crate::blocks::{
 };
 use crate::world::data::WorldData;
 use crate::world::graph::GNode;
-use crate::world::{CBlockGraph, TickUpdatableList};
+use crate::world::{CBlockGraph, UpdatableList};
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
 use std::ops::Index;
@@ -77,7 +77,7 @@ impl ToBlock for CRedstone {
 
 impl Updatable for Redstone {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
         let s_new = idx
             .incoming_rear
             .iter()
@@ -93,7 +93,7 @@ impl Updatable for Redstone {
     fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut TickUpdatableList,
+        tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         unreachable!()

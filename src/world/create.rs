@@ -3,7 +3,7 @@ use crate::world::data::{neighbours_and_facings, TileMap, WorldData};
 use crate::world::graph::GNode;
 use crate::world::prune::prune_graph;
 use crate::world::schematic::SchemFormat;
-use crate::world::{BlockGraph, CBlockGraph, TickUpdatableList, UpdatableList, World};
+use crate::world::{BlockGraph, CBlockGraph, TickUpdatableLists, UpdatableList, World};
 use itertools::iproduct;
 use nbt::from_gzip_reader;
 use std::collections::HashMap;
@@ -98,13 +98,15 @@ impl From<SchemFormat> for World {
             triggers,
             probes,
             updatable: UpdatableList::new(),
-            tick_updatable: TickUpdatableList::new(),
+            tick_updatable: TickUpdatableLists {
+                down: UpdatableList::new(),
+                up: UpdatableList::new(),
+            },
             tick_counter: 0,
         };
 
         // Update probes for initial state.
-        // Probes ignore the `false`
-        world.tick_updatable = world.probes.values().cloned().map(|n| (n, false)).collect();
+        world.tick_updatable.down = world.probes.values().cloned().collect();
         world.step();
 
         world

@@ -9,10 +9,10 @@ use crate::blocks::srepeater::{CSRepeater, SRepeater};
 use crate::blocks::torch::{CTorch, Torch};
 use crate::blocks::trigger::CTrigger;
 use crate::world::graph::GNode;
-use crate::world::{TickUpdatableList};
 use once_cell::sync::Lazy;
 use std::collections::{HashMap, HashSet};
 use std::ops::Add;
+use crate::world::UpdatableList;
 
 pub mod comparator;
 pub mod facing;
@@ -323,19 +323,19 @@ impl CBlock {
 }
 
 pub trait Updatable {
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool;
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool;
 
     fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut TickUpdatableList,
+        tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool;
 }
 
 impl Updatable for Block {
     #[inline(always)]
-    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut TickUpdatableList, up: bool) -> bool {
+    fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
         match self {
             Block::Repeater(v) => v.update(idx, tick_updatable, up),
             Block::Torch(v) => v.update(idx, tick_updatable, up),
@@ -348,7 +348,7 @@ impl Updatable for Block {
     fn late_update(
         &self,
         idx: &'static GNode<Block, u8>,
-        tick_updatable: &mut TickUpdatableList,
+        tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> bool {
         match self {

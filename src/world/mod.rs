@@ -13,7 +13,10 @@ use std::collections::{HashMap};
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
 pub type BlockGraph = FastGraph<Block, u8>;
-pub type TickUpdatableList = Vec<(&'static GNode<Block, u8>, bool)>;
+pub struct TickUpdatableLists {
+    pub down: UpdatableList,
+    pub up: UpdatableList,
+}
 pub type UpdatableList = Vec<&'static GNode<Block, u8>>;
 
 /// The `World` is a pruned instance of a redstone circuit.
@@ -32,7 +35,7 @@ pub struct World {
     updatable: UpdatableList,
 
     /// Queue that holds indexes of blocks that require intra-tick update.
-    tick_updatable: TickUpdatableList,
+    tick_updatable: TickUpdatableLists,
 
     /// Global tick counter.
     tick_counter: usize,
