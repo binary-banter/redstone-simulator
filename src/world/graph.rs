@@ -23,6 +23,7 @@ pub struct GEdge<N: 'static, E: 'static> {
 
 pub struct FastGraph<N: 'static, E: 'static> {
     phantom: PhantomData<(N, E)>,
+    pub nodes: Vec<&'static GNode<N, E>>,
 }
 
 impl FastGraph<Block, u8> {
@@ -91,12 +92,13 @@ impl FastGraph<Block, u8> {
         // We now just have multiple read-only references
         let nodes: HashMap<NodeIndex, &'static GNode<Block, u8>> = unsafe { mem::transmute(nodes) };
 
-        for (idx, block_ref) in nodes {
-            callback(&cblocks[idx], block_ref);
+        for (idx, block_ref) in &nodes {
+            callback(&cblocks[*idx], block_ref);
         }
 
         FastGraph {
             phantom: Default::default(),
+            nodes: nodes.values().cloned().collect_vec(),
         }
     }
 }
