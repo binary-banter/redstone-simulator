@@ -47,8 +47,6 @@ impl World {
                     }
                 }
             }
-
-            //self.tick_updatable.extend(idx.outgoing_neighbours());
         }
 
         self.tick_counter += 1;

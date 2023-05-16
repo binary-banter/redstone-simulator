@@ -62,20 +62,16 @@ impl Updatable for SRepeater {
         up: bool,
     ) -> bool {
         if up {
-            //TODO fetch_add
             self.on_inputs.store(
                 self.on_inputs.load(Ordering::Relaxed) + 1,
                 Ordering::Relaxed,
             );
-            // assert_eq!(self.on_inputs.load(Ordering::Relaxed) as usize, idx.incoming_rear.iter().filter(|n| n.node.weight.output_power().saturating_sub(n.weight) > 0).count());
             self.on_inputs.load(Ordering::Relaxed) == 1
         } else {
-            //TODO fetch_sub
             self.on_inputs.store(
                 self.on_inputs.load(Ordering::Relaxed) - 1,
                 Ordering::Relaxed,
             );
-            // assert_eq!(self.on_inputs.load(Ordering::Relaxed) as usize, idx.incoming_rear.iter().filter(|n| n.node.weight.output_power().saturating_sub(n.weight) > 0).count());
             self.on_inputs.load(Ordering::Relaxed) == 0
         }
     }
