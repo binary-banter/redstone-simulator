@@ -28,9 +28,9 @@ impl ToBlock for CSRepeater {
 #[derive(Debug)]
 pub struct SRepeater {
     /// Whether the repeater is currently powered.
-    powered: AtomicBool,
-    on_inputs: AtomicU8,
-    last_update: AtomicUsize,
+    pub powered: AtomicBool,
+    pub on_inputs: AtomicU8,
+    pub last_update: AtomicUsize,
 }
 
 impl OutputPower for SRepeater {

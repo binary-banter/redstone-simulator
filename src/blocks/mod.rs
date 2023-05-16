@@ -6,7 +6,7 @@ use crate::blocks::redstone_block::CRedstoneBlock;
 use crate::blocks::repeater::{CRepeater, Repeater};
 use crate::blocks::solid::{CSolidStrong, CSolidWeak};
 use crate::blocks::srepeater::{CSRepeater, SRepeater};
-use crate::blocks::torch::{CTorch, Torch};
+use crate::blocks::torch::{CTorch};
 use crate::blocks::trigger::CTrigger;
 use crate::world::graph::GNode;
 use once_cell::sync::Lazy;
@@ -38,7 +38,6 @@ static TRANSPARENT_BLOCKS: Lazy<HashSet<&'static str>> = Lazy::new(|| {
 pub enum Block {
     Redstone(Redstone),
     Repeater(Repeater),
-    Torch(Torch),
     Comparator(Comparator),
     SRepeater(SRepeater),
 }
@@ -101,7 +100,6 @@ impl OutputPower for Block {
         match self {
             Block::Redstone(v) => v.output_power(),
             Block::Repeater(v) => v.output_power(),
-            Block::Torch(v) => v.output_power(),
             Block::Comparator(v) => v.output_power(),
             Block::SRepeater(v) => v.output_power(),
         }
@@ -338,7 +336,6 @@ impl Updatable for Block {
     fn update(&self, idx: &'static GNode<Block, u8>, tick_updatable: &mut UpdatableList, up: bool) -> bool {
         match self {
             Block::Repeater(v) => v.update(idx, tick_updatable, up),
-            Block::Torch(v) => v.update(idx, tick_updatable, up),
             Block::Comparator(v) => v.update(idx, tick_updatable, up),
             Block::Redstone(v) => v.update(idx, tick_updatable, up),
             Block::SRepeater(v) => v.update(idx, tick_updatable, up),
@@ -353,7 +350,6 @@ impl Updatable for Block {
     ) -> bool {
         match self {
             Block::Repeater(v) => v.late_update(idx, tick_updatable, tick_counter),
-            Block::Torch(v) => v.late_update(idx, tick_updatable, tick_counter),
             Block::Comparator(v) => v.late_update(idx, tick_updatable, tick_counter),
             Block::Redstone(_) => unreachable!(),
             Block::SRepeater(v) => v.late_update(idx, tick_updatable, tick_counter),
