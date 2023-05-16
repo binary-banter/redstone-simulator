@@ -27,16 +27,16 @@ pub struct FastGraph<N: 'static, E: 'static> {
 
 impl FastGraph<Block, u8> {
     pub fn from_petgraph(
-        g: &CBlockGraph,
+        cblocks: &CBlockGraph,
         mut callback: impl FnMut(&CBlock, &'static GNode<Block, u8>),
     ) -> Self {
         let bump: &'static Bump = Box::leak(Box::new(Bump::new()));
 
         let mut nodes: HashMap<NodeIndex, &'static mut GNode<Block, u8>> = HashMap::new();
-        for (idx, block) in g.node_references() {
-            let on_inputs = g
+        for (idx, block) in cblocks.node_references() {
+            let on_inputs = cblocks
                 .neighbors_directed(idx, Incoming)
-                .filter(|n_idx| g[*n_idx].output_power() > 0)
+                .filter(|n_idx| cblocks[*n_idx].output_power() > 0)
                 .count() as u8;
 
             let block_ref = bump.alloc(GNode {
@@ -53,11 +53,11 @@ impl FastGraph<Block, u8> {
             let map_read: &HashMap<NodeIndex, &'static mut GNode<Block, u8>> =
                 unsafe { &*(&nodes as *const HashMap<NodeIndex, &'static mut GNode<Block, u8>>) };
 
-            for idx in g.node_indices() {
+            for idx in cblocks.node_indices() {
                 let node = nodes.get_mut(&idx).unwrap();
 
                 node.outgoing = bump.alloc_slice_fill_iter(
-                    g.edges_directed(idx, Outgoing)
+                    cblocks.edges_directed(idx, Outgoing)
                         .map(|e| GEdge {
                             weight: e.weight().strength_loss(),
                             node: map_read[&e.target()],
@@ -66,7 +66,7 @@ impl FastGraph<Block, u8> {
                         .into_iter(),
                 );
                 node.incoming_rear = bump.alloc_slice_fill_iter(
-                    g.edges_directed(idx, Incoming)
+                    cblocks.edges_directed(idx, Incoming)
                         .filter(|e| !e.weight().is_side())
                         .map(|e| GEdge {
                             weight: e.weight().strength_loss(),
@@ -76,7 +76,7 @@ impl FastGraph<Block, u8> {
                         .into_iter(),
                 );
                 node.incoming_side = bump.alloc_slice_fill_iter(
-                    g.edges_directed(idx, Incoming)
+                    cblocks.edges_directed(idx, Incoming)
                         .filter(|e| e.weight().is_side())
                         .map(|e| GEdge {
                             weight: e.weight().strength_loss(),
@@ -92,7 +92,7 @@ impl FastGraph<Block, u8> {
         let nodes: HashMap<NodeIndex, &'static GNode<Block, u8>> = unsafe { mem::transmute(nodes) };
 
         for (idx, block_ref) in nodes {
-            callback(&g[idx], block_ref);
+            callback(&cblocks[idx], block_ref);
         }
 
         FastGraph {
