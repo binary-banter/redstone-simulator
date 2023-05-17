@@ -52,6 +52,10 @@ pub fn prune_constants(cblocks: &mut CBlockGraph) {
                 | CBlock::Trigger(_)
                 | CBlock::RedstoneBlock(_) => unreachable!(),
                 CBlock::Probe(_) => {}
+
+                CBlock::SComparator(_) => {
+                    //TODO maybe constant folding?
+                },
             }
         }
     }

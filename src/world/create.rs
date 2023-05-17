@@ -90,6 +90,8 @@ impl From<SchemFormat> for World {
 
         prune_graph(&mut cblocks);
 
+        println!("{:?}", cblocks);
+
         // CBlock graph to Block graph
         let (blocks, triggers, probes) = World::cblock_to_block(cblocks);
 

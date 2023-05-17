@@ -13,6 +13,8 @@ use crate::world::UpdatableList;
 use once_cell::sync::Lazy;
 use std::collections::{HashMap, HashSet};
 use std::ops::Add;
+use itertools::Itertools;
+use crate::blocks::scomparator::{CSComparator, SComparator};
 
 pub mod comparator;
 pub mod facing;
@@ -24,6 +26,7 @@ pub mod solid;
 pub mod srepeater;
 pub mod torch;
 pub mod trigger;
+pub mod scomparator;
 
 static SOLID_BLOCKS: Lazy<HashSet<&'static str>> =
     Lazy::new(|| include_str!("../../resources/solid.txt").lines().collect());
@@ -40,6 +43,7 @@ pub enum Block {
     Repeater(Repeater),
     Comparator(Comparator),
     SRepeater(SRepeater),
+    SComparator(SComparator),
 }
 
 /// Blocks used during the creation of the graph structure of the world.
@@ -55,6 +59,7 @@ pub enum CBlock {
     RedstoneBlock(CRedstoneBlock),
     Torch(CTorch),
     Comparator(CComparator),
+    SComparator(CSComparator),
 }
 
 #[derive(Debug, Clone, Copy, Ord, PartialOrd, Eq, PartialEq)]
@@ -102,6 +107,7 @@ impl OutputPower for Block {
             Block::Repeater(v) => v.output_power(),
             Block::Comparator(v) => v.output_power(),
             Block::SRepeater(v) => v.output_power(),
+            Block::SComparator(v) => v.output_power(),
         }
     }
 }
@@ -119,6 +125,7 @@ impl OutputPower for CBlock {
             CBlock::Trigger(_) => 0,
             CBlock::Probe(_) => unreachable!(),
             CBlock::RedstoneBlock(_) => 15,
+            CBlock::SComparator(v) => v.output_power(),
         }
     }
 }
@@ -216,6 +223,7 @@ impl BlockConnections for CBlock {
             CBlock::Torch(v) => v.can_output(facing),
             CBlock::Comparator(v) => v.can_output(facing),
             CBlock::SRepeater(_) => unreachable!(),
+            CBlock::SComparator(_) => unreachable!(),
         }
     }
 
@@ -231,6 +239,7 @@ impl BlockConnections for CBlock {
             CBlock::Torch(v) => v.can_input(facing),
             CBlock::Comparator(v) => v.can_input(facing),
             CBlock::SRepeater(_) => unreachable!(),
+            CBlock::SComparator(_) => unreachable!(),
         }
     }
 }
@@ -247,6 +256,7 @@ impl ToBlock for CBlock {
             CBlock::Torch(v) => v.to_block(on_inputs),
             CBlock::Comparator(v) => v.to_block(on_inputs),
             CBlock::SRepeater(v) => v.to_block(on_inputs),
+            CBlock::SComparator(v) => v.to_block(on_inputs),
         }
     }
 }
@@ -296,6 +306,7 @@ impl CBlock {
             CBlock::Torch { .. } => true,
             CBlock::Probe { .. } => false,
             CBlock::SRepeater { .. } => unreachable!(),
+            CBlock::SComparator(_) => unreachable!(),
         }
     }
 
@@ -349,6 +360,7 @@ impl Updatable for Block {
             Block::Comparator(v) => v.update(idx, tick_updatable, up),
             Block::Redstone(v) => v.update(idx, tick_updatable, up),
             Block::SRepeater(v) => v.update(idx, tick_updatable, up),
+            Block::SComparator(v) => v.update(idx, tick_updatable, up),
         }
     }
 
@@ -363,6 +375,7 @@ impl Updatable for Block {
             Block::Comparator(v) => v.late_update(idx, tick_updatable, tick_counter),
             Block::Redstone(_) => unreachable!(),
             Block::SRepeater(v) => v.late_update(idx, tick_updatable, tick_counter),
+            Block::SComparator(v) => v.late_update(idx, tick_updatable, tick_counter),
         }
     }
 }

@@ -31,6 +31,7 @@ pub fn prune_dead_nodes(cblocks: &mut CBlockGraph) {
             CBlock::SolidWeak(_) => unreachable!(),
             CBlock::SolidStrong(_) => unreachable!(),
             CBlock::RedstoneBlock(_) => true,
+            CBlock::SComparator(_) => false,
         }
     });
 }
