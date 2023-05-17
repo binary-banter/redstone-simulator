@@ -44,7 +44,7 @@ pub struct CComparator {
     entity_power: Option<u8>,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum ComparatorMode {
     Compare,
     Subtract,
@@ -148,7 +148,7 @@ impl Updatable for Comparator {
         self.signal
             .store(self.next_signal.load(Ordering::Relaxed), Ordering::Relaxed);
 
-        Some((old ,self.signal.load(Ordering::Relaxed)))
+        Some((old, self.signal.load(Ordering::Relaxed)))
     }
 }
 
@@ -184,5 +184,9 @@ impl CComparator {
 
     pub fn facing(&self) -> Facing {
         self.facing
+    }
+
+    pub fn is_subtractor(&self) -> bool {
+        self.mode == ComparatorMode::Subtract
     }
 }

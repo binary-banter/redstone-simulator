@@ -5,6 +5,7 @@ mod groups;
 mod irrelevant;
 mod redstone;
 mod srepeater;
+mod subtractor_edges;
 mod untraversable_edges;
 
 use crate::world::prune::constants::prune_constants;
@@ -14,6 +15,7 @@ use crate::world::prune::groups::prune_groups;
 use crate::world::prune::irrelevant::prune_irrelevant;
 use crate::world::prune::redstone::prune_redstone;
 use crate::world::prune::srepeater::replace_simple_repeaters;
+use crate::world::prune::subtractor_edges::prune_subtractor_edges;
 use crate::world::prune::untraversable_edges::prune_untraversable_edges;
 use crate::world::CBlockGraph;
 
@@ -25,6 +27,7 @@ pub fn prune_graph(cblocks: &mut CBlockGraph) {
     prune_duplicate_edges(cblocks);
     prune_irrelevant(cblocks);
     replace_simple_repeaters(cblocks);
+    prune_subtractor_edges(cblocks);
 
     loop {
         let nodes = cblocks.node_count();

@@ -58,7 +58,8 @@ impl FastGraph<Block, u8> {
                 let node = nodes.get_mut(&idx).unwrap();
 
                 node.outgoing = bump.alloc_slice_fill_iter(
-                    cblocks.edges_directed(idx, Outgoing)
+                    cblocks
+                        .edges_directed(idx, Outgoing)
                         .map(|e| GEdge {
                             weight: e.weight().strength_loss(),
                             node: map_read[&e.target()],
@@ -67,7 +68,8 @@ impl FastGraph<Block, u8> {
                         .into_iter(),
                 );
                 node.incoming_rear = bump.alloc_slice_fill_iter(
-                    cblocks.edges_directed(idx, Incoming)
+                    cblocks
+                        .edges_directed(idx, Incoming)
                         .filter(|e| !e.weight().is_side())
                         .map(|e| GEdge {
                             weight: e.weight().strength_loss(),
@@ -77,7 +79,8 @@ impl FastGraph<Block, u8> {
                         .into_iter(),
                 );
                 node.incoming_side = bump.alloc_slice_fill_iter(
-                    cblocks.edges_directed(idx, Incoming)
+                    cblocks
+                        .edges_directed(idx, Incoming)
                         .filter(|e| e.weight().is_side())
                         .map(|e| GEdge {
                             weight: e.weight().strength_loss(),

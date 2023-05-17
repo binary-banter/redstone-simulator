@@ -90,9 +90,9 @@ impl Updatable for SRepeater {
         self.powered
             .store(!self.powered.load(Ordering::Relaxed), Ordering::Relaxed);
 
-        if self.powered.load(Ordering::Relaxed){
+        if self.powered.load(Ordering::Relaxed) {
             Some((0, 15))
-        } else{
+        } else {
             Some((15, 0))
         }
     }

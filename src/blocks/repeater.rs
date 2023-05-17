@@ -167,9 +167,9 @@ impl Updatable for Repeater {
                 self.locking_signal.load(Ordering::Relaxed),
                 Ordering::Relaxed,
             );
-            if self.powered.load(Ordering::Relaxed){
+            if self.powered.load(Ordering::Relaxed) {
                 Some((0, 15))
-            } else{
+            } else {
                 Some((15, 0))
             }
         } else {
