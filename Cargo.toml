@@ -21,5 +21,9 @@ criterion = "0.4.0"
 name = "bench"
 harness = false
 
+[[bench]]
+name = "stress"
+harness = false
+
 [profile.release]
 lto = true
