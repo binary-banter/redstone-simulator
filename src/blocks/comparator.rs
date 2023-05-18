@@ -20,8 +20,6 @@ pub struct Comparator {
     /// Mode of the comparator, can be in `Compare` or `Subtract` mode.
     // todo: we can most likely get rid off this by having both a `Comparator` and `Subtractor`.
     mode: ComparatorMode,
-
-    last_update: Cell<usize>,
 }
 
 impl CComparator {
@@ -94,7 +92,6 @@ impl ToBlock for CComparator {
             next_signal: Cell::new(self.signal),
             entity_power: self.entity_power,
             mode: self.mode,
-            last_update: Cell::new(usize::MAX),
         })
     }
 }
@@ -134,13 +131,8 @@ impl Updatable for Comparator {
         &self,
         _idx: &'static GNode<Block, u8>,
         _tick_updatable: &mut UpdatableList,
-        tick_counter: usize,
+        _tick_counter: usize,
     ) -> Option<(u8, u8)> {
-        if tick_counter == self.last_update.get() {
-            return None;
-        }
-        self.last_update.set(tick_counter);
-
         let old = self.signal.get();
         self.signal.set(self.next_signal.get());
 
