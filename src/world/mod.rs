@@ -1,12 +1,14 @@
 pub mod create;
 pub mod data;
+pub mod edge;
 pub mod graph;
 mod prune;
 pub mod schematic;
 mod step;
 
-use crate::blocks::{Block, Edge};
+use crate::blocks::Block;
 use crate::blocks::{CBlock, OutputPower};
+use crate::world::edge::Edge;
 use crate::world::graph::{FastGraph, GNode};
 use petgraph::prelude::StableGraph;
 use std::collections::HashMap;

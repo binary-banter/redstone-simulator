@@ -1,8 +1,8 @@
-use std::cell::Cell;
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
 use crate::world::UpdatableList;
+use std::cell::Cell;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -134,16 +134,13 @@ impl Updatable for Repeater {
             (_, _, _) => {}
         };
 
-        self.locking_signal.set(
-            if locked_next_tick {
-                self.powered.get()
-            } else if self.count.get() + 1 == self.delay {
-                self.next_powered.get()
-            } else {
-                self.powered.get()
-            },
-
-        );
+        self.locking_signal.set(if locked_next_tick {
+            self.powered.get()
+        } else if self.count.get() + 1 == self.delay {
+            self.next_powered.get()
+        } else {
+            self.powered.get()
+        });
 
         self.powered.get() != self.next_powered.get()
     }
@@ -163,10 +160,7 @@ impl Updatable for Repeater {
         tick_updatable.push(idx);
         if self.count.get() == self.delay {
             self.count.set(0);
-            self.powered.set(
-                self.locking_signal.get(),
-
-            );
+            self.powered.set(self.locking_signal.get());
             if self.powered.get() {
                 Some((0, 15))
             } else {

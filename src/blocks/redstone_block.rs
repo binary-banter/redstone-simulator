@@ -1,7 +1,7 @@
-use std::cell::Cell;
 use crate::blocks::facing::Facing;
 use crate::blocks::srepeater::SRepeater;
 use crate::blocks::{Block, BlockConnections, InputSide, ToBlock};
+use std::cell::Cell;
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRedstoneBlock {}

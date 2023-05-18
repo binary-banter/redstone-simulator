@@ -1,7 +1,7 @@
-use std::cell::Cell;
 use crate::blocks::{Block, OutputPower, ToBlock, Updatable};
 use crate::world::graph::GNode;
 use crate::world::UpdatableList;
+use std::cell::Cell;
 
 #[derive(Clone, Debug)]
 pub struct CSRepeater {
@@ -62,15 +62,10 @@ impl Updatable for SRepeater {
         up: bool,
     ) -> bool {
         if up {
-            self.on_inputs.set(
-                self.on_inputs.get() + 1,
-            );
+            self.on_inputs.set(self.on_inputs.get() + 1);
             self.on_inputs.get() == 1
         } else {
-            self.on_inputs.set(
-                self.on_inputs.get() - 1,
-                
-            );
+            self.on_inputs.set(self.on_inputs.get() - 1);
             self.on_inputs.get() == 0
         }
     }
@@ -84,10 +79,9 @@ impl Updatable for SRepeater {
         if tick_counter == self.last_update.get() {
             return None;
         }
-        self.last_update.set(tick_counter, );
+        self.last_update.set(tick_counter);
 
-        self.powered
-            .set(!self.powered.get());
+        self.powered.set(!self.powered.get());
 
         if self.powered.get() {
             Some((0, 15))

@@ -1,12 +1,11 @@
-use std::cell::Cell;
 use crate::blocks::facing::Facing;
-use crate::blocks::{
-    Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, ToBlock, Updatable,
-};
+use crate::blocks::{Block, BlockConnections, CBlock, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::WorldData;
+use crate::world::edge::Edge;
 use crate::world::graph::GNode;
 use crate::world::{CBlockGraph, UpdatableList};
 use petgraph::stable_graph::NodeIndex;
+use std::cell::Cell;
 use std::collections::HashMap;
 use std::ops::Index;
 

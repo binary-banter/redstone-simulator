@@ -1,10 +1,10 @@
-use std::cell::Cell;
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::TileMap;
 use crate::world::graph::GNode;
 use crate::world::UpdatableList;
 use nbt::Value;
+use std::cell::Cell;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -121,13 +121,11 @@ impl Updatable for Comparator {
             .max()
             .unwrap_or(0);
 
-        self.next_signal.set(
-            match self.mode {
-                ComparatorMode::Compare if side <= rear => rear,
-                ComparatorMode::Compare => 0,
-                ComparatorMode::Subtract => rear.saturating_sub(side),
-            },
-        );
+        self.next_signal.set(match self.mode {
+            ComparatorMode::Compare if side <= rear => rear,
+            ComparatorMode::Compare => 0,
+            ComparatorMode::Subtract => rear.saturating_sub(side),
+        });
 
         self.signal.get() != self.next_signal.get()
     }
@@ -144,8 +142,7 @@ impl Updatable for Comparator {
         self.last_update.set(tick_counter);
 
         let old = self.signal.get();
-        self.signal
-            .set(self.next_signal.get());
+        self.signal.set(self.next_signal.get());
 
         Some((old, self.signal.get()))
     }

@@ -1,4 +1,5 @@
-use crate::blocks::{CBlock, Edge};
+use crate::blocks::CBlock;
+use crate::world::edge::Edge;
 use crate::world::CBlockGraph;
 use itertools::Itertools;
 use petgraph::prelude::*;
