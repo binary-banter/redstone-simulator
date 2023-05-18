@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use crate::blocks::facing::Facing;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock, Updatable};
 use crate::world::data::TileMap;
@@ -5,15 +6,14 @@ use crate::world::graph::GNode;
 use crate::world::UpdatableList;
 use nbt::Value;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU8, AtomicUsize, Ordering};
 
 #[derive(Debug)]
 pub struct Comparator {
     /// Signal ranges from 0 to 15 inclusive.
-    signal: AtomicU8,
+    signal: Cell<u8>,
 
     /// Signal of the comparator during the next tick.
-    next_signal: AtomicU8,
+    next_signal: Cell<u8>,
 
     entity_power: Option<u8>,
 
@@ -21,7 +21,7 @@ pub struct Comparator {
     // todo: we can most likely get rid off this by having both a `Comparator` and `Subtractor`.
     mode: ComparatorMode,
 
-    last_update: AtomicUsize,
+    last_update: Cell<usize>,
 }
 
 impl CComparator {
@@ -62,7 +62,7 @@ impl From<&str> for ComparatorMode {
 
 impl OutputPower for Comparator {
     fn output_power(&self) -> u8 {
-        self.signal.load(Ordering::Relaxed)
+        self.signal.get()
     }
 }
 
@@ -90,11 +90,11 @@ impl BlockConnections for CComparator {
 impl ToBlock for CComparator {
     fn to_block(&self, _on_inputs: u8) -> Block {
         Block::Comparator(Comparator {
-            signal: AtomicU8::new(self.signal),
-            next_signal: AtomicU8::new(self.signal),
+            signal: Cell::new(self.signal),
+            next_signal: Cell::new(self.signal),
             entity_power: self.entity_power,
             mode: self.mode,
-            last_update: AtomicUsize::new(usize::MAX),
+            last_update: Cell::new(usize::MAX),
         })
     }
 }
@@ -121,16 +121,15 @@ impl Updatable for Comparator {
             .max()
             .unwrap_or(0);
 
-        self.next_signal.store(
+        self.next_signal.set(
             match self.mode {
                 ComparatorMode::Compare if side <= rear => rear,
                 ComparatorMode::Compare => 0,
                 ComparatorMode::Subtract => rear.saturating_sub(side),
             },
-            Ordering::Relaxed,
         );
 
-        self.signal.load(Ordering::Relaxed) != self.next_signal.load(Ordering::Relaxed)
+        self.signal.get() != self.next_signal.get()
     }
 
     fn late_update(
@@ -139,16 +138,16 @@ impl Updatable for Comparator {
         _tick_updatable: &mut UpdatableList,
         tick_counter: usize,
     ) -> Option<(u8, u8)> {
-        if tick_counter == self.last_update.load(Ordering::Relaxed) {
+        if tick_counter == self.last_update.get() {
             return None;
         }
-        self.last_update.store(tick_counter, Ordering::Relaxed);
+        self.last_update.set(tick_counter);
 
-        let old = self.signal.load(Ordering::Relaxed);
+        let old = self.signal.get();
         self.signal
-            .store(self.next_signal.load(Ordering::Relaxed), Ordering::Relaxed);
+            .set(self.next_signal.get());
 
-        Some((old, self.signal.load(Ordering::Relaxed)))
+        Some((old, self.signal.get()))
     }
 }
 

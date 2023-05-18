@@ -1,8 +1,8 @@
+use std::cell::Cell;
 use crate::blocks::facing::Facing;
 use crate::blocks::srepeater::SRepeater;
 use crate::blocks::{Block, BlockConnections, InputSide, OutputPower, ToBlock};
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize};
 
 #[derive(Copy, Clone, Debug)]
 pub struct CTorch {
@@ -39,9 +39,9 @@ impl BlockConnections for CTorch {
 impl ToBlock for CTorch {
     fn to_block(&self, on_inputs: u8) -> Block {
         Block::SRepeater(SRepeater {
-            powered: AtomicBool::new(self.lit),
-            last_update: AtomicUsize::new(usize::MAX),
-            on_inputs: AtomicU8::new(on_inputs),
+            powered: Cell::new(self.lit),
+            last_update: Cell::new(usize::MAX),
+            on_inputs: Cell::new(on_inputs),
         })
     }
 }

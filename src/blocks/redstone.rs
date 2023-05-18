@@ -1,3 +1,4 @@
+use std::cell::Cell;
 use crate::blocks::facing::Facing;
 use crate::blocks::{
     Block, BlockConnections, CBlock, Edge, InputSide, OutputPower, ToBlock, Updatable,
@@ -8,12 +9,11 @@ use crate::world::{CBlockGraph, UpdatableList};
 use petgraph::stable_graph::NodeIndex;
 use std::collections::HashMap;
 use std::ops::Index;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Debug, Default)]
 pub struct Redstone {
     /// Signal ranges from 0 to 15 inclusive.
-    signal: AtomicBool,
+    signal: Cell<bool>,
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -50,7 +50,7 @@ impl Index<Facing> for Connections {
 
 impl OutputPower for Redstone {
     fn output_power(&self) -> u8 {
-        if self.signal.load(Ordering::Relaxed) {
+        if self.signal.get() {
             15
         } else {
             0
@@ -70,7 +70,7 @@ impl BlockConnections for CRedstone {
 impl ToBlock for CRedstone {
     fn to_block(&self, _on_inputs: u8) -> Block {
         Block::Redstone(Redstone {
-            signal: AtomicBool::new(self.signal),
+            signal: Cell::new(self.signal),
         })
     }
 }
@@ -88,8 +88,8 @@ impl Updatable for Redstone {
             .iter()
             .any(|e| e.node.weight.output_power().saturating_sub(e.weight) > 0);
 
-        if self.signal.load(Ordering::Relaxed) != s_new {
-            self.signal.store(s_new, Ordering::Relaxed);
+        if self.signal.get() != s_new {
+            self.signal.set(s_new);
         }
 
         false
@@ -122,12 +122,12 @@ impl From<HashMap<&str, &str>> for CRedstone {
 impl Redstone {
     pub fn with_signal(signal: bool) -> Self {
         Redstone {
-            signal: AtomicBool::new(signal),
+            signal: Cell::new(signal),
         }
     }
 
     pub fn toggle_signal(&self) {
-        self.signal.fetch_xor(true, Ordering::Relaxed);
+        self.signal.set(!self.signal.get());
     }
 }
 

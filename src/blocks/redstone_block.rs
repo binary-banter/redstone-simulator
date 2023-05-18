@@ -1,7 +1,7 @@
+use std::cell::Cell;
 use crate::blocks::facing::Facing;
 use crate::blocks::srepeater::SRepeater;
 use crate::blocks::{Block, BlockConnections, InputSide, ToBlock};
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicUsize};
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct CRedstoneBlock {}
@@ -18,9 +18,9 @@ impl BlockConnections for CRedstoneBlock {
 impl ToBlock for CRedstoneBlock {
     fn to_block(&self, on_inputs: u8) -> Block {
         Block::SRepeater(SRepeater {
-            powered: AtomicBool::new(true),
-            last_update: AtomicUsize::new(usize::MAX),
-            on_inputs: AtomicU8::new(on_inputs),
+            powered: Cell::new(true),
+            last_update: Cell::new(usize::MAX),
+            on_inputs: Cell::new(on_inputs),
         })
     }
 }
