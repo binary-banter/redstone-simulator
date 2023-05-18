@@ -6,9 +6,9 @@ use crate::world::schematic::SchemFormat;
 use crate::world::{BlockGraph, CBlockGraph, TickUpdatableLists, UpdatableList, World};
 use itertools::iproduct;
 use nbt::from_gzip_reader;
+use petgraph::prelude::NodeIndex;
 use std::collections::HashMap;
 use std::fs::File;
-use petgraph::prelude::NodeIndex;
 
 impl From<File> for World {
     fn from(file: File) -> Self {
@@ -64,7 +64,14 @@ impl From<SchemFormat> for World {
             for block in &world[(x, y, z)] {
                 let idx = cblocks.add_node(block.clone());
                 indexes[x][y][z].push(idx);
-                cblock_positions.insert(idx, (x as isize + format.offset[0] as isize, y as isize + format.offset[1] as isize, z as isize + format.offset[2] as isize));
+                cblock_positions.insert(
+                    idx,
+                    (
+                        x as isize + format.offset[0] as isize,
+                        y as isize + format.offset[1] as isize,
+                        z as isize + format.offset[2] as isize,
+                    ),
+                );
             }
         }
 
