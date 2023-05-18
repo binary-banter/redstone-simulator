@@ -119,12 +119,6 @@ impl From<HashMap<&str, &str>> for CRedstone {
 }
 
 impl Redstone {
-    pub fn with_signal(signal: bool) -> Self {
-        Redstone {
-            signal: Cell::new(signal),
-        }
-    }
-
     pub fn toggle_signal(&self) {
         self.signal.set(!self.signal.get());
     }

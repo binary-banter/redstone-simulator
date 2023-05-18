@@ -1,3 +1,5 @@
 /target
 .idea/!/tests/test_torch.rs
 .idea/
+output.gv
+output.wave
