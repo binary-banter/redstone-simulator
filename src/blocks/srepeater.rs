@@ -19,7 +19,6 @@ impl ToBlock for CSRepeater {
     fn to_block(&self, on_inputs: u8) -> Block {
         Block::SRepeater(SRepeater {
             powered: Cell::new(self.powered),
-            last_update: Cell::new(usize::MAX),
             on_inputs: Cell::new(on_inputs),
         })
     }
@@ -30,7 +29,6 @@ pub struct SRepeater {
     /// Whether the repeater is currently powered.
     pub powered: Cell<bool>,
     pub on_inputs: Cell<u8>,
-    pub last_update: Cell<usize>,
 }
 
 impl OutputPower for SRepeater {
@@ -74,13 +72,8 @@ impl Updatable for SRepeater {
         &self,
         _idx: &'static GNode<Block, u8>,
         _tick_updatable: &mut UpdatableList,
-        tick_counter: usize,
+        _tick_counter: usize,
     ) -> Option<(u8, u8)> {
-        if tick_counter == self.last_update.get() {
-            return None;
-        }
-        self.last_update.set(tick_counter);
-
         self.powered.set(!self.powered.get());
 
         if self.powered.get() {

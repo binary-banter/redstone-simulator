@@ -19,7 +19,6 @@ impl ToBlock for CRedstoneBlock {
     fn to_block(&self, on_inputs: u8) -> Block {
         Block::SRepeater(SRepeater {
             powered: Cell::new(true),
-            last_update: Cell::new(usize::MAX),
             on_inputs: Cell::new(on_inputs),
         })
     }

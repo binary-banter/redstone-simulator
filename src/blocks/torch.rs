@@ -40,7 +40,6 @@ impl ToBlock for CTorch {
     fn to_block(&self, on_inputs: u8) -> Block {
         Block::SRepeater(SRepeater {
             powered: Cell::new(self.lit),
-            last_update: Cell::new(usize::MAX),
             on_inputs: Cell::new(on_inputs),
         })
     }
