@@ -65,9 +65,6 @@ fn run_ast(world: &mut World, ast: &InstructionAst, write: &mut impl FnMut(HashM
             world.step();
             write(world.get_probes());
         }
-        InstructionAst::Instruction(Instruction::Probe) => {
-            //TODO world.get_probes();
-        }
         InstructionAst::Sequence(v) => {
             for i in v {
                 run_ast(world, i, write);

@@ -5,7 +5,6 @@ use crate::cli::instructions::InstructionAst::*;
 pub enum Instruction {
     Trigger,
     Step,
-    Probe,
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -55,8 +54,6 @@ fn parse_instruction(s: &str) -> Option<(InstructionAst, &str)> {
         Some((Instruction(Trigger), s))
     } else if let Some(s) = parse_literal(s, "step") {
         Some((Instruction(Step), s))
-    } else if let Some(s) = parse_literal(s, "probe") {
-        Some((Instruction(Probe), s))
     } else if let Some(s) = parse_literal(s, "(") {
         let (ast, s) = parse_sequence(s)?;
         let s = parse_literal(s, ")")?;
@@ -106,11 +103,11 @@ mod tests {
     #[test]
     fn test_ast() {
         assert_eq!(
-            parse("trigger, step 10, probe"),
+            parse("trigger, step 10, trigger"),
             Some(Sequence(vec![
                 Instruction(Trigger),
                 Repeat(Box::new(Instruction(Step)), 10),
-                Instruction(Probe)
+                Instruction(Trigger)
             ]))
         );
     }
