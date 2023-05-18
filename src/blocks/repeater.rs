@@ -109,10 +109,7 @@ impl Updatable for Repeater {
         let locked_next_tick = idx.incoming_side.iter().any(|e| e.node.weight.will_lock());
 
         if locked_next_tick == self.locking_signal.get() {
-            tick_updatable.extend(
-                idx.outgoing_neighbours()
-                    .filter(|b| matches!(b.weight, Block::Repeater(_))), //TODO filter may not be needed if we pre-compute
-            );
+            tick_updatable.extend(idx.outgoing_locks);
         }
 
         // if signal strength has changed, update neighbours

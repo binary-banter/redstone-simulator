@@ -14,11 +14,12 @@ pub struct GNode<N: 'static, E: 'static> {
     pub outgoing: &'static [GEdge<N, E>],
     pub incoming_rear: &'static [GEdge<N, E>],
     pub incoming_side: &'static [GEdge<N, E>],
+    pub outgoing_locks: &'static [&'static GNode<N, E>],
 }
 
 pub struct GEdge<N: 'static, E: 'static> {
-    pub weight: E,
     pub node: &'static GNode<N, E>,
+    pub weight: E,
 }
 
 pub struct FastGraph<N: 'static, E: 'static> {
@@ -43,6 +44,7 @@ impl FastGraph<Block, u8> {
             let block_ref = bump.alloc(GNode {
                 weight: block.to_block(on_inputs),
                 outgoing: &[],
+                outgoing_locks: &[],
                 incoming_rear: &[],
                 incoming_side: &[],
             });
@@ -89,6 +91,17 @@ impl FastGraph<Block, u8> {
                         .collect_vec()
                         .into_iter(),
                 );
+                if let CBlock::Repeater(_) = &cblocks[idx] {
+                    let out = cblocks
+                        .edges_directed(idx, Outgoing)
+                        .filter(|b| b.weight().is_side())
+                        .filter(|b| matches!(&cblocks[b.target()], CBlock::Repeater(_)))
+                        .map(|e| &*map_read[&e.target()])
+                        .collect_vec();
+                    if out.len() > 0 {
+                        node.outgoing_locks = bump.alloc_slice_fill_iter(out.into_iter());
+                    }
+                }
             }
         }
         // Safety invariant holds until here. We can now read from the references in map because map_read no longer exists
