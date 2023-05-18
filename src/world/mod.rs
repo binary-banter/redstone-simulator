@@ -10,7 +10,7 @@ use crate::blocks::Block;
 use crate::blocks::{CBlock, OutputPower};
 use crate::world::edge::Edge;
 use crate::world::graph::{FastGraph, GNode};
-use petgraph::prelude::StableGraph;
+use petgraph::prelude::{NodeIndex, StableGraph};
 use std::collections::HashMap;
 
 pub type CBlockGraph = StableGraph<CBlock, Edge, petgraph::Directed, u32>;
@@ -23,6 +23,9 @@ pub type UpdatableList = Vec<&'static GNode<Block, u8>>;
 
 /// The `World` is a pruned instance of a redstone circuit.
 pub struct World {
+    pub cblocks: CBlockGraph,
+    pub cblock_positions: HashMap<NodeIndex, (isize, isize, isize)>,
+
     /// Holds the graph of the redstone circuit.
     // todo: make this private, requires implementation of Display for `World`.
     pub blocks: BlockGraph,

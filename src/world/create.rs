@@ -8,6 +8,7 @@ use itertools::iproduct;
 use nbt::from_gzip_reader;
 use std::collections::HashMap;
 use std::fs::File;
+use petgraph::prelude::NodeIndex;
 
 impl From<File> for World {
     fn from(file: File) -> Self {
@@ -17,7 +18,7 @@ impl From<File> for World {
 
 impl World {
     fn cblock_to_block(
-        cblocks: CBlockGraph,
+        cblocks: &CBlockGraph,
     ) -> (
         BlockGraph,
         Vec<&'static GNode<Block, u8>>,
@@ -56,10 +57,14 @@ impl From<SchemFormat> for World {
         let mut cblocks = CBlockGraph::new();
         let mut indexes = vec![vec![vec![vec![]; length]; height]; width];
 
+        let mut cblock_positions: HashMap<NodeIndex, (isize, isize, isize)> = HashMap::new();
+
         // Construct nodes.
         for (x, y, z) in iproduct!(0..width, 0..height, 0..length) {
             for block in &world[(x, y, z)] {
-                indexes[x][y][z].push(cblocks.add_node(block.clone()));
+                let idx = cblocks.add_node(block.clone());
+                indexes[x][y][z].push(idx);
+                cblock_positions.insert(idx, (x as isize + format.offset[0] as isize, y as isize + format.offset[1] as isize, z as isize + format.offset[2] as isize));
             }
         }
 
@@ -91,9 +96,11 @@ impl From<SchemFormat> for World {
         prune_graph(&mut cblocks);
 
         // CBlock graph to Block graph
-        let (blocks, triggers, probes) = World::cblock_to_block(cblocks);
+        let (blocks, triggers, probes) = World::cblock_to_block(&cblocks);
 
         let mut world = World {
+            cblocks,
+            cblock_positions,
             blocks,
             triggers,
             probes,
