@@ -115,12 +115,4 @@ impl<N: 'static, E: 'static> GNode<N, E> {
     pub fn outgoing_neighbours(&self) -> impl Iterator<Item = &'static GNode<N, E>> {
         self.outgoing.iter().map(|e| e.node)
     }
-
-    pub fn incoming_rear_edges(&self) -> &'static [GEdge<N, E>] {
-        self.incoming_rear
-    }
-
-    pub fn incoming_side_edges(&self) -> &'static [GEdge<N, E>] {
-        self.incoming_side
-    }
 }

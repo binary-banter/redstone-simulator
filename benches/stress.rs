@@ -3,7 +3,7 @@ use redstone_simulator::world::World;
 use std::fs::File;
 
 fn stress_srepeater(c: &mut Criterion) {
-    let file = File::open("./schematics/srepeater_stress.schem").unwrap();
+    let file = File::open("./schematics/stress_srepeater.schem").unwrap();
     let mut world = World::from(file);
     world.step_with_trigger();
     c.bench_function("stress_srepeater", |b| {
@@ -14,7 +14,7 @@ fn stress_srepeater(c: &mut Criterion) {
 }
 
 fn stress_repeater(c: &mut Criterion) {
-    let file = File::open("./schematics/repeater_stress.schem").unwrap();
+    let file = File::open("./schematics/stress_repeater.schem").unwrap();
     let mut world = World::from(file);
     world.step_with_trigger();
     c.bench_function("stress_repeater", |b| {
@@ -25,7 +25,7 @@ fn stress_repeater(c: &mut Criterion) {
 }
 
 fn stress_comparator(c: &mut Criterion) {
-    let file = File::open("./schematics/comparator_stress.schem").unwrap();
+    let file = File::open("./schematics/stress_comparator.schem").unwrap();
     let mut world = World::from(file);
     world.step_with_trigger();
     c.bench_function("stress_comparator", |b| {
