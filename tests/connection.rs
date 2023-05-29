@@ -1,130 +1,88 @@
-use redstone_simulator::world::World;
-use std::fs::File;
+use redstone_simulator::test_macro::{T, F};
+use redstone_simulator::test;
 
-macro_rules! test {
-    ($name:ident, $b1:expr, $b2:expr, $b3:expr, $b4:expr) => {
-        #[test]
-        fn $name() {
-            let file = File::open("./schematics/connections.schem").unwrap();
-            let mut world = World::from(file);
+test!("connections", rstone_rstone; F, T, F, F);
+test!("connections", rstone_wsolid; F, F, T, F);
+test!("connections", rstone_ssolid; F, F, F, F);
+test!("connections", rstone_rep; F, F, T, F);
+test!("connections", rstone_cmp; F, F, T, F);
 
-            assert_eq!(
-                world.get_probe(stringify!($name)).unwrap(),
-                $b1,
-                "T0 expected {} got {}",
-                $b1,
-                world.get_probe(stringify!($name)).unwrap()
-            );
-            world.step_with_trigger();
-            assert_eq!(
-                world.get_probe(stringify!($name)).unwrap(),
-                $b2,
-                "T1 expected {} got {}",
-                $b2,
-                world.get_probe(stringify!($name)).unwrap()
-            );
-            world.step();
-            assert_eq!(
-                world.get_probe(stringify!($name)).unwrap(),
-                $b3,
-                "T2 expected {} got {}",
-                $b3,
-                world.get_probe(stringify!($name)).unwrap()
-            );
-            world.step();
-            assert_eq!(
-                world.get_probe(stringify!($name)).unwrap(),
-                $b4,
-                "T3 expected {} got {}",
-                $b4,
-                world.get_probe(stringify!($name)).unwrap()
-            );
-        }
-    };
-}
+test!("connections", wsolid_rstone; F, F, F, F);
+test!("connections", wsolid_wsolid; F, F, F, F);
+test!("connections", wsolid_ssolid; F, F, F, F);
+test!("connections", wsolid_rep; F, F, T, F);
+test!("connections", wsolid_torch; T, T, F, T);
+test!("connections", wsolid_cmp; F, F, T, F);
 
-test!(rstone_rstone, false, true, false, false);
-test!(rstone_wsolid, false, false, true, false);
-test!(rstone_ssolid, false, false, false, false);
-test!(rstone_rep, false, false, true, false);
-test!(rstone_cmp, false, false, true, false);
+test!("connections", ssolid_rstone; F, F, T, F);
+test!("connections", ssolid_wsolid; F, F, F, F);
+test!("connections", ssolid_ssolid; F, F, F, F);
+test!("connections", ssolid_rep; F, F, F, T);
+test!("connections", ssolid_torch; T, T, T, F);
+test!("connections", ssolid_cmp; F, F, F, T);
 
-test!(wsolid_rstone, false, false, false, false);
-test!(wsolid_wsolid, false, false, false, false);
-test!(wsolid_ssolid, false, false, false, false);
-test!(wsolid_rep, false, false, true, false);
-test!(wsolid_torch, true, true, false, true);
-test!(wsolid_cmp, false, false, true, false);
+test!("connections", rep_rstone; F, F, T, F);
+test!("connections", rep_wsolid; F, F, F, T);
+test!("connections", rep_ssolid; F, F, T, F);
+test!("connections", rep_rep; F, F, F, T);
+test!("connections", rep_cmp; F, F, F, T);
 
-test!(ssolid_rstone, false, false, true, false);
-test!(ssolid_wsolid, false, false, false, false);
-test!(ssolid_ssolid, false, false, false, false);
-test!(ssolid_rep, false, false, false, true);
-test!(ssolid_torch, true, true, true, false);
-test!(ssolid_cmp, false, false, false, true);
+test!("connections", torch_rstone; T, T, F, T);
+test!("connections", torch_wsolid; F, F, F, F);
+test!("connections", torch_ssolid; F, F, F, F);
+test!("connections", torch_rep; T, T, T, F);
+test!("connections", torch_cmp; T, T, T, F);
 
-test!(rep_rstone, false, false, true, false);
-test!(rep_wsolid, false, false, false, true);
-test!(rep_ssolid, false, false, true, false);
-test!(rep_rep, false, false, false, true);
-test!(rep_cmp, false, false, false, true);
+test!("connections", cmp_rstone; F, F, T, F);
+test!("connections", cmp_wsolid; F, F, F, T);
+test!("connections", cmp_ssolid; F, F, T, F);
+test!("connections", cmp_rep; F, F, F, T);
+test!("connections", cmp_cmp; F, F, F, T);
 
-test!(torch_rstone, true, true, false, true);
-test!(torch_wsolid, false, false, false, false);
-test!(torch_ssolid, false, false, false, false);
-test!(torch_rep, true, true, true, false);
-test!(torch_cmp, true, true, true, false);
+test!("connections", rblock_rstone; T, T, T, T);
+test!("connections", rblock_wsolid; F, F, F, F);
+test!("connections", rblock_ssolid; F, F, F, F);
+test!("connections", rblock_rep; T, T, T, T);
+test!("connections", rblock_torch; F, F, F, F);
+test!("connections", rblock_cmp; T, T, T, T);
 
-test!(cmp_rstone, false, false, true, false);
-test!(cmp_wsolid, false, false, false, true);
-test!(cmp_ssolid, false, false, true, false);
-test!(cmp_rep, false, false, false, true);
-test!(cmp_cmp, false, false, false, true);
+test!("connections", torch_wsolid_up; T, T, T, F);
+test!("connections", torch_ssolid_up; T, T, F, T);
 
-test!(rblock_rstone, true, true, true, true);
-test!(rblock_wsolid, false, false, false, false);
-test!(rblock_ssolid, false, false, false, false);
-test!(rblock_rep, true, true, true, true);
-test!(rblock_torch, false, false, false, false);
-test!(rblock_cmp, true, true, true, true);
+test!("connections", rblock_rstone_up; T, T, T, T);
+test!("connections", rblock_wsolid_up; F, F, F, F);
+test!("connections", rblock_ssolid_up; F, F, F, F);
+test!("connections", rblock_rep_up; F, F, F, F);
+test!("connections", rblock_cmp_up; F, F, F, F);
+test!("connections", rblock_torch_up; F, F, F, F);
 
-test!(torch_wsolid_up, true, true, true, false);
-test!(torch_ssolid_up, true, true, false, true);
+test!("connections", rblock_rstone_dn; T, T, T, T);
+test!("connections", rblock_wsolid_dn; F, F, F, F);
+test!("connections", rblock_ssolid_dn; F, F, F, F);
+test!("connections", rblock_rep_dn; F, F, F, F);
+test!("connections", rblock_cmp_dn; F, F, F, F);
+test!("connections", rblock_torch_dn; T, T, T, T);
 
-test!(rblock_rstone_up, true, true, true, true);
-test!(rblock_wsolid_up, false, false, false, false);
-test!(rblock_ssolid_up, false, false, false, false);
-test!(rblock_rep_up, false, false, false, false);
-test!(rblock_cmp_up, false, false, false, false);
-test!(rblock_torch_up, false, false, false, false);
+test!("connections", rstone_north; F, T, F, F);
+test!("connections", rstone_east; F, T, F, F);
+test!("connections", rstone_south; F, T, F, F);
+test!("connections", rstone_west; F, T, F, F);
+test!("connections", rstone_up; F, F, F, F);
+test!("connections", rstone_dn; F, T, F, F);
 
-test!(rblock_rstone_dn, true, true, true, true);
-test!(rblock_wsolid_dn, false, false, false, false);
-test!(rblock_ssolid_dn, false, false, false, false);
-test!(rblock_rep_dn, false, false, false, false);
-test!(rblock_cmp_dn, false, false, false, false);
-test!(rblock_torch_dn, true, true, true, true);
+test!("connections", rstone_off_north; F, F, F, F);
+test!("connections", rstone_off_east; F, F, F, F);
+test!("connections", rstone_off_south; F, F, F, F);
+test!("connections", rstone_off_west; F, F, F, F);
 
-test!(rstone_north, false, true, false, false);
-test!(rstone_east, false, true, false, false);
-test!(rstone_south, false, true, false, false);
-test!(rstone_west, false, true, false, false);
-test!(rstone_up, false, false, false, false);
-test!(rstone_dn, false, true, false, false);
+test!("connections", rep_out_top; F, F, F, F);
+test!("connections", rep_out_down; F, F, F, F);
+test!("connections", rep_out_left; F, F, F, F);
+test!("connections", rep_out_right; F, F, F, F);
+test!("connections", rstone_rep_in; F, F, F, F);
 
-test!(rstone_off_north, false, false, false, false);
-test!(rstone_off_east, false, false, false, false);
-test!(rstone_off_south, false, false, false, false);
-test!(rstone_off_west, false, false, false, false);
-
-test!(rep_out_top, false, false, false, false);
-test!(rep_out_down, false, false, false, false);
-test!(rep_out_left, false, false, false, false);
-test!(rep_out_right, false, false, false, false);
-test!(rstone_rep_in, false, false, false, false);
-
-test!(cmp_out_top, false, false, false, false);
-test!(cmp_out_down, false, false, false, false);
-test!(cmp_out_left, false, false, false, false);
-test!(cmp_out_right, false, false, false, false);
-test!(cmp_in, false, false, false, false);
+test!("connections", cmp_out_top; F, F, F, F);
+test!("connections", cmp_out_down; F, F, F, F);
+test!("connections", cmp_out_left; F, F, F, F);
+test!("connections", cmp_out_right; F, F, F, F);
+test!("connections", cmp_in; F, F, F, F);

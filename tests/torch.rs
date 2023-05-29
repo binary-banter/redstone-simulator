@@ -1,44 +1,6 @@
-use redstone_simulator::world::World;
-use std::fs::File;
+use redstone_simulator::test_macro::{T, F};
+use redstone_simulator::test;
 
-#[test]
-fn torch() {
-    let file = File::open("./schematics/torch.schem").unwrap();
-    let mut world = World::from(file);
-
-    assert!(world.get_probe("probe_1").unwrap());
-    world.step_with_trigger();
-    assert!(world.get_probe("probe_1").unwrap());
-    world.step();
-    assert!(!world.get_probe("probe_1").unwrap()); // tick 1
-    world.step();
-    assert!(world.get_probe("probe_1").unwrap()); // tick 2
-}
-
-#[test]
-fn wall_torch() {
-    let file = File::open("./schematics/wall_torch.schem").unwrap();
-    let mut world = World::from(file);
-
-    assert!(world.get_probe("probe_1").unwrap());
-    world.step_with_trigger();
-    assert!(world.get_probe("probe_1").unwrap());
-    world.step();
-    assert!(!world.get_probe("probe_1").unwrap()); // tick 1
-    world.step();
-    assert!(world.get_probe("probe_1").unwrap()); // tick 2
-}
-
-#[test]
-fn torch_strong() {
-    let file = File::open("./schematics/torch_strong.schem").unwrap();
-    let mut world = World::from(file);
-
-    assert!(world.get_probe("probe_1").unwrap());
-    world.step_with_trigger();
-    assert!(world.get_probe("probe_1").unwrap());
-    world.step();
-    assert!(!world.get_probe("probe_1").unwrap()); // tick 1
-    world.step();
-    assert!(world.get_probe("probe_1").unwrap()); // tick 2
-}
+test!("torch", torch; T, T, F, T);
+test!("torch", torch_wall; T, T, F, T);
+test!("torch", torch_strong; T, T, F, T);

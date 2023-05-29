@@ -1,20 +1,20 @@
+use crate::cli::dot::write_dot;
+use crate::cli::instructions::{parse, Instruction, InstructionAst};
+use crate::cli::Args;
+use crate::world::World;
 use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
 use vcd::{IdCode, SimulationCommand, TimescaleUnit};
-use crate::cli::instructions::{Instruction, InstructionAst, parse};
-use crate::world::World;
-use crate::cli::Args;
-use crate::cli::dot::write_dot;
 
-pub fn run(args: Args){
+pub fn run(args: Args) {
     let mut world = World::from(File::open(args.input).expect("Could not open schematic file."));
 
     if let Some(dot) = args.dot {
         write_dot(&world.cblocks, &world.cblock_positions, Path::new(&dot));
     }
 
-    if let Some(w) = args.wave{
+    if let Some(w) = args.wave {
         let Some(simulation) = args.simulation else {
             panic!("No simulation program was provided using the simulation flag!");
         };
